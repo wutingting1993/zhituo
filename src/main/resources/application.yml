@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: zhituo
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:zhituo}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+mybatis:
+  mapper-locations: classpath:mapper/report/*.xml
+  configuration:
+    map-underscore-to-camel-case: true

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cmbchina.infrastructure.report.dao.mapper.ReportMapper">
+  <select id="targets" resultType="com.cmbchina.infrastructure.report.dao.po.ReportTargetPo">
+    SELECT DISTINCT u.first_bbk_id AS bbk_id, u.first_bbk_nm AS bbk_name,
+      u.org_id, u.org_nm AS org_name, u.pst_lvl AS level, t.sap_id, p.id AS plan_id, p.created_at
+    FROM rm_jkh_user_info u
+    JOIN swe_wealth_plan_targets t ON t.sap_id COLLATE utf8mb4_bin = u.user_id AND t.deleted = 0
+    JOIN swe_wealth_plans p ON p.id = t.plan_id AND p.deleted = 0
+    <where>
+      <if test="query.bbkId != null">AND u.first_bbk_id = #{query.bbkId}</if>
+      <if test="query.orgId != null">AND u.org_id = #{query.orgId}</if>
+      <if test="query.level != null">AND u.pst_lvl = #{query.level}</if>
+    </where>
+  </select>
+  <select id="organizationCount" resultType="long">
+    SELECT COUNT(1) FROM rm_jkh_user_info WHERE first_bbk_id = #{bbkId} AND org_id = #{orgId}
+  </select>
+  <select id="jobs" resultType="com.cmbchina.infrastructure.report.dao.po.ReportJobPo">
+    SELECT DISTINCT s.plan_id, j.tenant_id AS sap_id, s.scene_id AS skill_id, k.skill_name, j.id AS job_id
+    FROM swe_wealth_plan_scenes s
+    JOIN swe_marketplace_skills k ON k.skill_id = s.scene_id AND k.source_id = 'RMASSIST'
+    JOIN swe_cron_jobs j ON j.plan_id = s.plan_id AND j.skill_ids = s.scene_id
+      AND j.source_id = 'RMASSIST' AND j.status != 'deleted'
+    WHERE s.deleted = 0 AND
+    <foreach collection="rows" item="r" open="(" close=")" separator=" OR ">
+      (s.plan_id = #{r.planId} AND j.tenant_id = #{r.sapId})
+    </foreach>
+  </select>
+  <select id="candidates" resultType="com.cmbchina.infrastructure.report.dao.po.ReportExecutionPo">
+    SELECT DISTINCT e.job_id, e.trace_id, e.actual_time, e.is_read AS `read`
+    FROM swe_cron_executions e JOIN swe_plan_sence_cron c
+      ON e.actual_time &gt;= CAST(c.execute_day AS DATE)
+      AND e.actual_time &lt; DATE_ADD(CAST(c.execute_day AS DATE), INTERVAL 1 DAY)
+    WHERE c.execute_day &gt;= #{query.startDate} AND c.execute_day &lt;= #{query.endDate}
+    AND
+    <foreach collection="rows" item="r" open="(" close=")" separator=" OR ">
+      (e.job_id = #{r.jobId} AND c.plan_id = #{r.planId} AND c.sence_id = #{r.skillId}
+        AND e.actual_time &gt;= #{r.createdAt})
+    </foreach>
+  </select>
+  <select id="executions" resultType="com.cmbchina.infrastructure.report.dao.po.ReportExecutionPo">
+    SELECT job_id, trace_id, actual_time, is_read AS `read` FROM swe_cron_executions
+    WHERE trace_id IN
+    <foreach collection="traces" item="trace" open="(" close=")" separator=",">#{trace}</foreach>
+  </select>
+  <select id="results" resultType="com.cmbchina.infrastructure.report.dao.po.ReportResultPo">
+    SELECT DISTINCT job_id, skill_id, trace_id, custuid AS customer_id FROM swe_cron_result_index
+    WHERE result_type = 'plan' AND is_latest_success = 1 AND status = 'SUC' AND
+    <foreach collection="rows" item="r" open="(" close=")" separator=" OR ">
+      (job_id = #{r.relation.jobId} AND skill_id = #{r.relation.skillId} AND trace_id = #{r.traceId})
+    </foreach>
+  </select>
+  <select id="contacts" resultType="com.cmbchina.infrastructure.report.dao.po.ReportContactPo">
+    SELECT DISTINCT d.cust_uid AS customer_id
+    FROM swe_html_preview_click_events c JOIN swe_skill_contact_detail d ON d.click_id = c.id
+    WHERE (c.event_type = 'button_click' OR (c.event_type = 'preview_view' AND c.template_type = 'sub'))
+      AND d.cust_uid IS NOT NULL AND
+    <foreach collection="rows" item="r" open="(" close=")" separator=" OR ">
+      (c.trace_id = #{r.execution.traceId} AND c.customer_id = #{r.customerId}
+        AND c.clicked_at &gt;= #{r.execution.executionDay}
+        AND c.clicked_at &lt; DATE_ADD(#{r.execution.executionDay}, INTERVAL 1 DAY))
+    </foreach>
+  </select>
+</mapper>

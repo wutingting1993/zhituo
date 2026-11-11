@@ -1,0 +1,368 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java"/>
+    <!--  代码中不允许存在制表符('\t')  -->
+    <module name="FileTabCharacter">
+        <property name="eachLine" value="false"/>
+    </module>
+    <!--  Java代码行宽不允许超过150字符  -->
+    <module name="LineLength">
+        <property name="fileExtensions" value="java"/>
+        <property name="max" value="150"/>
+        <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+    </module>
+    <!--  必要时可以使用注解@SuppressWarnings屏蔽检查  -->
+    <module name="SuppressWarningsFilter"/>
+    <!--  禁止打印语句：System.out.println(), System.err().println() -->
+    <module name="RegexpSingleline">
+        <property name="format" value="System\s*\.\s*(?:out|err)\s*\.\s*print(?:ln|f)?\s*\("/>
+        <property name="message" value="Common bad practice such as calling System.out.println(), System.err()"/>
+    </module>
+    <!--  禁止终止语句：System.exit() -->
+    <module name="RegexpSingleline">
+        <property name="format" value="System\.exit\("/>
+        <property name="message" value="Common bad practice such as calling System.exit()"/>
+    </module>
+    <!--  禁止异常堆栈打印语句：ex.printStacktrace()  -->
+    <module name="RegexpSingleline">
+        <property name="format" value="(.*?)\.printStackTrace\("/>
+        <property name="message" value="Common bad practice calling ex.printStacktrace()"/>
+        <property name="severity" value="error"/>
+    </module>
+    <!--  遍历语法树检查  -->
+    <module name="TreeWalker">
+        <module name="SuppressWarningsHolder" />
+        <!--  文件行数不允许超过1000行  -->
+        <module name="JavaNCSS">
+            <property name="id" value="FileLengthCheck"/>
+            <property name="methodMaximum" value="9999"/>
+            <property name="classMaximum" value="9999"/>
+            <property name="fileMaximum" value="1000"/>
+        </module>
+        <!--  方法长度不允许超过80行  -->
+        <module name="JavaNCSS">
+            <property name="id" value="MethodLengthCheck"/>
+            <property name="fileMaximum" value="9999"/>
+            <property name="classMaximum" value="9999"/>
+            <property name="methodMaximum" value="80"/>
+        </module>
+        <property name="tabWidth" value="4"/>
+        <!--  内部类长度不允许超过60行 -->
+        <module name="AnonInnerLength">
+            <property name="severity" value="warning"/>
+            <property name="max" value="60"/>
+        </module>
+        <!--  lambda表达式长度不允许超过30行 -->
+        <module name="LambdaBodyLength">
+            <property name="severity" value="warning"/>
+            <property name="max" value="30"/>
+        </module>
+        <!--  方法参数不允许超过6个   -->
+        <module name="ParameterNumber">
+            <property name="tokens" value="METHOD_DEF"/>
+            <property name="max" value="6"/>
+            <property name="ignoreOverriddenMethods" value="false"/>
+        </module>
+        <!--  最大public方法数不允许超过30个 -->
+        <module name="MethodCount">
+            <property name="maxPublic" value="30"/>
+            <property name="maxTotal" value="300"/>
+            <property name="maxPrivate" value="300"/>
+        </module>
+        <!--  方法或lambda中return不超过5次 -->
+        <module name="ReturnCount">
+            <property name="severity" value="INFO"/>
+            <property name="max" value="5"/>
+            <property name="maxForVoid" value="5"/>
+        </module>
+        <!--  JDK14 Record定义参数的个数不能超过5个  -->
+        <module name="RecordComponentNumber">
+            <property name="max" value="5"/>
+        </module>
+        <!--  方法中抛出的异常个数不超过5个 -->
+        <module name="ThrowsCount">
+            <property name="max" value="5"/>
+        </module>
+        <!--  if语句嵌套的层数不能超过4层 -->
+        <module name="NestedIfDepth">
+            <property name="max" value="4"/>
+        </module>
+        <!--  不允许try-catch嵌套  -->
+        <module name="NestedTryDepth"/>
+        <!--  for语句不允许嵌套超过4层 -->
+        <module name="NestedForDepth">
+            <property name="max" value="4"/>
+        </module>
+        <!--  boolean表达式的复杂度不能超过4 -->
+        <module name="BooleanExpressionComplexity">
+            <property name="max" value="4"/>
+        </module>
+        <!--  方法的圈复杂度不允许超过10 -->
+        <module name="CyclomaticComplexity">
+            <property name="max" value="10"/>
+            <property name="severity" value="error"/>
+        </module>
+        <!--  检查代码块的左花括号("{")的位置。  -->
+        <module name="LeftCurly">
+            <property name="tokens" value="ANNOTATION_DEF, CLASS_DEF, CTOR_DEF, ENUM_CONSTANT_DEF, ENUM_DEF,
+                    INTERFACE_DEF, LAMBDA, LITERAL_CASE, LITERAL_CATCH, LITERAL_DEFAULT,
+                    LITERAL_DO, LITERAL_ELSE, LITERAL_FINALLY, LITERAL_FOR, LITERAL_IF,
+                    LITERAL_SWITCH, LITERAL_SYNCHRONIZED, LITERAL_TRY, LITERAL_WHILE, METHOD_DEF,
+                    OBJBLOCK, STATIC_INIT"/>
+        </module>
+        <!--  检查代码块的右花括号("}")的位置  -->
+        <module name="RightCurly">
+            <property name="id" value="RightCurlySame"/>
+            <property name="tokens" value="LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE,
+                    LITERAL_DO"/>
+        </module>
+        <!--  检查代码块的右花括号("}")的位置  -->
+        <module name="RightCurly">
+            <property name="id" value="RightCurlyAlone"/>
+            <property name="option" value="alone"/>
+            <property name="tokens" value="CTOR_DEF, LITERAL_FOR, LITERAL_WHILE, STATIC_INIT,
+                    INSTANCE_INIT, ANNOTATION_DEF, ENUM_DEF, INTERFACE_DEF"/>
+        </module>
+        <!--  检查代码块的右花括号("}")的位置  -->
+        <module name="RightCurly">
+            <property name="id" value="RightCurlyAloneOrSingle"/>
+            <property name="option" value="alone_or_singleline"/>
+            <property name="tokens" value="CLASS_DEF, METHOD_DEF"/>
+        </module>
+
+        <!--  If/Else/For/While/Do需要双大括号  -->
+        <module name="NeedBraces">
+            <property name="tokens" value="LITERAL_DO, LITERAL_ELSE, LITERAL_FOR, LITERAL_IF, LITERAL_WHILE"/>
+        </module>
+        <!--  内部类需要定义在文件末尾  -->
+        <module name="InnerTypeLast">
+            <property name="severity" value="warning"/>
+        </module>
+        <!--  Java类代码成员顺序应该为：静态变量、成员变量、构造器、其他方法 -->
+        <module name="DeclarationOrder">
+            <property name="severity" value="error"/>
+        </module>
+        <!--  需要符合Java风格的数组定义String[] args  -->
+        <module name="ArrayTypeStyle"/>
+        <!--  数字单位需要大写  -->
+        <module name="UpperEll"/>
+        <!--  连续大写数量允许超过3个，仅允许Final，Override，常量  -->
+        <module name="AbbreviationAsWordInName">
+            <property name="ignoreStatic" value="true"/>
+            <property name="ignoreStaticFinal" value="true"/>
+            <property name="ignoreOverriddenMethods" value="false"/>
+            <property name="allowedAbbreviationLength" value="3"/>
+        </module>
+        <!--  抽象类需要以Abstract开头  -->
+        <module name="AbstractClassName">
+            <property name="format" value="^(Abstract|Base).+$"/>
+            <property name="ignoreModifier" value="true"/>
+        </module>
+        <!--  泛型类需要单字母大写：class MyClass<T> {}  -->
+        <module name="ClassTypeParameterName">
+            <property name="format" value="^[A-Z][A-Z0-9]*$"/>
+        </module>
+        <!--  泛型接口需要单字母大写：interface FirstInterface<T> {}  -->
+        <module name="InterfaceTypeParameterName">
+            <property name="format" value="^[A-Z][A-Z0-9]*$"/>
+        </module>
+        <!--  JDK14 Record泛型需要单字母大写：interface FirstInterface<T> {}  -->
+        <module name="RecordTypeParameterName">
+            <property name="format" value="^[A-Z][A-Z0-9]*$"/>
+        </module>
+        <!--  常量名需要大写  -->
+        <module name="ConstantName"/>
+        <!--  Lambda变量名需要小写  -->
+        <module name="LambdaParameterName"/>
+        <!--  本地变量命名规则：必须小写字母开头  -->
+        <module name="LocalVariableName">
+            <property name="format" value="^[a-z](_?[a-zA-Z0-9]+)*$"/>
+        </module>
+        <!--  成员变量命名规则，小写字母开头  -->
+        <module name="MemberName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+        <!--  方法命名规则：必须小写字母开头  -->
+        <module name="MethodName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+        <!--  包名规则：小写字母.类名  -->
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+[a-z0-9]*(\.[a-z0-9]*)*$"/>
+            <property name="severity" value="error"/>
+        </module>
+        <!--  参数命名规则：必须小写字母开头  -->
+        <module name="ParameterName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+            <property name="ignoreOverridden" value="true"/>
+        </module>
+        <!--  JDK14 Record命名规则：必须小写字母开头  -->
+        <module name="RecordComponentName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+        <!-- 类命名规则：必须大写字母开头 -->
+        <module name="TypeName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+            <property name="severity" value="error"/>
+        </module>
+        <!--  禁止星导包 -->
+        <module name="AvoidStarImport">
+            <property name="severity" value="error"/>
+        </module>
+        <!--  禁止重复导包  -->
+        <module name="RedundantImport"/>
+        <!--  禁止无用的导包  -->
+        <module name="UnusedImports"/>
+        <!--  注解需要新起一行  -->
+        <module name="AnnotationLocation"/>
+        <!--  for循环小括号前不允许留白  -->
+        <module name="EmptyForInitializerPad"/>
+        <!--  尖括号前后不允许空格  -->
+        <module name="GenericWhitespace"/>
+        <!--  方法名后不允许空格  -->
+        <module name="MethodParamPad"/>
+        <!--  导包package不允许断行  -->
+        <module name="NoLineWrap">
+            <property name="tokens" value="PACKAGE_DEF"/>
+        </module>
+        <!--  特定符号前无空格  -->
+        <module name="NoWhitespaceAfter">
+            <property name="id" value="NoWhiteSpaceGeneral"/>
+            <property name="tokens" value="ARRAY_INIT,AT,INC,DEC,UNARY_MINUS,UNARY_PLUS,BNOT,LNOT,DOT,ARRAY_DECLARATOR,INDEX_OP"/>
+        </module>
+        <!--  特定符号前无空格  -->
+        <module name="NoWhitespaceAfter">
+            <property name="id" value="NoWhitespaceAfterTypeCast"/>
+            <property name="severity" value="warning"/>
+            <property name="tokens" value="TYPECAST"/>
+        </module>
+        <!--  特定符号后无空格  -->
+        <module name="NoWhitespaceBefore">
+            <property name="allowLineBreaks" value="true"/>
+        </module>
+        <!--  检查switch中冒号前不允许有空格  -->
+        <module name="NoWhitespaceBeforeCaseDefaultColon"/>
+        <!--  入参的括号不允许有空格  -->
+        <module name="ParenPad"/>
+        <!--  类型转换时括号不允许有空格  -->
+        <module name="TypecastParenPad"/>
+        <!--  检查指定项目后是否有空格，如lambda，if，try，switch，return等  -->
+        <module name="WhitespaceAfter">
+            <property name="tokens" value="COMMA,SEMI,LITERAL_IF,LITERAL_ELSE,LITERAL_WHILE,LITERAL_DO,LITERAL_FOR,DO_WHILE"/>
+        </module>
+        <!--  运算符换行时新起一行  -->
+        <module name="OperatorWrap">
+            <property name="severity" value="warning"/>
+        </module>
+        <!--  分隔符换行  -->
+        <module name="SeparatorWrap">
+            <property name="tokens" value="COMMA"/>
+            <property name="severity" value="warning"/>
+        </module>
+        <!--  禁止多余的空格  -->
+        <module name="SingleSpaceSeparator"/>
+        <!--  禁止双花括号实例化  -->
+        <module name="AvoidDoubleBraceInitialization">
+            <property name="severity" value="warning"/>
+        </module>
+        <!--  禁止空串equals对比  -->
+        <module name="EqualsAvoidNull"/>
+        <!--  switch需要有break  -->
+        <module name="FallThrough"/>
+        <!--  switch需要有default  -->
+        <module name="MissingSwitchDefault"/>
+
+        <!--  禁止特定通用异常抛出  -->
+        <module name="IllegalThrows">
+            <property name="severity" value="warning"/>
+            <property name="illegalClassNames" value="RuntimeException, Throwable, Exception, Error"/>
+        </module>
+        <!--  禁止特定可能泄露敏感信息的异常抛出  -->
+        <module name="IllegalThrows">
+            <property name="id" value="IllegalSensitiveThrowsCheck"/>
+            <property name="severity" value="error"/>
+            <property name="illegalClassNames"
+                      value="FileNotFoundException, JarException, MissingResourceException, NotOwnerException,ConcurrentModificationException,
+                       InsufficientResourcesException, BindException, OutOfMemoryError,  StackOverflowError, SQLException,
+                       java.io.FileNotFoundException, java.util.jar.JarException, java.util.MissingResourceException,
+                       java.security.acl.NotOwnerException, java.util.ConcurrentModificationException, javax.naming.InsufficientResourcesException,
+                       java.net.BindException, java.lang.OutOfMemoryError,  java.lang.StackOverflowError, java.sql.SQLException"/>
+        </module>
+        <!--  禁止通过内联赋值，多变量多个等号赋值  -->
+        <module name="InnerAssignment"/>
+        <!--  禁止魔术数字，允许类成员，注解含数字，其他不允许  -->
+        <module name="MagicNumber">
+            <property name="ignoreNumbers" value="-1, 0, 1, 2"/>
+            <property name="ignoreFieldDeclaration" value="true"/>
+            <property name="ignoreAnnotation" value="true"/>
+            <property name="ignoreHashCodeMethod" value="true"/>
+            <property name="severity" value="INFO"/>
+        </module>
+        <!--  不允许修改For循环内循环变量的值  -->
+        <module name="ModifiedControlVariable"/>
+        <!--  禁止重复字符串赋值  -->
+        <module name="MultipleStringLiterals">
+            <property name="allowedDuplicates" value="2"/>
+            <property name="severity" value="error"/>
+            <property name="ignoreOccurrenceContext" value="ANNOTATION,METHOD_CALL,VARIABLE_DEF,ENUM_CONSTANT_DEF"/>
+        </module>
+        <!--  禁止多变量同行声明  -->
+        <module name="MultipleVariableDeclarations"/>
+        <!--  一条声明语句语句单独一行  -->
+        <module name="OneStatementPerLine"/>
+        <!--  禁止给参数赋值  -->
+        <module name="ParameterAssignment"/>
+        <!--  字符串需要用equals判等  -->
+        <module name="StringLiteralEquality"/>
+        <!--  禁止未使用的本地变量  -->
+        <module name="UnusedLocalVariable"/>
+        <!--  禁止空代码文件  -->
+        <module name="NoCodeInFile"/>
+        <!--  类名与文件名保持一致  -->
+        <module name="OuterTypeFilename"/>
+        <!--  不允许漏写Override  -->
+        <module name="MissingOverride"/>
+        <!--  工具类仅包含private构造器  -->
+        <module name="HideUtilityClassConstructor">
+            <property name="severity" value="INFO"/>
+        </module>
+        <module name="SuppressionXpathSingleFilter">
+            <property name="checks" value="HideUtilityClassConstructor"/>
+            <property name="query"
+                      value="//*[MODIFIERS//*[@text = 'UtilityClass' or @text='NoArgsConstructor' or @text = 'SpringBootApplication']]/descendant-or-self::node()"/>
+        </module>
+        <!--  检查接口仅用于行为抽象  -->
+        <module name="InterfaceIsType"/>
+        <!--  禁止空代码块  -->
+        <module name="EmptyBlock"/>
+        <!--  禁止空Catch代码块  -->
+        <module name="EmptyCatchBlock"/>
+        <!--  所有的类JavaDoc  都需要有创建者 -->
+        <module name="WriteTag">
+            <property name="id" value="MissingJavadocCreatorCheck"/>
+            <property name="tag" value="(?i)@author(?:)"/>
+            <property name="tokens" value="INTERFACE_DEF, CLASS_DEF, ENUM_DEF" />
+            <property name="tagSeverity" value="ignore"/>
+            <property name="tagFormat" value=".*"/>
+            <property name="severity" value="INFO"/>
+        </module>
+        <!--  所有的类JavaDoc  都需要有创建日期 -->
+        <module name="WriteTag">
+            <property name="id" value="MissingJavadocDateCheck"/>
+            <property name="tag" value="(?i)@(date|since|create)(?:)"/>
+            <property name="tokens" value="INTERFACE_DEF, CLASS_DEF, ENUM_DEF" />
+            <property name="tagSeverity" value="ignore"/>
+            <property name="tagFormat" value=".*"/>
+            <property name="severity" value="INFO"/>
+        </module>
+        <!--  所有的公开类都需要有JavaDoc  -->
+        <module name="MissingJavadocType">
+            <property name="severity" value="INFO"/>
+        </module>
+    </module>
+</module>

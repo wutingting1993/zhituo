@@ -1,0 +1,24 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>local.quality</groupId><artifactId>java-quality</artifactId><version>1</version>
+  <properties><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding><quality.input>${project.basedir}/input</quality.input><quality.config>${project.basedir}/../config</quality.config></properties>
+  <build><plugins>
+    <plugin>
+      <groupId>com.diffplug.spotless</groupId><artifactId>spotless-maven-plugin</artifactId><version>2.30.0</version>
+      <configuration><java>
+        <includes><include>input/**/*.java</include></includes>
+        <eclipse><version>4.16.0</version><file>${quality.config}/eclipse-formatter.xml</file></eclipse>
+      </java></configuration>
+    </plugin>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId><artifactId>maven-checkstyle-plugin</artifactId><version>3.3.1</version>
+      <dependencies><dependency><groupId>com.puppycrawl.tools</groupId><artifactId>checkstyle</artifactId><version>9.3</version></dependency></dependencies>
+      <configuration>
+        <configLocation>${quality.config}/checkstyle.xml</configLocation>
+        <sourceDirectories><sourceDirectory>${quality.input}</sourceDirectory></sourceDirectories>
+        <includeTestSourceDirectory>false</includeTestSourceDirectory><consoleOutput>true</consoleOutput>
+        <failOnViolation>true</failOnViolation><violationSeverity>error</violationSeverity>
+      </configuration>
+    </plugin>
+  </plugins></build>
+</project>
