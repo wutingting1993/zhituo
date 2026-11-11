@@ -1,4 +1,6 @@
 package com.cmbchina.infrastructure.report.supportimpl;
+import com.cmbchina.domain.report.model.ReportPlan;
+import com.cmbchina.infrastructure.report.dao.po.ReportPlanPo;
 import com.cmbchina.domain.report.model.ReportQuery;
 import com.cmbchina.domain.report.model.ReportRelation;
 import com.cmbchina.domain.report.model.ReportExecution;
@@ -28,6 +30,17 @@ public class ReportDataSupportImpl implements ReportDataSupport {
     private static final int BATCH_SIZE = 200;
     @Autowired
     private ReportMapper mapper;
+
+    @Override
+    public List<ReportPlan> findPlans(List<String> ids) {
+        List<ReportPlan> result = Lists.newArrayList();
+        for (List<String> batch : Lists.partition(ids, BATCH_SIZE)) {
+            for (ReportPlanPo row : mapper.plans(batch)) {
+                result.add(ReportDataConverter.plan(row));
+            }
+        }
+        return result;
+    }
 
     @Override
     public boolean matchesOrganization(String bbkId, String orgId) {

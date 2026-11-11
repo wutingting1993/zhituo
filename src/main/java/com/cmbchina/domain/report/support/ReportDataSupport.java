@@ -1,4 +1,5 @@
 package com.cmbchina.domain.report.support;
+import com.cmbchina.domain.report.model.ReportPlan;
 import com.cmbchina.domain.report.model.ReportQuery;
 import com.cmbchina.domain.report.model.ReportRelation;
 import com.cmbchina.domain.report.model.ReportExecution;
@@ -7,6 +8,9 @@ import com.cmbchina.domain.report.model.ReportContact;
 import java.util.List;
 /** 报表分批读取契约。 */
 public interface ReportDataSupport {
+    /** 获取统计规划的来源及展示信息。 */
+    List<ReportPlan> findPlans(List<String> ids);
+
     /** 查找具备任务的人员规划技能关系。 */
     List<ReportRelation> findRelations(ReportQuery query);
 

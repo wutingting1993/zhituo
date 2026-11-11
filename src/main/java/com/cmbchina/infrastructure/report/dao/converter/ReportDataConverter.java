@@ -1,4 +1,6 @@
 package com.cmbchina.infrastructure.report.dao.converter;
+import com.cmbchina.domain.report.model.ReportPlan;
+import com.cmbchina.infrastructure.report.dao.po.ReportPlanPo;
 import com.cmbchina.domain.report.model.ReportRelation;
 import com.cmbchina.domain.report.model.ReportExecution;
 import com.cmbchina.infrastructure.report.dao.po.ReportTargetPo;
@@ -7,6 +9,13 @@ import com.cmbchina.infrastructure.report.dao.po.ReportExecutionPo;
 /** 持久化记录到领域数据的边界转换。 */
 public final class ReportDataConverter {
     private ReportDataConverter() {
+    }
+
+    /** 转换规划来源及负责人信息。 */
+    public static ReportPlan plan(ReportPlanPo row) {
+        return ReportPlan.builder().id(row.getId()).name(row.getName()).source(row.getSource()).ownerId(row.getOwnerId())
+                .ownerName(row.getOwnerName()).ownerLevel(row.getOwnerLevel()).periodStart(row.getPeriodStart()).periodEnd(row.getPeriodEnd())
+                .build();
     }
 
     /** 组合人员目标和技能任务。 */

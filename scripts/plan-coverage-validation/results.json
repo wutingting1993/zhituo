@@ -1,0 +1,1077 @@
+{
+  "passed": [
+    "branch deduplication across subbranches and days",
+    "source mapping and exclusions",
+    "covered subbranch count",
+    "detail count equals clicked count",
+    "aggregate customer deduplication and both task types",
+    "owner independent from target institution",
+    "no result execution retained",
+    "no current publication or validity filter",
+    "per plan task deduplication",
+    "source filter leaves summaries unchanged",
+    "all source reset",
+    "only selected skill is displayed",
+    "multi skill OR",
+    "subbranch drill scope",
+    "branch drill retains top subbranch condition",
+    "level filters target not owner",
+    "first date included",
+    "last date included",
+    "empty interval",
+    "empty detail",
+    "source with no matching plans keeps summary",
+    "reversed dates",
+    "missing dates",
+    "mismatched institution",
+    "invalid source",
+    "out of scope branch",
+    "out of scope subbranch",
+    "missing drill institution",
+    "missing nested filters",
+    "invalid nested dates"
+  ],
+  "responses": {
+    "branch deduplication across subbranches and days": [
+      {
+        "id": "32872541c2cd0b85",
+        "name": "覆盖验证分行1",
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1,
+        "planCount": 3,
+        "subBranchCount": 2,
+        "children": [
+          {
+            "id": "32872541c2ce0b85",
+            "name": "覆盖验证支行1",
+            "myCount": 1,
+            "branchCount": 1,
+            "presidentCount": 1,
+            "planCount": 3,
+            "subBranchCount": 1,
+            "children": []
+          },
+          {
+            "id": "32872541c2d00b85",
+            "name": "覆盖验证支行2",
+            "myCount": 1,
+            "branchCount": 0,
+            "presidentCount": 0,
+            "planCount": 1,
+            "subBranchCount": 1,
+            "children": []
+          }
+        ]
+      }
+    ],
+    "source mapping and exclusions": {
+      "id": "32872541c2cd0b85",
+      "name": "覆盖验证分行1",
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "planCount": 3,
+      "subBranchCount": 2,
+      "children": [
+        {
+          "id": "32872541c2ce0b85",
+          "name": "覆盖验证支行1",
+          "myCount": 1,
+          "branchCount": 1,
+          "presidentCount": 1,
+          "planCount": 3,
+          "subBranchCount": 1,
+          "children": []
+        },
+        {
+          "id": "32872541c2d00b85",
+          "name": "覆盖验证支行2",
+          "myCount": 1,
+          "branchCount": 0,
+          "presidentCount": 0,
+          "planCount": 1,
+          "subBranchCount": 1,
+          "children": []
+        }
+      ]
+    },
+    "covered subbranch count": {
+      "id": "32872541c2cd0b85",
+      "name": "覆盖验证分行1",
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "planCount": 3,
+      "subBranchCount": 2,
+      "children": [
+        {
+          "id": "32872541c2ce0b85",
+          "name": "覆盖验证支行1",
+          "myCount": 1,
+          "branchCount": 1,
+          "presidentCount": 1,
+          "planCount": 3,
+          "subBranchCount": 1,
+          "children": []
+        },
+        {
+          "id": "32872541c2d00b85",
+          "name": "覆盖验证支行2",
+          "myCount": 1,
+          "branchCount": 0,
+          "presidentCount": 0,
+          "planCount": 1,
+          "subBranchCount": 1,
+          "children": []
+        }
+      ]
+    },
+    "detail count equals clicked count": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 3,
+      "recommendedCustomerCount": 1,
+      "taskCount": 20,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 16
+        },
+        {
+          "id": "32872541c3170b85",
+          "name": "覆盖规划2",
+          "source": "分行关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 4
+        },
+        {
+          "id": "32872541c3270b85",
+          "name": "覆盖规划3",
+          "source": "行长关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 0,
+          "taskCount": 0
+        }
+      ]
+    },
+    "aggregate customer deduplication and both task types": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 3,
+      "recommendedCustomerCount": 1,
+      "taskCount": 20,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 16
+        },
+        {
+          "id": "32872541c3170b85",
+          "name": "覆盖规划2",
+          "source": "分行关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 4
+        },
+        {
+          "id": "32872541c3270b85",
+          "name": "覆盖规划3",
+          "source": "行长关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 0,
+          "taskCount": 0
+        }
+      ]
+    },
+    "owner independent from target institution": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 3,
+      "recommendedCustomerCount": 1,
+      "taskCount": 20,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 16
+        },
+        {
+          "id": "32872541c3170b85",
+          "name": "覆盖规划2",
+          "source": "分行关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 4
+        },
+        {
+          "id": "32872541c3270b85",
+          "name": "覆盖规划3",
+          "source": "行长关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 0,
+          "taskCount": 0
+        }
+      ]
+    },
+    "no result execution retained": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 3,
+      "recommendedCustomerCount": 1,
+      "taskCount": 20,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 16
+        },
+        {
+          "id": "32872541c3170b85",
+          "name": "覆盖规划2",
+          "source": "分行关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 4
+        },
+        {
+          "id": "32872541c3270b85",
+          "name": "覆盖规划3",
+          "source": "行长关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 0,
+          "taskCount": 0
+        }
+      ]
+    },
+    "no current publication or validity filter": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 3,
+      "recommendedCustomerCount": 1,
+      "taskCount": 20,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 16
+        },
+        {
+          "id": "32872541c3170b85",
+          "name": "覆盖规划2",
+          "source": "分行关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 4
+        },
+        {
+          "id": "32872541c3270b85",
+          "name": "覆盖规划3",
+          "source": "行长关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 0,
+          "taskCount": 0
+        }
+      ]
+    },
+    "per plan task deduplication": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 3,
+      "recommendedCustomerCount": 1,
+      "taskCount": 20,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 16
+        },
+        {
+          "id": "32872541c3170b85",
+          "name": "覆盖规划2",
+          "source": "分行关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 4
+        },
+        {
+          "id": "32872541c3270b85",
+          "name": "覆盖规划3",
+          "source": "行长关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 0,
+          "taskCount": 0
+        }
+      ]
+    },
+    "source filter leaves summaries unchanged": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 3,
+      "recommendedCustomerCount": 1,
+      "taskCount": 20,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "plans": [
+        {
+          "id": "32872541c3170b85",
+          "name": "覆盖规划2",
+          "source": "分行关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 4
+        }
+      ]
+    },
+    "all source reset": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 3,
+      "recommendedCustomerCount": 1,
+      "taskCount": 20,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 16
+        },
+        {
+          "id": "32872541c3170b85",
+          "name": "覆盖规划2",
+          "source": "分行关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 4
+        },
+        {
+          "id": "32872541c3270b85",
+          "name": "覆盖规划3",
+          "source": "行长关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 0,
+          "taskCount": 0
+        }
+      ]
+    },
+    "only selected skill is displayed": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 1,
+      "recommendedCustomerCount": 1,
+      "taskCount": 8,
+      "skillCount": 1,
+      "myCount": 1,
+      "branchCount": 0,
+      "presidentCount": 0,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 8
+        }
+      ]
+    },
+    "multi skill OR": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 3,
+      "recommendedCustomerCount": 1,
+      "taskCount": 20,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 16
+        },
+        {
+          "id": "32872541c3170b85",
+          "name": "覆盖规划2",
+          "source": "分行关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 4
+        },
+        {
+          "id": "32872541c3270b85",
+          "name": "覆盖规划3",
+          "source": "行长关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 0,
+          "taskCount": 0
+        }
+      ]
+    },
+    "subbranch drill scope": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": "32872541c2d00b85",
+      "name": "覆盖验证支行2",
+      "planCount": 1,
+      "recommendedCustomerCount": 1,
+      "taskCount": 8,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 0,
+      "presidentCount": 0,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 8
+        }
+      ]
+    },
+    "branch drill retains top subbranch condition": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 1,
+      "recommendedCustomerCount": 1,
+      "taskCount": 8,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 0,
+      "presidentCount": 0,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 8
+        }
+      ]
+    },
+    "level filters target not owner": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 1,
+      "recommendedCustomerCount": 1,
+      "taskCount": 8,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 0,
+      "presidentCount": 0,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 8
+        }
+      ]
+    },
+    "first date included": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 3,
+      "recommendedCustomerCount": 1,
+      "taskCount": 10,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 8
+        },
+        {
+          "id": "32872541c3170b85",
+          "name": "覆盖规划2",
+          "source": "分行关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 2
+        },
+        {
+          "id": "32872541c3270b85",
+          "name": "覆盖规划3",
+          "source": "行长关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 0,
+          "taskCount": 0
+        }
+      ]
+    },
+    "last date included": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": "覆盖验证分行1",
+      "planCount": 3,
+      "recommendedCustomerCount": 1,
+      "taskCount": 10,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 1,
+      "presidentCount": 1,
+      "plans": [
+        {
+          "id": "32872541c2d90b85",
+          "name": "覆盖规划1",
+          "source": "我的关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            },
+            {
+              "id": "32872541c2d80b85",
+              "name": "覆盖技能2"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 8
+        },
+        {
+          "id": "32872541c3170b85",
+          "name": "覆盖规划2",
+          "source": "分行关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 1,
+          "taskCount": 2
+        },
+        {
+          "id": "32872541c3270b85",
+          "name": "覆盖规划3",
+          "source": "行长关注",
+          "ownerId": "32872541c2d40b85",
+          "ownerName": "规划负责人",
+          "ownerLevel": "L3",
+          "periodStart": "2020-01-01",
+          "periodEnd": "2020-01-02",
+          "skills": [
+            {
+              "id": "32872541c2d60b85",
+              "name": "覆盖技能1"
+            }
+          ],
+          "recommendedCustomerCount": 0,
+          "taskCount": 0
+        }
+      ]
+    },
+    "empty interval": [],
+    "empty detail": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": null,
+      "name": null,
+      "planCount": 0,
+      "recommendedCustomerCount": 0,
+      "taskCount": 0,
+      "skillCount": 0,
+      "myCount": 0,
+      "branchCount": 0,
+      "presidentCount": 0,
+      "plans": []
+    },
+    "source with no matching plans keeps summary": {
+      "bbkId": "32872541c2cd0b85",
+      "orgId": "32872541c2d00b85",
+      "name": "覆盖验证支行2",
+      "planCount": 1,
+      "recommendedCustomerCount": 1,
+      "taskCount": 8,
+      "skillCount": 2,
+      "myCount": 1,
+      "branchCount": 0,
+      "presidentCount": 0,
+      "plans": []
+    },
+    "reversed dates": {
+      "code": 10000
+    },
+    "missing dates": {
+      "code": 10000
+    },
+    "mismatched institution": {
+      "code": 10000
+    },
+    "invalid source": {
+      "code": 10000
+    },
+    "out of scope branch": {
+      "code": 10000
+    },
+    "out of scope subbranch": {
+      "code": 10000
+    },
+    "missing drill institution": {
+      "code": 10000
+    },
+    "missing nested filters": {
+      "code": 10000
+    },
+    "invalid nested dates": {
+      "code": 10000
+    }
+  }
+}

@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.cmbchina.infrastructure.report.dao.mapper.ReportMapper">
+  <select id="plans" resultType="com.cmbchina.infrastructure.report.dao.po.ReportPlanPo">
+    SELECT p.id, p.name,
+      CASE WHEN p.source_label = '分行中台' THEN '分行关注' ELSE p.source_label END AS source,
+      p.sap_id AS owner_id, p.creator_name AS owner_name, u.pst_lvl AS owner_level,
+      p.period_start, p.period_end
+    FROM swe_wealth_plans p LEFT JOIN rm_jkh_user_info u ON p.sap_id COLLATE utf8mb4_bin = u.user_id
+    WHERE p.deleted = 0 AND p.source_label IN ('我的关注', '分行中台', '行长关注') AND p.id IN
+    <foreach collection="ids" item="id" open="(" close=")" separator=",">#{id}</foreach>
+  </select>
   <select id="targets" resultType="com.cmbchina.infrastructure.report.dao.po.ReportTargetPo">
     SELECT DISTINCT u.first_bbk_id AS bbk_id, u.first_bbk_nm AS bbk_name,
       u.org_id, u.org_nm AS org_name, u.pst_lvl AS level, t.sap_id, p.id AS plan_id, p.created_at

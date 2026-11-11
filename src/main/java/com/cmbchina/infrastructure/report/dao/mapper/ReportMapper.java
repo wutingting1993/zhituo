@@ -1,4 +1,5 @@
 package com.cmbchina.infrastructure.report.dao.mapper;
+import com.cmbchina.infrastructure.report.dao.po.ReportPlanPo;
 import com.cmbchina.domain.report.model.ReportQuery;
 import com.cmbchina.domain.report.model.ReportRelation;
 import com.cmbchina.domain.report.model.ReportRecommendation;
@@ -14,6 +15,9 @@ import org.apache.ibatis.annotations.Param;
 /** 报表只读分阶段查询。 */
 @Mapper
 public interface ReportMapper {
+    /** 获取三类来源的规划与负责人信息。 */
+    List<ReportPlanPo> plans(@Param("ids") List<String> ids);
+
     /** 查询人员与有效规划目标。 */
     List<ReportTargetPo> targets(@Param("query") ReportQuery query);
 
