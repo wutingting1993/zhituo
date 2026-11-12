@@ -19,6 +19,7 @@ public class ReportTargetPo {
     private String orgName;
     private String level;
     private String sapId;
+    private String userName;
     private String planId;
     private LocalDateTime createdAt;
 }

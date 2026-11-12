@@ -1,4 +1,8 @@
 package com.cmbchina.infrastructure.report.supportimpl;
+import com.cmbchina.domain.report.model.ReportOrganization;
+import com.cmbchina.infrastructure.report.dao.po.ReportOrganizationPo;
+import com.cmbchina.domain.report.model.ReportCustomerAction;
+import com.cmbchina.infrastructure.report.dao.po.ReportActionPo;
 import com.cmbchina.domain.report.model.ReportPlan;
 import com.cmbchina.infrastructure.report.dao.po.ReportPlanPo;
 import com.cmbchina.domain.report.model.ReportQuery;
@@ -40,6 +44,12 @@ public class ReportDataSupportImpl implements ReportDataSupport {
             }
         }
         return result;
+    }
+
+    @Override
+    public ReportOrganization findOrganization(String bbkId, String orgId) {
+        ReportOrganizationPo row = mapper.organization(bbkId, orgId);
+        return ReportOrganization.builder().bbkId(row.getBbkId()).bbkName(row.getBbkName()).orgId(row.getOrgId()).orgName(row.getOrgName()).build();
     }
 
     @Override
@@ -136,6 +146,27 @@ public class ReportDataSupportImpl implements ReportDataSupport {
             }
         }
         return result;
+    }
+
+    @Override
+    public List<ReportCustomerAction> findActions(List<ReportRecommendation> recommendations) {
+        Map<List<String>, List<ReportRecommendation>> matches = recommendations.stream().collect(Collectors.groupingBy(this::actionKey));
+        List<ReportRecommendation> unique = matches.values().stream().map(rows -> rows.get(0)).collect(Collectors.toList());
+        List<ReportCustomerAction> result = Lists.newArrayList();
+        for (List<ReportRecommendation> batch : Lists.partition(unique, BATCH_SIZE)) {
+            for (ReportActionPo row : mapper.actions(batch)) {
+                List<String> key = Lists.newArrayList(row.getTraceId(), row.getCustomerId(), row.getExecutionDay().toString());
+                for (ReportRecommendation recommendation : matches.get(key)) {
+                    result.add(ReportCustomerAction.builder().recommendation(recommendation).buttonType(row.getButtonType())
+                            .contactCustomerId(row.getContactCustomerId()).build());
+                }
+            }
+        }
+        return result;
+    }
+
+    private List<String> actionKey(ReportRecommendation row) {
+        return Lists.newArrayList(row.getExecution().getTraceId(), row.getCustomerId(), row.getExecution().getExecutionDay().toString());
     }
 
     @Override

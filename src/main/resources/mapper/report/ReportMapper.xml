@@ -12,7 +12,7 @@
   </select>
   <select id="targets" resultType="com.cmbchina.infrastructure.report.dao.po.ReportTargetPo">
     SELECT DISTINCT u.first_bbk_id AS bbk_id, u.first_bbk_nm AS bbk_name,
-      u.org_id, u.org_nm AS org_name, u.pst_lvl AS level, t.sap_id, p.id AS plan_id, p.created_at
+      u.org_id, u.org_nm AS org_name, u.pst_lvl AS level, u.user_name, t.sap_id, p.id AS plan_id, p.created_at
     FROM rm_jkh_user_info u
     JOIN swe_wealth_plan_targets t ON t.sap_id COLLATE utf8mb4_bin = u.user_id AND t.deleted = 0
     JOIN swe_wealth_plans p ON p.id = t.plan_id AND p.deleted = 0
@@ -21,6 +21,11 @@
       <if test="query.orgId != null">AND u.org_id = #{query.orgId}</if>
       <if test="query.level != null">AND u.pst_lvl = #{query.level}</if>
     </where>
+  </select>
+  <select id="organization" resultType="com.cmbchina.infrastructure.report.dao.po.ReportOrganizationPo">
+    SELECT first_bbk_id AS bbk_id, first_bbk_nm AS bbk_name, org_id, org_nm AS org_name
+    FROM rm_jkh_user_info WHERE first_bbk_id = #{bbkId} AND org_id = #{orgId}
+    ORDER BY user_id LIMIT 1
   </select>
   <select id="organizationCount" resultType="long">
     SELECT COUNT(1) FROM rm_jkh_user_info WHERE first_bbk_id = #{bbkId} AND org_id = #{orgId}
@@ -65,6 +70,18 @@
     FROM swe_html_preview_click_events c JOIN swe_skill_contact_detail d ON d.click_id = c.id
     WHERE (c.event_type = 'button_click' OR (c.event_type = 'preview_view' AND c.template_type = 'sub'))
       AND d.cust_uid IS NOT NULL AND
+    <foreach collection="rows" item="r" open="(" close=")" separator=" OR ">
+      (c.trace_id = #{r.execution.traceId} AND c.customer_id = #{r.customerId}
+        AND c.clicked_at &gt;= #{r.execution.executionDay}
+        AND c.clicked_at &lt; DATE_ADD(#{r.execution.executionDay}, INTERVAL 1 DAY))
+    </foreach>
+  </select>
+  <select id="actions" resultType="com.cmbchina.infrastructure.report.dao.po.ReportActionPo">
+    SELECT DISTINCT c.trace_id, c.customer_id, DATE(c.clicked_at) AS execution_day,
+      CASE WHEN c.event_type = 'button_click' THEN c.button_type ELSE NULL END AS button_type,
+      d.cust_uid AS contact_customer_id
+    FROM swe_html_preview_click_events c LEFT JOIN swe_skill_contact_detail d ON d.click_id = c.id
+    WHERE (c.event_type = 'button_click' OR (c.event_type = 'preview_view' AND c.template_type = 'sub')) AND
     <foreach collection="rows" item="r" open="(" close=")" separator=" OR ">
       (c.trace_id = #{r.execution.traceId} AND c.customer_id = #{r.customerId}
         AND c.clicked_at &gt;= #{r.execution.executionDay}

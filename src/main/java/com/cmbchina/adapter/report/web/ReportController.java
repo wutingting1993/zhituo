@@ -1,4 +1,11 @@
 package com.cmbchina.adapter.report.web;
+import com.cmbchina.application.report.api.ExecutionReportApplicationService;
+import com.cmbchina.application.report.api.dto.ExecutionBranchesRequest;
+import com.cmbchina.application.report.api.dto.ExecutionBranchesResponse;
+import com.cmbchina.application.report.api.dto.ExecutionDetailsRequest;
+import com.cmbchina.application.report.api.dto.ExecutionManagerDetailsResponse;
+import com.cmbchina.application.report.api.dto.ExecutionOverviewResponse;
+import com.cmbchina.application.report.api.dto.ExecutionSkillDetailsResponse;
 import com.cmbchina.application.report.api.PlanCoverageApplicationService;
 import com.cmbchina.application.report.api.dto.PlanCoverageResponse;
 import com.cmbchina.application.report.api.dto.PlanDetailsRequest;
@@ -23,6 +30,33 @@ public class ReportController {
     private ReportApplicationService service;
     @Autowired
     private PlanCoverageApplicationService coverage;
+
+    @Autowired
+    private ExecutionReportApplicationService execution;
+
+    /** 获取执行链路概览。 */
+    @PostMapping("/execution-overview")
+    public Result<ExecutionOverviewResponse> executionOverview(@Valid @RequestBody ReportSummaryRequest request) {
+        return Result.success(execution.overview(request));
+    }
+
+    /** 获取支行执行明细。 */
+    @PostMapping("/execution-branches")
+    public Result<ExecutionBranchesResponse> executionBranches(@Valid @RequestBody ExecutionBranchesRequest request) {
+        return Result.success(execution.branches(request));
+    }
+
+    /** 获取支行客户经理执行明细。 */
+    @PostMapping("/execution-branches/managers")
+    public Result<ExecutionManagerDetailsResponse> executionManagers(@Valid @RequestBody ExecutionDetailsRequest request) {
+        return Result.success(execution.managers(request));
+    }
+
+    /** 获取支行技能执行明细。 */
+    @PostMapping("/execution-branches/skills")
+    public Result<ExecutionSkillDetailsResponse> executionSkills(@Valid @RequestBody ExecutionDetailsRequest request) {
+        return Result.success(execution.skills(request));
+    }
 
     /** 获取分支行规划覆盖。 */
     @PostMapping("/plan-coverage")

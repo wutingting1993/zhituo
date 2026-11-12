@@ -21,8 +21,8 @@ public final class ReportDataConverter {
     /** 组合人员目标和技能任务。 */
     public static ReportRelation relation(ReportTargetPo target, ReportJobPo job) {
         return ReportRelation.builder().bbkId(target.getBbkId()).bbkName(target.getBbkName()).orgId(target.getOrgId()).orgName(target.getOrgName())
-                .level(target.getLevel()).sapId(target.getSapId()).planId(target.getPlanId()).createdAt(target.getCreatedAt())
-                .skillId(job.getSkillId()).skillName(job.getSkillName()).jobId(job.getJobId()).build();
+                .level(target.getLevel()).sapId(target.getSapId()).userName(target.getUserName()).planId(target.getPlanId())
+                .createdAt(target.getCreatedAt()).skillId(job.getSkillId()).skillName(job.getSkillName()).jobId(job.getJobId()).build();
     }
 
     /** 保留人员机构关系和执行信息。 */

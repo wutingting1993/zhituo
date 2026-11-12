@@ -1,4 +1,5 @@
 package com.cmbchina.infrastructure.report.dao.mapper;
+import com.cmbchina.infrastructure.report.dao.po.ReportOrganizationPo;
 import com.cmbchina.infrastructure.report.dao.po.ReportPlanPo;
 import com.cmbchina.domain.report.model.ReportQuery;
 import com.cmbchina.domain.report.model.ReportRelation;
@@ -24,6 +25,9 @@ public interface ReportMapper {
     /** 查询目标对应的技能任务。 */
     List<ReportJobPo> jobs(@Param("rows") List<ReportTargetPo> rows);
 
+    /** 查询分支行展示信息。 */
+    ReportOrganizationPo organization(@Param("bbkId") String bbkId, @Param("orgId") String orgId);
+
     /** 校验分支行关系。 */
     long organizationCount(@Param("bbkId") String bbkId, @Param("orgId") String orgId);
 
@@ -35,6 +39,9 @@ public interface ReportMapper {
 
     /** 查询成功的推荐和名单结果。 */
     List<ReportResultPo> results(@Param("rows") List<ReportExecution> rows);
+
+    /** 查询推荐客户的执行当日行为与接触明细。 */
+    List<com.cmbchina.infrastructure.report.dao.po.ReportActionPo> actions(@Param("rows") List<ReportRecommendation> rows);
 
     /** 查询点击关联接触客户。 */
     List<ReportContactPo> contacts(@Param("rows") List<ReportRecommendation> rows);
