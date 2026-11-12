@@ -14,6 +14,10 @@ public class ExecutionSkillRow {
     private String categoryName;
     private long managerCount;
     private long taskCount;
+    private long scheduledTaskCount;
+    private long executedTaskCount;
+    private long pendingTaskCount;
+    private long failedTaskCount;
     private long recommendedCustomerCount;
     private BigDecimal viewRate;
     private BigDecimal contactRate;

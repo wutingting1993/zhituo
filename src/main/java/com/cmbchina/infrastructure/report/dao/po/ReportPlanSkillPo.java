@@ -13,4 +13,5 @@ import lombok.AllArgsConstructor;
 public class ReportPlanSkillPo {
     private String planId;
     private String skillId;
+    private java.time.LocalDate executionDay;
 }

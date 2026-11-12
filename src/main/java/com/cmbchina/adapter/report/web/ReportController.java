@@ -1,5 +1,9 @@
 package com.cmbchina.adapter.report.web;
 import com.cmbchina.application.report.api.ExecutionReportApplicationService;
+import com.cmbchina.application.report.api.dto.ExecutionTrendResponse;
+import com.cmbchina.application.report.api.dto.SkillParticipationRequest;
+import com.cmbchina.application.report.api.dto.SkillParticipationResponse;
+import com.cmbchina.application.report.api.dto.AttentionBranchesResponse;
 import com.cmbchina.application.report.api.dto.ExecutionBranchesRequest;
 import com.cmbchina.application.report.api.dto.ExecutionBranchesResponse;
 import com.cmbchina.application.report.api.dto.ExecutionDetailsRequest;
@@ -16,6 +20,8 @@ import com.cmbchina.application.report.api.dto.ReportFilterRequest;
 import com.cmbchina.application.report.api.dto.ReportFiltersResponse;
 import com.cmbchina.application.report.api.dto.ReportSummaryRequest;
 import com.cmbchina.application.report.api.dto.ReportSummaryResponse;
+import com.cmbchina.application.report.api.dto.PlanSourcesResponse;
+import com.cmbchina.application.report.api.dto.PlanSourcesRequest;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,6 +39,24 @@ public class ReportController {
 
     @Autowired
     private ExecutionReportApplicationService execution;
+
+    /** 获取所选日期区间的执行走势。 */
+    @PostMapping("/execution-trend")
+    public Result<ExecutionTrendResponse> executionTrend(@Valid @RequestBody ReportSummaryRequest request) {
+        return Result.success(execution.trend(request));
+    }
+
+    /** 获取技能参与度排名。 */
+    @PostMapping("/skill-participation")
+    public Result<SkillParticipationResponse> skillParticipation(@Valid @RequestBody SkillParticipationRequest request) {
+        return Result.success(execution.participation(request));
+    }
+
+    /** 获取需关注支行。 */
+    @PostMapping("/attention-branches")
+    public Result<AttentionBranchesResponse> attentionBranches(@Valid @RequestBody ReportSummaryRequest request) {
+        return Result.success(execution.attention(request));
+    }
 
     /** 获取执行链路概览。 */
     @PostMapping("/execution-overview")
@@ -56,6 +80,12 @@ public class ReportController {
     @PostMapping("/execution-branches/skills")
     public Result<ExecutionSkillDetailsResponse> executionSkills(@Valid @RequestBody ExecutionDetailsRequest request) {
         return Result.success(execution.skills(request));
+    }
+
+    /** 获取规划来源结构排名分行。 */
+    @PostMapping("/plan-sources")
+    public Result<PlanSourcesResponse> planSources(@Valid @RequestBody PlanSourcesRequest request) {
+        return Result.success(coverage.sources(request));
     }
 
     /** 获取分支行规划覆盖。 */

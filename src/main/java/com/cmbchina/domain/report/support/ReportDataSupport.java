@@ -10,6 +10,15 @@ import java.util.List;
 import java.util.Map;
 /** 报表分批读取契约。 */
 public interface ReportDataSupport {
+    /** 直接读取人员表去重后的机构。 */
+    List<ReportOrganization> findFilterOrganizations();
+
+    /** 按规划所属分支行查询技能，未选机构时查询全部技能。 */
+    List<com.cmbchina.domain.report.model.ReportSkillOption> findFilterSkills(String bbkId, String orgId);
+
+    /** 读取全部实际非空等级。 */
+    List<String> findFilterLevels();
+
     /** 获取统计规划的来源及展示信息。 */
     List<ReportPlan> findPlans(List<String> ids);
 
@@ -21,9 +30,6 @@ public interface ReportDataSupport {
 
     /** 获取合法分支行的展示名称，不依赖执行结果。 */
     ReportOrganization findOrganization(String bbkId, String orgId);
-
-    /** 按人员机构信息校验分支行归属。 */
-    boolean matchesOrganization(String bbkId, String orgId);
 
     /** 获取每天最新执行。 */
     List<ReportExecution> findExecutions(ReportQuery query, List<ReportRelation> relations);

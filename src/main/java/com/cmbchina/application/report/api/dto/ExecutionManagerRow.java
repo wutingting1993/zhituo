@@ -18,6 +18,10 @@ public class ExecutionManagerRow {
     @Builder.Default
     private List<ExecutionSkillOption> skills = Lists.newArrayList();
     private long taskCount;
+    private long scheduledTaskCount;
+    private long executedTaskCount;
+    private long pendingTaskCount;
+    private long failedTaskCount;
     private long recommendedCustomerCount;
     private BigDecimal viewRate;
     private BigDecimal insightRate;

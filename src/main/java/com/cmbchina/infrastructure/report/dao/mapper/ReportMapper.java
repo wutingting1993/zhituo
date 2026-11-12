@@ -17,11 +17,31 @@ import org.apache.ibatis.annotations.Param;
 /** 报表只读分阶段查询。 */
 @Mapper
 public interface ReportMapper {
+    /** 只取机构去重结果，不读取人员明细。 */
+    List<ReportOrganizationPo> filterOrganizations();
+
+    /** 未选机构时读取全部技能。 */
+    List<com.cmbchina.infrastructure.report.dao.po.ReportSkillOptionPo> filterSkills();
+
+    /** 按机构读取规划场景，不限制逻辑删除。 */
+    List<com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo> filterPlanSkills(@Param("bbkId") String bbkId, @Param("orgId") String orgId);
+
+    /** 按完整规划场景匹配有效任务及技能。 */
+    List<com.cmbchina.infrastructure.report.dao.po.ReportSkillOptionPo> filterTaskSkills(
+            @Param("rows") List<com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo> rows);
+
+    /** 只取实际等级去重结果。 */
+    List<String> filterLevels();
+
     /** 获取三类来源的规划与负责人信息。 */
     List<ReportPlanPo> plans(@Param("ids") List<String> ids);
 
     /** 查询日期范围内的规划与技能组合。 */
     List<com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo> scheduledSkills(@Param("query") ReportQuery query);
+
+    /** 查询范围内的排程日期。 */
+    List<com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo> scheduledDays(@Param("query") ReportQuery query,
+            @Param("rows") List<ReportRelation> rows);
 
     /** 查询候选规划的人员与有效目标。 */
     List<ReportTargetPo> targets(@Param("query") ReportQuery query, @Param("planIds") List<String> planIds);
@@ -36,14 +56,11 @@ public interface ReportMapper {
     /** 查询分支行展示信息。 */
     ReportOrganizationPo organization(@Param("bbkId") String bbkId, @Param("orgId") String orgId);
 
-    /** 校验分支行关系。 */
-    long organizationCount(@Param("bbkId") String bbkId, @Param("orgId") String orgId);
-
     /** 查询排程当天的候选执行。 */
     List<ReportExecutionPo> candidates(@Param("rows") List<ReportRelation> rows, @Param("query") ReportQuery query);
 
     /** 按选定链路获取执行。 */
-    List<ReportExecutionPo> executions(@Param("traces") List<String> traces);
+    List<ReportExecutionPo> executions(@Param("rows") List<ReportExecutionPo> rows);
 
     /** 查询成功的推荐和名单结果。 */
     List<ReportResultPo> results(@Param("rows") List<ReportExecution> rows);

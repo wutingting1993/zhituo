@@ -1,5 +1,12 @@
 package com.cmbchina.application.report.service;
 import com.cmbchina.application.report.api.ExecutionReportApplicationService;
+import com.cmbchina.application.report.api.dto.ExecutionTrendPoint;
+import com.cmbchina.application.report.api.dto.ExecutionTrendResponse;
+import com.cmbchina.application.report.api.dto.SkillParticipationRequest;
+import com.cmbchina.application.report.api.dto.SkillParticipationRow;
+import com.cmbchina.application.report.api.dto.SkillParticipationResponse;
+import com.cmbchina.application.report.api.dto.AttentionBranchRow;
+import com.cmbchina.application.report.api.dto.AttentionBranchesResponse;
 import com.cmbchina.application.report.api.dto.ExecutionBenchmarkResponse;
 import com.cmbchina.application.report.api.dto.ExecutionBranchRow;
 import com.cmbchina.application.report.api.dto.ExecutionBranchesRequest;
@@ -19,6 +26,7 @@ import com.cmbchina.application.report.api.dto.ReportSummaryRequest;
 import com.cmbchina.domain.report.model.ExecutionDataset;
 import com.cmbchina.domain.report.model.ExecutionMetrics;
 import com.cmbchina.domain.report.model.ReportExecution;
+import com.cmbchina.domain.report.model.ReportCustomerAction;
 import com.cmbchina.domain.report.model.ReportOrganization;
 import com.cmbchina.domain.report.model.ReportQuery;
 import com.cmbchina.domain.report.model.ReportRecommendation;
@@ -33,6 +41,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -43,12 +52,131 @@ import org.springframework.stereotype.Service;
 /** 复用存量执行链路，按机构、人员和技能独立去重。 */
 @Service
 public class ExecutionReportApplicationServiceImpl implements ExecutionReportApplicationService {
+    private static final int DEFAULT_PARTICIPATION_TOP_N = 5;
+    private static final int ATTENTION_LIMIT = 4;
     private static final List<String> SORT_KEYS = java.util.Collections.unmodifiableList(
             Lists.newArrayList("skillCount", "taskCount", "recommendedCustomerCount", "viewRate", "insightRate", "callRate", "contactRate"));
     @Autowired
     private ReportDataSupport data;
     @Autowired
     private ExecutionStatisticsService statistics;
+
+    @Override
+    public ExecutionTrendResponse trend(ReportSummaryRequest request) {
+        ExecutionDataset dataset = load(request);
+        Map<LocalDate, List<ReportExecution>> executions = dataset.getExecutions().stream()
+                .collect(Collectors.groupingBy(ReportExecution::getExecutionDay));
+        Map<LocalDate, List<ReportRecommendation>> recommendations = dataset.getRecommendations().stream()
+                .collect(Collectors.groupingBy(r -> r.getExecution().getExecutionDay()));
+        Map<LocalDate, List<ReportCustomerAction>> actions = dataset.getActions().stream()
+                .collect(Collectors.groupingBy(a -> a.getRecommendation().getExecution().getExecutionDay()));
+        List<ExecutionTrendPoint> points = Lists.newArrayList();
+        LocalDate day = request.getStartDate();
+        while (true) {
+            ExecutionMetrics metrics = statistics.summarize(executions.getOrDefault(day, java.util.Collections.emptyList()),
+                    recommendations.getOrDefault(day, java.util.Collections.emptyList()),
+                    actions.getOrDefault(day, java.util.Collections.emptyList()));
+            points.add(ExecutionTrendPoint.builder().date(day).metrics(response(metrics)).build());
+            if (day.equals(request.getEndDate())) {
+                break;
+            }
+            day = day.plusDays(1);
+        }
+        return ExecutionTrendResponse.builder().dailyPoints(points).build();
+    }
+
+    @Override
+    public SkillParticipationResponse participation(SkillParticipationRequest request) {
+        String key = request.getSortKey() == null ? "participantCount" : request.getSortKey();
+        int topN = request.getTopN() == null ? DEFAULT_PARTICIPATION_TOP_N : request.getTopN();
+        if (!Lists.newArrayList("participantCount", "participationRate", "assignedManagerCount").contains(key)) {
+            throw invalid("技能参与度排序字段不支持");
+        }
+        ReportQuery query = query(request.getFilters());
+        List<ReportRelation> relations = data.findRelations(query);
+        Map<String, List<ReportRelation>> assigned = relations.stream().collect(Collectors.groupingBy(ReportRelation::getSkillId));
+        Map<String, Set<String>> participants = Maps.newHashMap();
+        for (ReportExecution execution : data.findExecutions(query, relations)) {
+            if (execution.isRead()) {
+                ReportRelation relation = execution.getRelation();
+                participants.computeIfAbsent(relation.getSkillId(), id -> Sets.newHashSet()).add(relation.getSapId());
+            }
+        }
+        List<SkillParticipationRow> rows = Lists.newArrayList();
+        for (Map.Entry<String, List<ReportRelation>> entry : assigned.entrySet()) {
+            Set<String> managers = entry.getValue().stream().map(ReportRelation::getSapId).collect(Collectors.toSet());
+            long count = participants.getOrDefault(entry.getKey(), java.util.Collections.emptySet()).stream().filter(managers::contains).count();
+            rows.add(SkillParticipationRow.builder().skillId(entry.getKey()).skillName(entry.getValue().get(0).getSkillName()).participantCount(count)
+                    .assignedManagerCount(managers.size()).participationRate(ExecutionCalculations.rate(count, managers.size())).build());
+        }
+        Comparator<SkillParticipationRow> primary = participationComparator(key);
+        rows.sort(primary.thenComparing(SkillParticipationRow::getSkillId));
+        return SkillParticipationResponse.builder().rows(Lists.newArrayList(rows.subList(0, Math.min(topN, rows.size())))).build();
+    }
+
+    private Comparator<SkillParticipationRow> participationComparator(String key) {
+        if ("participationRate".equals(key)) {
+            return (left, right) -> ExecutionCalculations.compare(right.getParticipantCount(), right.getAssignedManagerCount(),
+                    left.getParticipantCount(), left.getAssignedManagerCount());
+        }
+        return "assignedManagerCount".equals(key)
+                ? Comparator.comparingLong(SkillParticipationRow::getAssignedManagerCount).reversed()
+                : Comparator.comparingLong(SkillParticipationRow::getParticipantCount).reversed();
+    }
+
+    @Override
+    public AttentionBranchesResponse attention(ReportSummaryRequest request) {
+        ExecutionDataset dataset = load(request);
+        ExecutionMetrics baseline = summarize(load(
+                ReportSummaryRequest.builder().startDate(request.getStartDate()).endDate(request.getEndDate()).bbkId(request.getBbkId()).build()));
+        Map<List<String>, List<ReportExecution>> groups = dataset.getExecutions().stream()
+                .collect(Collectors.groupingBy(e -> Lists.newArrayList(e.getRelation().getBbkId(), e.getRelation().getOrgId())));
+        List<AttentionBranchRow> rows = Lists.newArrayList();
+        for (List<ReportExecution> group : groups.values()) {
+            ExecutionMetrics current = summarize(dataset, group);
+            boolean viewLow = below(current, baseline, "viewRate");
+            boolean contactLow = below(current, baseline, "contactRate");
+            if (viewLow || contactLow) {
+                String diagnosis = viewLow && contactLow ? "bothLow" : (viewLow ? "usageLow" : "contactLow");
+                rows.add(attentionRow(group.get(0).getRelation(), current, baseline, diagnosis));
+            }
+        }
+        rows.sort(attentionComparator());
+        return AttentionBranchesResponse.builder().totalCount(rows.size())
+                .rows(Lists.newArrayList(rows.subList(0, Math.min(ATTENTION_LIMIT, rows.size())))).build();
+    }
+
+    private boolean below(ExecutionMetrics current, ExecutionMetrics baseline, String key) {
+        long total = current.getStatistics().getRecommendedCustomerCount();
+        long baseTotal = baseline.getStatistics().getRecommendedCustomerCount();
+        return total > 0 && baseTotal > 0 && ExecutionCalculations.compare(value(current, key), total, value(baseline, key), baseTotal) < 0;
+    }
+
+    private AttentionBranchRow attentionRow(ReportRelation relation, ExecutionMetrics current, ExecutionMetrics baseline, String diagnosis) {
+        ExecutionMetricsResponse metrics = response(current);
+        ExecutionMetricsResponse base = response(baseline);
+        return AttentionBranchRow.builder().bbkId(relation.getBbkId()).bbkName(relation.getBbkName()).orgId(relation.getOrgId())
+                .orgName(relation.getOrgName()).diagnosis(diagnosis).recommendedCustomerCount(metrics.getRecommendedCustomerCount())
+                .viewCustomerCount(metrics.getViewCustomerCount()).contactCustomerCount(metrics.getContactCustomerCount())
+                .viewRate(metrics.getViewRate()).contactRate(metrics.getContactRate()).benchmarkViewRate(base.getViewRate())
+                .benchmarkContactRate(base.getContactRate()).viewRateDifference(difference(current, baseline, "viewRate"))
+                .contactRateDifference(difference(current, baseline, "contactRate")).build();
+    }
+
+    private Comparator<AttentionBranchRow> attentionComparator() {
+        Comparator<AttentionBranchRow> primary = (left, right) -> {
+            boolean leftContact = !"usageLow".equals(left.getDiagnosis());
+            boolean rightContact = !"usageLow".equals(right.getDiagnosis());
+            if (leftContact != rightContact) {
+                return leftContact ? -1 : 1;
+            }
+            return ExecutionCalculations.compare(leftContact ? left.getContactCustomerCount() : left.getViewCustomerCount(),
+                    left.getRecommendedCustomerCount(), rightContact ? right.getContactCustomerCount() : right.getViewCustomerCount(),
+                    right.getRecommendedCustomerCount());
+        };
+        return primary.thenComparing(Comparator.comparingLong(AttentionBranchRow::getRecommendedCustomerCount).reversed())
+                .thenComparing(AttentionBranchRow::getBbkId).thenComparing(AttentionBranchRow::getOrgId);
+    }
 
     @Override
     public ExecutionOverviewResponse overview(ReportSummaryRequest request) {
@@ -67,17 +195,18 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
     }
 
     private ExecutionDataset load(ReportSummaryRequest request) {
-        if (request.getStartDate().isAfter(request.getEndDate())) {
-            throw invalid("开始日期不能晚于结束日期");
-        }
-        if (request.getBbkId() != null && request.getOrgId() != null && !data.matchesOrganization(request.getBbkId(), request.getOrgId())) {
-            throw invalid("分行与支行不匹配");
-        }
-        ReportQuery query = ReportQuery.builder().bbkId(request.getBbkId()).orgId(request.getOrgId()).level(request.getLevel())
-                .skillIds(request.getSkillIds()).startDate(request.getStartDate()).endDate(request.getEndDate()).build();
+        ReportQuery query = query(request);
         List<ReportExecution> executions = data.findExecutions(query, data.findRelations(query));
         List<ReportRecommendation> recommendations = data.findRecommendations(executions);
         return ExecutionDataset.builder().executions(executions).recommendations(recommendations).actions(data.findActions(recommendations)).build();
+    }
+
+    private ReportQuery query(ReportSummaryRequest request) {
+        if (request.getStartDate().isAfter(request.getEndDate())) {
+            throw invalid("开始日期不能晚于结束日期");
+        }
+        return ReportQuery.builder().bbkId(request.getBbkId()).orgId(request.getOrgId()).level(request.getLevel()).skillIds(request.getSkillIds())
+                .startDate(request.getStartDate()).endDate(request.getEndDate()).build();
     }
 
     private BusinessException invalid(String message) {
@@ -98,10 +227,11 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
     private ExecutionMetricsResponse response(ExecutionMetrics metrics) {
         ReportStatistics s = metrics.getStatistics();
         long customers = s.getRecommendedCustomerCount();
-        return ExecutionMetricsResponse.builder().taskCount(s.getTaskCount()).recommendedCustomerCount(customers)
-                .viewCustomerCount(s.getViewedCustomerCount()).insightCustomerCount(metrics.getInsightCustomerCount())
-                .callCustomerCount(metrics.getCallCustomerCount()).contactCustomerCount(s.getContactedCustomerCount())
-                .viewRate(ExecutionCalculations.rate(s.getViewedCustomerCount(), customers))
+        return ExecutionMetricsResponse.builder().taskCount(s.getTaskCount()).scheduledTaskCount(s.getScheduledTaskCount())
+                .executedTaskCount(s.getExecutedTaskCount()).pendingTaskCount(s.getPendingTaskCount()).failedTaskCount(s.getFailedTaskCount())
+                .recommendedCustomerCount(customers).viewCustomerCount(s.getViewedCustomerCount())
+                .insightCustomerCount(metrics.getInsightCustomerCount()).callCustomerCount(metrics.getCallCustomerCount())
+                .contactCustomerCount(s.getContactedCustomerCount()).viewRate(ExecutionCalculations.rate(s.getViewedCustomerCount(), customers))
                 .insightRate(ExecutionCalculations.rate(metrics.getInsightCustomerCount(), customers))
                 .callRate(ExecutionCalculations.rate(metrics.getCallCustomerCount(), customers))
                 .contactRate(ExecutionCalculations.rate(s.getContactedCustomerCount(), customers)).build();
@@ -214,9 +344,6 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
                 || filters.getOrgId() != null && !filters.getOrgId().equals(request.getScopeOrgId())) {
             throw invalid("下钻机构超出当前检索范围");
         }
-        if (!data.matchesOrganization(request.getScopeBbkId(), request.getScopeOrgId())) {
-            throw invalid("下钻分行与支行不匹配");
-        }
         return load(ReportSummaryRequest.builder().startDate(filters.getStartDate()).endDate(filters.getEndDate()).bbkId(request.getScopeBbkId())
                 .orgId(request.getScopeOrgId()).level(filters.getLevel()).skillIds(filters.getSkillIds()).build());
     }
@@ -237,6 +364,8 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
         return ExecutionManagerDetailsResponse.builder().bbkId(request.getScopeBbkId()).orgId(request.getScopeOrgId())
                 .bbkName(organization.getBbkName()).orgName(organization.getOrgName())
                 .summary(ExecutionManagerSummary.builder().managerCount(summary.getUserCount()).taskCount(total.getTaskCount())
+                        .scheduledTaskCount(total.getScheduledTaskCount()).executedTaskCount(total.getExecutedTaskCount())
+                        .pendingTaskCount(total.getPendingTaskCount()).failedTaskCount(total.getFailedTaskCount())
                         .recommendedCustomerCount(total.getRecommendedCustomerCount()).contactRate(total.getContactRate()).build())
                 .rows(rows).build();
     }
@@ -249,9 +378,11 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
                         r -> ExecutionSkillOption.builder().skillId(r.getSkillId()).skillName(r.getSkillName()).build(), (a, b) -> a,
                         Maps::newTreeMap));
         return ExecutionManagerRow.builder().sapId(first.getSapId()).userName(first.getUserName()).level(first.getLevel())
-                .skills(Lists.newArrayList(skills.values())).taskCount(metrics.getTaskCount())
-                .recommendedCustomerCount(metrics.getRecommendedCustomerCount()).viewRate(metrics.getViewRate()).insightRate(metrics.getInsightRate())
-                .callRate(metrics.getCallRate()).contactRate(metrics.getContactRate()).build();
+                .skills(Lists.newArrayList(skills.values())).taskCount(metrics.getTaskCount()).scheduledTaskCount(metrics.getScheduledTaskCount())
+                .executedTaskCount(metrics.getExecutedTaskCount()).pendingTaskCount(metrics.getPendingTaskCount())
+                .failedTaskCount(metrics.getFailedTaskCount()).recommendedCustomerCount(metrics.getRecommendedCustomerCount())
+                .viewRate(metrics.getViewRate()).insightRate(metrics.getInsightRate()).callRate(metrics.getCallRate())
+                .contactRate(metrics.getContactRate()).build();
     }
 
     @Override
@@ -267,10 +398,12 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
             rows.add(skillRow(dataset, group, categories.get(group.get(0).getRelation().getSkillId())));
         }
         rows.sort(Comparator.comparingLong(ExecutionSkillRow::getTaskCount).reversed().thenComparing(ExecutionSkillRow::getSkillId));
-        return ExecutionSkillDetailsResponse
-                .builder().bbkId(request.getScopeBbkId()).orgId(request.getScopeOrgId()).bbkName(organization.getBbkName())
-                .orgName(organization.getOrgName()).summary(ExecutionSkillSummary.builder().skillCount(summary.getSkillCount())
-                        .managerCount(summary.getUserCount()).taskCount(summary.getTaskCount()).planCount(summary.getPlanCount()).build())
+        return ExecutionSkillDetailsResponse.builder().bbkId(request.getScopeBbkId()).orgId(request.getScopeOrgId())
+                .bbkName(organization.getBbkName()).orgName(organization.getOrgName())
+                .summary(ExecutionSkillSummary.builder().skillCount(summary.getSkillCount()).managerCount(summary.getUserCount())
+                        .taskCount(summary.getTaskCount()).scheduledTaskCount(summary.getScheduledTaskCount())
+                        .executedTaskCount(summary.getExecutedTaskCount()).pendingTaskCount(summary.getPendingTaskCount())
+                        .failedTaskCount(summary.getFailedTaskCount()).planCount(summary.getPlanCount()).build())
                 .rows(rows).build();
     }
 
@@ -280,8 +413,9 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
         ReportStatistics summary = current.getStatistics();
         ExecutionMetricsResponse metrics = response(current);
         return ExecutionSkillRow.builder().skillId(first.getSkillId()).skillName(first.getSkillName()).categoryName(categoryName)
-                .managerCount(summary.getUserCount()).taskCount(summary.getTaskCount())
-                .recommendedCustomerCount(summary.getRecommendedCustomerCount()).viewRate(metrics.getViewRate()).contactRate(metrics.getContactRate())
-                .planCount(summary.getPlanCount()).build();
+                .managerCount(summary.getUserCount()).taskCount(summary.getTaskCount()).scheduledTaskCount(summary.getScheduledTaskCount())
+                .executedTaskCount(summary.getExecutedTaskCount()).pendingTaskCount(summary.getPendingTaskCount())
+                .failedTaskCount(summary.getFailedTaskCount()).recommendedCustomerCount(summary.getRecommendedCustomerCount())
+                .viewRate(metrics.getViewRate()).contactRate(metrics.getContactRate()).planCount(summary.getPlanCount()).build();
     }
 }

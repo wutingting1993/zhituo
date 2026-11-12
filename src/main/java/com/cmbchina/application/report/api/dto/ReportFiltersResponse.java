@@ -12,21 +12,14 @@ import com.google.common.collect.Lists;
 @Builder
 public class ReportFiltersResponse {
     @Builder.Default
-    private List<ReportOption> branches = Lists.newArrayList();
-    @Builder.Default
-    private List<ReportOption> subBranches = Lists.newArrayList();
+    private List<ReportBranchOption> branches = Lists.newArrayList();
     @Builder.Default
     private List<ReportOption> skills = Lists.newArrayList();
     @Builder.Default
     private List<String> levels = Lists.newArrayList();
     /** 返回集合快照，避免暴露内部可变集合。 */
-    public List<ReportOption> getBranches() {
+    public List<ReportBranchOption> getBranches() {
         return Collections.unmodifiableList(branches == null ? Lists.newArrayList() : Lists.newArrayList(branches));
-    }
-
-    /** 返回集合快照，避免暴露内部可变集合。 */
-    public List<ReportOption> getSubBranches() {
-        return Collections.unmodifiableList(subBranches == null ? Lists.newArrayList() : Lists.newArrayList(subBranches));
     }
 
     /** 返回集合快照，避免暴露内部可变集合。 */

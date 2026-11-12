@@ -11,6 +11,10 @@ import java.math.BigDecimal;
 public class ExecutionManagerSummary {
     private long managerCount;
     private long taskCount;
+    private long scheduledTaskCount;
+    private long executedTaskCount;
+    private long pendingTaskCount;
+    private long failedTaskCount;
     private long recommendedCustomerCount;
     private BigDecimal contactRate;
 

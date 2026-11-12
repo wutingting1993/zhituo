@@ -19,6 +19,10 @@ public class PlanDetailRow {
     private java.util.List<ReportOption> skills;
     private long recommendedCustomerCount;
     private long taskCount;
+    private long scheduledTaskCount;
+    private long executedTaskCount;
+    private long pendingTaskCount;
+    private long failedTaskCount;
     /** 返回列表快照。 */
     public java.util.List<ReportOption> getSkills() {
         return java.util.Collections.unmodifiableList(com.google.common.collect.Lists.newArrayList(skills));

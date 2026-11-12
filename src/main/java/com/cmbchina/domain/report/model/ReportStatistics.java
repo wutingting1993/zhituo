@@ -12,6 +12,10 @@ public class ReportStatistics {
     private long planCount;
     private long skillCount;
     private long taskCount;
+    private long scheduledTaskCount;
+    private long executedTaskCount;
+    private long pendingTaskCount;
+    private long failedTaskCount;
     private long recommendedCustomerCount;
     private long viewedCustomerCount;
     private long contactedCustomerCount;

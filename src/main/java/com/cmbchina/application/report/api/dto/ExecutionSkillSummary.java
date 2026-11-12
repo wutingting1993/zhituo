@@ -11,6 +11,10 @@ public class ExecutionSkillSummary {
     private long skillCount;
     private long managerCount;
     private long taskCount;
+    private long scheduledTaskCount;
+    private long executedTaskCount;
+    private long pendingTaskCount;
+    private long failedTaskCount;
     private long planCount;
 
 }

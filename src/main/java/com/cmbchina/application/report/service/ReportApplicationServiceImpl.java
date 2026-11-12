@@ -5,9 +5,9 @@ import com.cmbchina.application.report.api.dto.ReportFiltersResponse;
 import com.cmbchina.application.report.api.dto.ReportSummaryRequest;
 import com.cmbchina.application.report.api.dto.ReportSummaryResponse;
 import com.cmbchina.application.report.api.dto.ReportOption;
+import com.cmbchina.application.report.api.dto.ReportBranchOption;
 import com.cmbchina.application.report.api.dto.MostUsedSkillResponse;
 import com.cmbchina.domain.report.model.ReportQuery;
-import com.cmbchina.domain.report.model.ReportRelation;
 import com.cmbchina.domain.report.model.ReportExecution;
 import com.cmbchina.domain.report.model.ReportRecommendation;
 import com.cmbchina.domain.report.model.ReportStatistics;
@@ -22,8 +22,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,26 +36,20 @@ public class ReportApplicationServiceImpl implements ReportApplicationService {
 
     @Override
     public ReportFiltersResponse filters(ReportFilterRequest request) {
-        validateOrganization(request.getBbkId(), request.getOrgId());
-        ReportQuery branches = ReportQuery.builder().orgId(request.getOrgId()).skillIds(request.getSkillIds()).build();
-        ReportQuery organizations = ReportQuery.builder().bbkId(request.getBbkId()).skillIds(request.getSkillIds()).build();
-        ReportQuery skills = ReportQuery.builder().bbkId(request.getBbkId()).orgId(request.getOrgId()).build();
-        List<ReportRelation> levels = data
-                .findRelations(ReportQuery.builder().bbkId(request.getBbkId()).orgId(request.getOrgId()).skillIds(request.getSkillIds()).build());
-        return ReportFiltersResponse.builder().branches(options(data.findRelations(branches), ReportRelation::getBbkId, ReportRelation::getBbkName))
-                .subBranches(options(data.findRelations(organizations), ReportRelation::getOrgId, ReportRelation::getOrgName))
-                .skills(options(data.findRelations(skills), ReportRelation::getSkillId, ReportRelation::getSkillName))
-                .levels(levels.stream().map(ReportRelation::getLevel).filter(Objects::nonNull).distinct().sorted().collect(Collectors.toList()))
-                .build();
-    }
-
-    private List<ReportOption> options(List<ReportRelation> rows, Function<ReportRelation, String> id, Function<ReportRelation, String> name) {
-        Map<String, ReportOption> values = Maps.newTreeMap();
-        for (ReportRelation row : rows) {
-            String key = id.apply(row);
-            values.putIfAbsent(key, ReportOption.builder().id(key).name(name.apply(row)).build());
+        Map<String, ReportBranchOption> branches = Maps.newTreeMap();
+        Map<String, List<ReportOption>> children = Maps.newHashMap();
+        for (com.cmbchina.domain.report.model.ReportOrganization organization : data.findFilterOrganizations()) {
+            List<ReportOption> subBranches = children.computeIfAbsent(organization.getBbkId(), ignored -> Lists.newArrayList());
+            branches.putIfAbsent(organization.getBbkId(),
+                    ReportBranchOption.builder().id(organization.getBbkId()).name(organization.getBbkName()).subBranches(subBranches).build());
+            if (organization.getOrgId() != null && !organization.getOrgId().isEmpty()) {
+                subBranches.add(ReportOption.builder().id(organization.getOrgId()).name(organization.getOrgName()).build());
+            }
         }
-        return Lists.newArrayList(values.values());
+        return ReportFiltersResponse.builder().branches(Lists.newArrayList(branches.values()))
+                .skills(data.findFilterSkills(request.getBbkId(), request.getOrgId()).stream()
+                        .map(skill -> ReportOption.builder().id(skill.getId()).name(skill.getName()).build()).collect(Collectors.toList()))
+                .levels(data.findFilterLevels()).build();
     }
 
     @Override
@@ -65,18 +57,11 @@ public class ReportApplicationServiceImpl implements ReportApplicationService {
         if (request.getStartDate().isAfter(request.getEndDate())) {
             throw new BusinessException(ResponseEnum.VALIDATION_ERROR.getCode(), "开始日期不能晚于结束日期", null);
         }
-        validateOrganization(request.getBbkId(), request.getOrgId());
         ReportQuery query = ReportQuery.builder().bbkId(request.getBbkId()).orgId(request.getOrgId()).level(request.getLevel())
                 .skillIds(request.getSkillIds()).startDate(request.getStartDate()).endDate(request.getEndDate()).build();
         ReportQuery benchmark = ReportQuery.builder().bbkId(request.getBbkId()).startDate(request.getStartDate()).endDate(request.getEndDate())
                 .build();
         return response(summarize(query), summarize(benchmark));
-    }
-
-    private void validateOrganization(String bbkId, String orgId) {
-        if (bbkId != null && orgId != null && !data.matchesOrganization(bbkId, orgId)) {
-            throw new BusinessException(ResponseEnum.VALIDATION_ERROR.getCode(), "分行与支行不匹配", null);
-        }
     }
 
     private ReportStatistics summarize(ReportQuery query) {
@@ -91,6 +76,8 @@ public class ReportApplicationServiceImpl implements ReportApplicationService {
                 ? null
                 : MostUsedSkillResponse.builder().id(skill.getId()).name(skill.getName()).userCount(skill.getUserCount()).build();
         return ReportSummaryResponse.builder().planCount(current.getPlanCount()).skillCount(current.getSkillCount()).taskCount(current.getTaskCount())
+                .scheduledTaskCount(current.getScheduledTaskCount()).executedTaskCount(current.getExecutedTaskCount())
+                .pendingTaskCount(current.getPendingTaskCount()).failedTaskCount(current.getFailedTaskCount())
                 .recommendedCustomerCount(current.getRecommendedCustomerCount()).coveredSubBranchCount(current.getCoveredSubBranchCount())
                 .mostUsedSkill(mostUsed).averageTaskCount(average(current.getTaskCount(), current.getUserCount()))
                 .averageRecommendedCustomerCount(average(current.getRecommendedCustomerCount(), current.getUserCount()))

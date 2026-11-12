@@ -19,17 +19,15 @@ import org.springframework.stereotype.Service;
 public class ReportStatisticsServiceImpl implements ReportStatisticsService {
     @Override
     public ReportStatistics summarize(List<ReportExecution> executions, List<ReportRecommendation> recommendations, List<ReportContact> contacts) {
-        List<ReportRelation> relations = executions.stream().map(ReportExecution::getRelation).collect(Collectors.toList());
+        List<ReportRelation> relations = executions.stream().filter(e -> e.getActualTime() != null).map(ReportExecution::getRelation)
+                .collect(Collectors.toList());
         Set<String> customers = Sets.newHashSet();
         Set<String> viewed = Sets.newHashSet();
-        Set<String> listTasks = Sets.newHashSet();
         Set<List<String>> planTasks = Sets.newHashSet();
         for (ReportRecommendation row : recommendations) {
             String customer = row.getCustomerId();
             String trace = row.getExecution().getTraceId();
-            if (customer.isEmpty()) {
-                listTasks.add(trace);
-            } else {
+            if (!customer.isEmpty()) {
                 planTasks.add(Lists.newArrayList(trace, customer));
                 customers.add(customer);
                 if (row.getExecution().isRead()) {
@@ -37,10 +35,26 @@ public class ReportStatisticsServiceImpl implements ReportStatisticsService {
                 }
             }
         }
+        Set<List<String>> scheduled = Sets.newHashSet();
+        Set<List<String>> executed = Sets.newHashSet();
+        Set<List<String>> failed = Sets.newHashSet();
+        for (ReportExecution execution : executions) {
+            ReportRelation relation = execution.getRelation();
+            List<String> key = Lists.newArrayList(relation.getSapId(), relation.getPlanId(), relation.getSkillId(),
+                    execution.getExecutionDay().toString(), relation.getJobId());
+            scheduled.add(key);
+            if (execution.getActualTime() != null) {
+                executed.add(key);
+                if (!"success".equals(execution.getTaskStatus())) {
+                    failed.add(key);
+                }
+            }
+        }
         long contacted = contacts.stream().map(ReportContact::getCustomerId).filter(Objects::nonNull).distinct().count();
         return ReportStatistics.builder().planCount(relations.stream().map(ReportRelation::getPlanId).distinct().count())
-                .skillCount(relations.stream().map(ReportRelation::getSkillId).distinct().count())
-                .taskCount((long) listTasks.size() + planTasks.size()).recommendedCustomerCount(customers.size()).viewedCustomerCount(viewed.size())
+                .skillCount(relations.stream().map(ReportRelation::getSkillId).distinct().count()).taskCount(planTasks.size())
+                .scheduledTaskCount(scheduled.size()).executedTaskCount(executed.size()).pendingTaskCount(scheduled.size() - executed.size())
+                .failedTaskCount(failed.size()).recommendedCustomerCount(customers.size()).viewedCustomerCount(viewed.size())
                 .contactedCustomerCount(contacted).userCount(relations.stream().map(ReportRelation::getSapId).distinct().count())
                 .coveredSubBranchCount(relations.stream().map(r -> Lists.newArrayList(r.getBbkId(), r.getOrgId())).distinct().count())
                 .mostUsedSkill(mostUsed(relations)).build();

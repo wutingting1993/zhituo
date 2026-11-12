@@ -15,8 +15,9 @@ import com.cmbchina.domain.report.support.ReportDataSupport;
 import com.cmbchina.infrastructure.report.dao.mapper.ReportMapper;
 import com.cmbchina.infrastructure.report.dao.converter.ReportDataConverter;
 import com.cmbchina.infrastructure.report.dao.po.ReportTargetPo;
-import com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo;
 import com.cmbchina.infrastructure.report.dao.po.ReportJobPo;
+import com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo;
+import com.cmbchina.infrastructure.report.dao.po.ReportSkillOptionPo;
 import com.cmbchina.infrastructure.report.dao.po.ReportExecutionPo;
 import com.cmbchina.infrastructure.report.dao.po.ReportResultPo;
 import com.cmbchina.infrastructure.report.dao.po.ReportContactPo;
@@ -26,7 +27,6 @@ import com.google.common.collect.Sets;
 import java.util.Set;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -36,6 +36,46 @@ public class ReportDataSupportImpl implements ReportDataSupport {
     private static final int BATCH_SIZE = 200;
     @Autowired
     private ReportMapper mapper;
+
+    @Override
+    public List<ReportOrganization> findFilterOrganizations() {
+        return mapper.filterOrganizations().stream().map(row -> ReportOrganization.builder().bbkId(row.getBbkId()).bbkName(row.getBbkName())
+                .orgId(row.getOrgId()).orgName(row.getOrgName()).build()).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<com.cmbchina.domain.report.model.ReportSkillOption> findFilterSkills(String bbkId, String orgId) {
+        Map<String, ReportSkillOptionPo> skills = Maps.newTreeMap();
+        if (bbkId == null && orgId == null) {
+            for (ReportSkillOptionPo row : mapper.filterSkills()) {
+                skills.put(row.getId(), row);
+            }
+        } else {
+            for (List<ReportPlanSkillPo> batch : Lists.partition(mapper.filterPlanSkills(bbkId, orgId), BATCH_SIZE)) {
+                for (ReportSkillOptionPo row : mapper.filterTaskSkills(batch)) {
+                    skills.merge(row.getId(), row, this::skillName);
+                }
+            }
+        }
+        return skills.values().stream()
+                .map(row -> com.cmbchina.domain.report.model.ReportSkillOption.builder().id(row.getId()).name(row.getName()).build())
+                .collect(Collectors.toList());
+    }
+
+    private ReportSkillOptionPo skillName(ReportSkillOptionPo left, ReportSkillOptionPo right) {
+        if (left.getName() == null) {
+            return right;
+        }
+        if (right.getName() == null) {
+            return left;
+        }
+        return left.getName().compareTo(right.getName()) <= 0 ? left : right;
+    }
+
+    @Override
+    public List<String> findFilterLevels() {
+        return mapper.filterLevels();
+    }
 
     @Override
     public List<ReportPlan> findPlans(List<String> ids) {
@@ -65,12 +105,10 @@ public class ReportDataSupportImpl implements ReportDataSupport {
     @Override
     public ReportOrganization findOrganization(String bbkId, String orgId) {
         ReportOrganizationPo row = mapper.organization(bbkId, orgId);
+        if (row == null) {
+            return ReportOrganization.builder().bbkId(bbkId).orgId(orgId).build();
+        }
         return ReportOrganization.builder().bbkId(row.getBbkId()).bbkName(row.getBbkName()).orgId(row.getOrgId()).orgName(row.getOrgName()).build();
-    }
-
-    @Override
-    public boolean matchesOrganization(String bbkId, String orgId) {
-        return mapper.organizationCount(bbkId, orgId) > 0;
     }
 
     @Override
@@ -129,14 +167,41 @@ public class ReportDataSupportImpl implements ReportDataSupport {
         for (ReportRelation relation : relations) {
             addExecutions(relation, byJob, byTrace, result);
         }
+        addPending(query, relations, result);
         return result;
     }
 
+    private void addPending(ReportQuery query, List<ReportRelation> relations, List<ReportExecution> result) {
+        Set<List<String>> executed = result.stream().map(e -> taskKey(e.getRelation(), e.getExecutionDay())).collect(Collectors.toSet());
+        Map<List<String>, Set<java.time.LocalDate>> days = Maps.newHashMap();
+        Map<List<String>, ReportRelation> unique = Maps.newHashMap();
+        for (ReportRelation relation : relations) {
+            unique.putIfAbsent(Lists.newArrayList(relation.getPlanId(), relation.getSkillId()), relation);
+        }
+        for (List<ReportRelation> batch : Lists.partition(Lists.newArrayList(unique.values()), BATCH_SIZE)) {
+            for (ReportPlanSkillPo row : mapper.scheduledDays(query, batch)) {
+                days.computeIfAbsent(Lists.newArrayList(row.getPlanId(), row.getSkillId()), key -> Sets.newHashSet()).add(row.getExecutionDay());
+            }
+        }
+        Set<List<String>> added = Sets.newHashSet(executed);
+        for (ReportRelation relation : relations) {
+            for (java.time.LocalDate day : days.getOrDefault(Lists.newArrayList(relation.getPlanId(), relation.getSkillId()),
+                    java.util.Collections.emptySet())) {
+                if (added.add(taskKey(relation, day))) {
+                    result.add(ReportExecution.builder().relation(relation).executionDay(day).build());
+                }
+            }
+        }
+    }
+
+    private List<String> taskKey(ReportRelation relation, java.time.LocalDate day) {
+        return Lists.newArrayList(relation.getSapId(), relation.getPlanId(), relation.getSkillId(), day.toString(), relation.getJobId());
+    }
+
     private Map<String, List<ReportExecutionPo>> loadTraces(Map<List<String>, ReportExecutionPo> latest) {
-        List<String> traces = latest.values().stream().map(ReportExecutionPo::getTraceId).filter(Objects::nonNull).distinct()
-                .collect(Collectors.toList());
+        List<ReportExecutionPo> selected = latest.values().stream().filter(row -> row.getTraceId() != null).collect(Collectors.toList());
         Map<String, List<ReportExecutionPo>> result = Maps.newHashMap();
-        for (List<String> batch : Lists.partition(traces, BATCH_SIZE)) {
+        for (List<ReportExecutionPo> batch : Lists.partition(selected, BATCH_SIZE)) {
             for (ReportExecutionPo row : mapper.executions(batch)) {
                 result.computeIfAbsent(row.getTraceId(), key -> Lists.newArrayList()).add(row);
             }
@@ -152,13 +217,20 @@ public class ReportDataSupportImpl implements ReportDataSupport {
         }
         for (ReportExecutionPo selected : selectedRows) {
             if (selected.getTraceId() == null) {
-                result.add(ReportDataConverter.execution(relation, selected));
+                ReportExecution execution = ReportDataConverter.execution(relation, selected);
+                execution.setTaskStatus(selected.getStatus());
+                result.add(execution);
                 continue;
             }
             List<ReportExecutionPo> records = byTrace.get(selected.getTraceId());
             if (records != null) {
                 for (ReportExecutionPo row : records) {
-                    result.add(ReportDataConverter.execution(relation, row));
+                    if (relation.getJobId().equals(row.getJobId()) && selected.getActualTime().toLocalDate().equals(row.getActualTime().toLocalDate())
+                            && !row.getActualTime().isBefore(relation.getCreatedAt())) {
+                        ReportExecution execution = ReportDataConverter.execution(relation, row);
+                        execution.setTaskStatus(selected.getStatus());
+                        result.add(execution);
+                    }
                 }
             }
         }

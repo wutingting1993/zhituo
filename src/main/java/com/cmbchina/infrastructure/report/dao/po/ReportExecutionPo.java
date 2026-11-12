@@ -17,4 +17,5 @@ public class ReportExecutionPo {
     private String traceId;
     private LocalDateTime actualTime;
     private boolean read;
+    private String status;
 }

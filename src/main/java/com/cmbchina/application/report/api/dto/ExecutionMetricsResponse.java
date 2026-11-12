@@ -10,6 +10,10 @@ import java.math.BigDecimal;
 @Builder
 public class ExecutionMetricsResponse {
     private long taskCount;
+    private long scheduledTaskCount;
+    private long executedTaskCount;
+    private long pendingTaskCount;
+    private long failedTaskCount;
     private long recommendedCustomerCount;
     private long viewCustomerCount;
     private long insightCustomerCount;

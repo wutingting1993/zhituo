@@ -14,6 +14,10 @@ public class PlanDetailsResponse {
     private long planCount;
     private long recommendedCustomerCount;
     private long taskCount;
+    private long scheduledTaskCount;
+    private long executedTaskCount;
+    private long pendingTaskCount;
+    private long failedTaskCount;
     private long skillCount;
     private long myCount;
     private long branchCount;

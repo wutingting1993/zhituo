@@ -1,6 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.cmbchina.infrastructure.report.dao.mapper.ReportMapper">
+  <select id="filterOrganizations" resultType="com.cmbchina.infrastructure.report.dao.po.ReportOrganizationPo">
+    SELECT first_bbk_id AS bbk_id, MIN(NULLIF(first_bbk_nm, '')) AS bbk_name,
+      org_id, MIN(NULLIF(org_nm, '')) AS org_name
+    FROM rm_jkh_user_info WHERE first_bbk_id IS NOT NULL AND first_bbk_id != ''
+    GROUP BY first_bbk_id, org_id ORDER BY first_bbk_id, org_id
+  </select>
+  <select id="filterLevels" resultType="string">
+    SELECT DISTINCT pst_lvl FROM rm_jkh_user_info
+    WHERE pst_lvl IS NOT NULL AND pst_lvl != '' ORDER BY pst_lvl
+  </select>
+  <select id="filterSkills" resultType="com.cmbchina.infrastructure.report.dao.po.ReportSkillOptionPo">
+    SELECT skill_id AS id, MIN(NULLIF(skill_name, '')) AS name
+    FROM swe_marketplace_skills
+    WHERE source_id = 'RMASSIST' AND skill_id IS NOT NULL AND skill_id != ''
+    GROUP BY skill_id ORDER BY skill_id
+  </select>
+  <select id="filterPlanSkills" resultType="com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo">
+    SELECT DISTINCT p.id AS plan_id, s.scene_id AS skill_id
+    FROM swe_wealth_plans p JOIN swe_wealth_plan_scenes s ON s.plan_id = p.id
+    <where>
+      <if test="bbkId != null">AND p.bbk_id = #{bbkId}</if>
+      <if test="orgId != null">AND p.bbk_org_id = #{orgId}</if>
+    </where>
+  </select>
+  <select id="filterTaskSkills" resultType="com.cmbchina.infrastructure.report.dao.po.ReportSkillOptionPo">
+    SELECT k.skill_id AS id, MIN(NULLIF(k.skill_name, '')) AS name
+    FROM swe_marketplace_skills k JOIN swe_cron_jobs j ON j.skill_ids = k.skill_id
+    WHERE k.source_id = 'RMASSIST' AND k.skill_id IS NOT NULL AND k.skill_id != ''
+      AND j.source_id = 'RMASSIST' AND j.status != 'deleted' AND
+    <foreach collection="rows" item="r" open="(" close=")" separator=" OR ">
+      (j.plan_id = #{r.planId} AND j.skill_ids = #{r.skillId})
+    </foreach>
+    GROUP BY k.skill_id ORDER BY k.skill_id
+  </select>
+
   <select id="plans" resultType="com.cmbchina.infrastructure.report.dao.po.ReportPlanPo">
     SELECT p.id, p.name,
       CASE WHEN p.source_label = '分行中台' THEN '分行关注' ELSE p.source_label END AS source,
@@ -17,6 +52,14 @@
       AND sence_id IN
       <foreach collection="query.skillIds" item="skill" open="(" close=")" separator=",">#{skill}</foreach>
     </if>
+  </select>
+  <select id="scheduledDays" resultType="com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo">
+    SELECT DISTINCT plan_id, sence_id AS skill_id, execute_day AS execution_day
+    FROM swe_plan_sence_cron
+    WHERE execute_day &gt;= #{query.startDate} AND execute_day &lt;= #{query.endDate} AND
+    <foreach collection="rows" item="r" open="(" close=")" separator=" OR ">
+      (plan_id = #{r.planId} AND sence_id = #{r.skillId})
+    </foreach>
   </select>
   <select id="targets" resultType="com.cmbchina.infrastructure.report.dao.po.ReportTargetPo">
     SELECT DISTINCT u.first_bbk_id AS bbk_id, u.first_bbk_nm AS bbk_name,
@@ -44,9 +87,6 @@
     FROM rm_jkh_user_info WHERE first_bbk_id = #{bbkId} AND org_id = #{orgId}
     ORDER BY user_id LIMIT 1
   </select>
-  <select id="organizationCount" resultType="long">
-    SELECT COUNT(1) FROM rm_jkh_user_info WHERE first_bbk_id = #{bbkId} AND org_id = #{orgId}
-  </select>
   <select id="jobs" resultType="com.cmbchina.infrastructure.report.dao.po.ReportJobPo">
     SELECT DISTINCT s.plan_id, j.tenant_id AS sap_id, s.scene_id AS skill_id, k.skill_name, j.id AS job_id
     FROM swe_wealth_plan_scenes s
@@ -67,7 +107,7 @@
     </if>
   </select>
   <select id="candidates" resultType="com.cmbchina.infrastructure.report.dao.po.ReportExecutionPo">
-    SELECT DISTINCT e.job_id, e.trace_id, e.actual_time, e.is_read AS `read`
+    SELECT DISTINCT e.job_id, e.trace_id, e.actual_time, e.status, e.is_read AS `read`
     FROM swe_cron_executions e JOIN swe_plan_sence_cron c
       ON e.actual_time &gt;= CAST(c.execute_day AS DATE)
       AND e.actual_time &lt; DATE_ADD(CAST(c.execute_day AS DATE), INTERVAL 1 DAY)
@@ -79,9 +119,13 @@
     </foreach>
   </select>
   <select id="executions" resultType="com.cmbchina.infrastructure.report.dao.po.ReportExecutionPo">
-    SELECT job_id, trace_id, actual_time, is_read AS `read` FROM swe_cron_executions
-    WHERE trace_id IN
-    <foreach collection="traces" item="trace" open="(" close=")" separator=",">#{trace}</foreach>
+    SELECT job_id, trace_id, actual_time, status, is_read AS `read` FROM swe_cron_executions
+    WHERE
+    <foreach collection="rows" item="r" open="(" close=")" separator=" OR ">
+      (trace_id = #{r.traceId} AND job_id = #{r.jobId}
+        AND actual_time &gt;= DATE(#{r.actualTime})
+        AND actual_time &lt; DATE_ADD(DATE(#{r.actualTime}), INTERVAL 1 DAY))
+    </foreach>
   </select>
   <select id="results" resultType="com.cmbchina.infrastructure.report.dao.po.ReportResultPo">
     SELECT DISTINCT job_id, skill_id, trace_id, custuid AS customer_id FROM swe_cron_result_index

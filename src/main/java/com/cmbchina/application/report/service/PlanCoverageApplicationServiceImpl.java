@@ -19,6 +19,10 @@ import com.cmbchina.infrastructure.common.ResponseEnum;
 import com.cmbchina.infrastructure.common.exception.BusinessException;
 import com.google.common.collect.Lists;
 import java.util.List;
+import java.util.Comparator;
+import com.cmbchina.application.report.api.dto.PlanSourceRow;
+import com.cmbchina.application.report.api.dto.PlanSourcesResponse;
+import com.cmbchina.application.report.api.dto.PlanSourcesRequest;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,7 +38,7 @@ public class PlanCoverageApplicationServiceImpl implements PlanCoverageApplicati
 
     @Override
     public PlanCoverageResponse coverage(ReportSummaryRequest request) {
-        List<ReportExecution> executions = load(request);
+        List<ReportExecution> executions = load(request).stream().filter(e -> e.getActualTime() != null).collect(Collectors.toList());
         Map<String, ReportPlan> plans = plans(executions);
         List<ReportExecution> included = included(executions, plans);
         Map<String, List<ReportExecution>> branches = included.stream()
@@ -54,12 +58,28 @@ public class PlanCoverageApplicationServiceImpl implements PlanCoverageApplicati
         return PlanCoverageResponse.builder().branches(rows).build();
     }
 
+    @Override
+    public PlanSourcesResponse sources(PlanSourcesRequest request) {
+        List<ReportExecution> executions = load(request).stream().filter(e -> e.getActualTime() != null).collect(Collectors.toList());
+        Map<String, ReportPlan> plans = plans(executions);
+        Map<String, List<ReportExecution>> branches = included(executions, plans).stream()
+                .collect(Collectors.groupingBy(e -> e.getRelation().getBbkId()));
+        List<PlanSourceRow> rows = Lists.newArrayList();
+        for (List<ReportExecution> branch : branches.values()) {
+            ReportRelation first = branch.get(0).getRelation();
+            rows.add(PlanSourceRow.builder().id(first.getBbkId()).name(first.getBbkName())
+                    .planCount(branch.stream().map(e -> e.getRelation().getPlanId()).distinct().count()).myCount(sourceCount(branch, plans, "我的关注"))
+                    .branchCount(sourceCount(branch, plans, "分行关注")).presidentCount(sourceCount(branch, plans, "行长关注")).build());
+        }
+        return PlanSourcesResponse.builder()
+                .branches(rows.stream().sorted(Comparator.comparingLong(PlanSourceRow::getPlanCount).reversed().thenComparing(PlanSourceRow::getId))
+                        .limit(request.getTopN()).collect(Collectors.toList()))
+                .build();
+    }
+
     private List<ReportExecution> load(ReportSummaryRequest request) {
         if (request.getStartDate().isAfter(request.getEndDate())) {
             throw invalid("开始日期不能晚于结束日期");
-        }
-        if (request.getBbkId() != null && request.getOrgId() != null && !data.matchesOrganization(request.getBbkId(), request.getOrgId())) {
-            throw invalid("分行与支行不匹配");
         }
         ReportQuery query = ReportQuery.builder().bbkId(request.getBbkId()).orgId(request.getOrgId()).level(request.getLevel())
                 .skillIds(request.getSkillIds()).startDate(request.getStartDate()).endDate(request.getEndDate()).build();
@@ -108,7 +128,9 @@ public class PlanCoverageApplicationServiceImpl implements PlanCoverageApplicati
                 : request.getScopeOrgId() == null ? executions.get(0).getRelation().getBbkName() : executions.get(0).getRelation().getOrgName();
         return PlanDetailsResponse.builder().bbkId(request.getScopeBbkId()).orgId(request.getScopeOrgId()).name(name)
                 .planCount(summary.getPlanCount()).recommendedCustomerCount(summary.getRecommendedCustomerCount()).taskCount(summary.getTaskCount())
-                .skillCount(summary.getSkillCount()).myCount(sourceCount(scoped, plans, "我的关注")).branchCount(sourceCount(scoped, plans, "分行关注"))
+                .scheduledTaskCount(summary.getScheduledTaskCount()).executedTaskCount(summary.getExecutedTaskCount())
+                .pendingTaskCount(summary.getPendingTaskCount()).failedTaskCount(summary.getFailedTaskCount()).skillCount(summary.getSkillCount())
+                .myCount(sourceCount(scoped, plans, "我的关注")).branchCount(sourceCount(scoped, plans, "分行关注"))
                 .presidentCount(sourceCount(scoped, plans, "行长关注")).plans(detailRows(scoped, plans, request.getSource(), recommendations)).build();
     }
 
@@ -125,11 +147,6 @@ public class PlanCoverageApplicationServiceImpl implements PlanCoverageApplicati
     }
 
     private void validateScopeOptions(PlanDetailsRequest request) {
-        ReportSummaryRequest filters = request.getFilters();
-        String org = request.getScopeOrgId() == null ? filters.getOrgId() : request.getScopeOrgId();
-        if (org != null && !data.matchesOrganization(request.getScopeBbkId(), org)) {
-            throw invalid("下钻分行与支行不匹配");
-        }
         if (request.getSource() != null && !Lists.newArrayList("全部", "我的关注", "分行关注", "行长关注").contains(request.getSource())) {
             throw invalid("规划来源须为全部、我的关注、分行关注或行长关注");
         }
@@ -158,6 +175,8 @@ public class PlanCoverageApplicationServiceImpl implements PlanCoverageApplicati
         return PlanDetailRow.builder().id(plan.getId()).name(plan.getName()).source(plan.getSource()).ownerId(plan.getOwnerId())
                 .ownerName(plan.getOwnerName()).ownerLevel(plan.getOwnerLevel()).periodStart(plan.getPeriodStart()).periodEnd(plan.getPeriodEnd())
                 .skills(Lists.newArrayList(skills.values())).recommendedCustomerCount(summary.getRecommendedCustomerCount())
-                .taskCount(summary.getTaskCount()).build();
+                .taskCount(summary.getTaskCount()).scheduledTaskCount(summary.getScheduledTaskCount())
+                .executedTaskCount(summary.getExecutedTaskCount()).pendingTaskCount(summary.getPendingTaskCount())
+                .failedTaskCount(summary.getFailedTaskCount()).build();
     }
 }

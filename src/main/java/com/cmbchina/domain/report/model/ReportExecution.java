@@ -15,4 +15,5 @@ public class ReportExecution {
     private LocalDateTime actualTime;
     private LocalDate executionDay;
     private boolean read;
+    private String taskStatus;
 }
