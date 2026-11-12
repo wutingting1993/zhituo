@@ -70,3 +70,27 @@ python3 scripts/execution-validation/verify_boundaries.py http://127.0.0.1:57831
 业务标识通过项目 `CUuid.nextId()` 生成，自增主键沿用表规则。finally按本次精确业务标识及点击主键清理，未改原有验证数据；涉及10张表的记录数均恢复原值，结果文件 `cleanupVerified=true`。临时服务已停止。
 
 边界脚本通过Python语法检查，项目未配置Python lint；本轮未改Java，不重复执行Java质量门禁。本轮仍不覆盖生产规模性能，以及差值舍入到±3但原始值尚未达到阈值的极近边界造数。
+
+## 技能分类名称复验（2026-11-12）
+
+用户补充 `swe_marketplace_categories` 结构并明确允许在本机 `zhituo` 验证库建表。已执行 [分类建表SQL](../database/skill-categories.sql)，补充主键中文注释，不保留历史自增起点。该表保留，未对其他数据库自动建表。
+
+分类名称按技能 `category_id` 关联分类 `id`，并要求相同 `source_id`。单独分批查询，不增加现有三表任务SQL的关联数量，不改变技能及执行统计范围。
+
+实际执行：
+
+```bash
+MYSQL_HOST=127.0.0.1 MYSQL_PORT=3306 MYSQL_DATABASE=zhituo python3 scripts/execution-validation/verify_categories.py http://127.0.0.1:56217
+MYSQL_HOST=127.0.0.1 MYSQL_PORT=3306 MYSQL_DATABASE=zhituo python3 scripts/execution-validation/verify.py http://127.0.0.1:56217
+```
+
+两条命令均退出码0：新增9项分类检查、原有70项执行视角回归均通过。
+
+- [分类验证脚本](../scripts/execution-validation/verify_categories.py)
+- [分类验证结果](../scripts/execution-validation/category-results.json)
+
+覆盖同入口分类名称、branch_visible不作为报表过滤条件、入口不一致、未配置分类、分类记录缺失、空技能列表，以及顶部汇总、技能汇总和行指标不受分类变化影响。
+
+临时两条分类已清理，验证技能的原始 `category_id` 及 `updated_at` 已恢复；分类表记录数恢复验证前数量。回归脚本9条临时点击已清理。临时服务已停止。
+
+本次6个新增或修改Java文件执行 `bash scripts/java-quality.sh verify $(cat /private/tmp/zhituo-category-files)` 与 `bash scripts/backend-gate.sh $(cat /private/tmp/zhituo-category-files)` 均通过，后者包括静态、格式、编译及架构检查。验证脚本通过Python语法检查；项目没有已配置Python lint，不将语法检查等同于完整静态检查。

@@ -22,6 +22,13 @@
       <if test="query.level != null">AND u.pst_lvl = #{query.level}</if>
     </where>
   </select>
+  <select id="skillCategories" resultType="com.cmbchina.infrastructure.report.dao.po.ReportSkillCategoryPo">
+    SELECT DISTINCT k.skill_id, c.name AS category_name
+    FROM swe_marketplace_skills k LEFT JOIN swe_marketplace_categories c
+      ON c.id = k.category_id AND c.source_id = k.source_id COLLATE utf8mb4_unicode_ci
+    WHERE k.source_id = 'RMASSIST' AND k.skill_id IN
+    <foreach collection="ids" item="id" open="(" close=")" separator=",">#{id}</foreach>
+  </select>
   <select id="organization" resultType="com.cmbchina.infrastructure.report.dao.po.ReportOrganizationPo">
     SELECT first_bbk_id AS bbk_id, first_bbk_nm AS bbk_name, org_id, org_nm AS org_name
     FROM rm_jkh_user_info WHERE first_bbk_id = #{bbkId} AND org_id = #{orgId}

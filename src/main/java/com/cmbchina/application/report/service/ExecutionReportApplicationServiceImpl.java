@@ -261,9 +261,10 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
         ReportStatistics summary = summarize(dataset).getStatistics();
         Map<String, List<ReportExecution>> groups = dataset.getExecutions().stream()
                 .collect(Collectors.groupingBy(e -> e.getRelation().getSkillId()));
+        Map<String, String> categories = data.findSkillCategories(Lists.newArrayList(groups.keySet()));
         List<ExecutionSkillRow> rows = Lists.newArrayList();
         for (List<ReportExecution> group : groups.values()) {
-            rows.add(skillRow(dataset, group));
+            rows.add(skillRow(dataset, group, categories.get(group.get(0).getRelation().getSkillId())));
         }
         rows.sort(Comparator.comparingLong(ExecutionSkillRow::getTaskCount).reversed().thenComparing(ExecutionSkillRow::getSkillId));
         return ExecutionSkillDetailsResponse
@@ -273,13 +274,12 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
                 .rows(rows).build();
     }
 
-    private ExecutionSkillRow skillRow(ExecutionDataset dataset, List<ReportExecution> executions) {
+    private ExecutionSkillRow skillRow(ExecutionDataset dataset, List<ReportExecution> executions, String categoryName) {
         ReportRelation first = executions.get(0).getRelation();
         ExecutionMetrics current = summarize(dataset, executions);
         ReportStatistics summary = current.getStatistics();
         ExecutionMetricsResponse metrics = response(current);
-        // TODO：明确分类名称来源后再按category_id获取，当前按需求返回null。
-        return ExecutionSkillRow.builder().skillId(first.getSkillId()).skillName(first.getSkillName()).categoryName(null)
+        return ExecutionSkillRow.builder().skillId(first.getSkillId()).skillName(first.getSkillName()).categoryName(categoryName)
                 .managerCount(summary.getUserCount()).taskCount(summary.getTaskCount())
                 .recommendedCustomerCount(summary.getRecommendedCustomerCount()).viewRate(metrics.getViewRate()).contactRate(metrics.getContactRate())
                 .planCount(summary.getPlanCount()).build();

@@ -1,4 +1,5 @@
 package com.cmbchina.infrastructure.report.dao.mapper;
+import com.cmbchina.infrastructure.report.dao.po.ReportSkillCategoryPo;
 import com.cmbchina.infrastructure.report.dao.po.ReportOrganizationPo;
 import com.cmbchina.infrastructure.report.dao.po.ReportPlanPo;
 import com.cmbchina.domain.report.model.ReportQuery;
@@ -24,6 +25,9 @@ public interface ReportMapper {
 
     /** 查询目标对应的技能任务。 */
     List<ReportJobPo> jobs(@Param("rows") List<ReportTargetPo> rows);
+
+    /** 按技能编号批量查询同入口分类名称。 */
+    List<ReportSkillCategoryPo> skillCategories(@Param("ids") List<String> ids);
 
     /** 查询分支行展示信息。 */
     ReportOrganizationPo organization(@Param("bbkId") String bbkId, @Param("orgId") String orgId);

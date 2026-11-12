@@ -1,5 +1,6 @@
 package com.cmbchina.infrastructure.report.supportimpl;
 import com.cmbchina.domain.report.model.ReportOrganization;
+import com.cmbchina.infrastructure.report.dao.po.ReportSkillCategoryPo;
 import com.cmbchina.infrastructure.report.dao.po.ReportOrganizationPo;
 import com.cmbchina.domain.report.model.ReportCustomerAction;
 import com.cmbchina.infrastructure.report.dao.po.ReportActionPo;
@@ -44,6 +45,20 @@ public class ReportDataSupportImpl implements ReportDataSupport {
             }
         }
         return result;
+    }
+
+    @Override
+    public Map<String, String> findSkillCategories(List<String> skillIds) {
+        Map<String, String> names = Maps.newHashMap();
+        List<String> unique = skillIds.stream().distinct().collect(Collectors.toList());
+        for (List<String> batch : Lists.partition(unique, BATCH_SIZE)) {
+            for (ReportSkillCategoryPo row : mapper.skillCategories(batch)) {
+                if (row.getCategoryName() != null) {
+                    names.put(row.getSkillId(), row.getCategoryName());
+                }
+            }
+        }
+        return java.util.Collections.unmodifiableMap(names);
     }
 
     @Override

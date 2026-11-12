@@ -1,0 +1,17 @@
+{
+  "count": 9,
+  "passed": [
+    "same-source category name returned",
+    "branch_visible does not filter report category",
+    "category change preserves summary statistics",
+    "category change preserves skill summary",
+    "category change preserves skill row metrics",
+    "different source returns null",
+    "unconfigured category returns null",
+    "missing category returns null without removing skill",
+    "empty skill list skips category query safely"
+  ],
+  "cleanupVerified": true,
+  "skillCategoryRestored": true,
+  "categoryCountRestored": true
+}

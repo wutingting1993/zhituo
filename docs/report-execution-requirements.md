@@ -89,7 +89,7 @@
 | 执行人数 | 每个技能按目标人员工号去重，同一人可归属多个技能 |
 | 关联规划 | 在相同执行统计范围内按 `plan_id` 去重，不额外限定当前发布状态或有效期 |
 
-同一客户、人员、规划可能跨技能出现，各行不能直接相加。技能名称及类型不得使用原型模拟分类。已只读核对本机项目数据库：技能表 `swe_marketplace_skills.category_id` 为技能分类ID（bigint），但当前库没有分类字典表，无法直接取得分类名称；场景表 `swe_wealth_plan_scenes.category` 为产品大类英文码（insurance/finance/deposit/payroll/cross_border/fund），属于场景维度，不能直接认定为技能类型。按用户确认，技能分类名称（列表中的技能类型）当前统一返回 null，页面展示“—”，暂不获取分类名称，不用产品大类替代，也不新增字典表。TODO：后续明确分类名称来源后，再通过分类ID获取名称；本次不实现该获取逻辑。无数据返回空列表，数量为0，分母为0的比率为 null。
+同一客户、人员、规划可能跨技能出现，各行不能直接相加。技能分类名称通过 `swe_marketplace_skills.category_id = swe_marketplace_categories.id` 获取 `name`，同时要求分类 `source_id` 与技能入口一致（当前统计入口为 `RMASSIST`）。未配置分类、关联分类不存在或入口不一致时返回 null，页面展示“—”，不剔除技能及统计数据。不使用场景产品大类替代，不增加 `branch_visible` 或 `sort_order` 过滤、排序条件；这两个字段不属于本次报表统计口径。无数据返回空列表，数量为0，分母为0的比率为 null。
 
 ## 数据来源与匹配规则
 
@@ -117,7 +117,7 @@
 - 技能明细展示原型指定字段，不额外添加洞察、电访率等列；客户经理明细包含四项比率。
 - 最大流失环节按相邻客户数差除以上一阶段客户数，取最小值；零分母不参与，全部不可计算返回 null，负值保留。并列按链路顺序取第一项。
 - 数量为0、空列表、参数错误、排序、阈值边界按本文规则处理。
-- 技能分类名称当前统一返回 null，并保留获取分类名称的 TODO；该事项不阻塞当前版本。接口路径已按本文实现；本文保留需求口径，实施验证不包含未经授权的单元测试或 e2e 测试。
+- 技能分类名称按分类ID及相同入口关联获取；缺失时返回 null，不影响原有技能数与执行统计。接口路径已按本文实现；本文保留需求口径，实施验证不包含未经授权的单元测试或 e2e 测试。
 
 ## 接口字段约定
 
@@ -162,9 +162,9 @@
 | 客户经理汇总 | `summary` 包含 `managerCount`、`taskCount`、`recommendedCustomerCount`、`contactRate` |
 | 客户经理行 | `sapId`、`userName`、`level`、`skills`（元素为 `skillId/skillName`），以及 `taskCount`、`recommendedCustomerCount` 和四项比率 |
 | 技能汇总 | `summary` 包含 `skillCount`、`managerCount`、`taskCount`、`planCount` |
-| 技能行 | `skillId`、`skillName`、`categoryName`（当前为 null，TODO）、`managerCount`、`taskCount`、`recommendedCustomerCount`、`viewRate`、`contactRate`、`planCount` |
+| 技能行 | `skillId`、`skillName`、`categoryName`（分类表名称，未匹配时为 null）、`managerCount`、`taskCount`、`recommendedCustomerCount`、`viewRate`、`contactRate`、`planCount` |
 
-数量为整数，技能分类名称明确返回 null，不省略字段；其他空值规则沿用正文。百分比以0—100为常见数值范围（如62.5表示62.5%），不返回0—1比例或带百分号字符串；接触率及流失率按正文允许超出常见范围。
+数量为整数，技能分类名称未匹配时明确返回 null，不省略字段；其他空值规则沿用正文。百分比以0—100为常见数值范围（如62.5表示62.5%），不返回0—1比例或带百分号字符串；接触率及流失率按正文允许超出常见范围。
 
 概览 `data` 示例（仅演示结构及计算，不代表真实业务数据）：
 

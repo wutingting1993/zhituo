@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import java.math.BigDecimal;
 
-/** 技能执行明细，分类名称暂不获取。 */
+/** 技能执行明细及同入口分类名称。 */
 @Getter
 @Setter
 @Builder

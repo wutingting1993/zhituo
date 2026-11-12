@@ -7,6 +7,7 @@ import com.cmbchina.domain.report.model.ReportExecution;
 import com.cmbchina.domain.report.model.ReportRecommendation;
 import com.cmbchina.domain.report.model.ReportContact;
 import java.util.List;
+import java.util.Map;
 /** 报表分批读取契约。 */
 public interface ReportDataSupport {
     /** 获取统计规划的来源及展示信息。 */
@@ -14,6 +15,9 @@ public interface ReportDataSupport {
 
     /** 查找具备任务的人员规划技能关系。 */
     List<ReportRelation> findRelations(ReportQuery query);
+
+    /** 返回技能编号到分类名称的只读映射，未配置分类的技能不在映射中。 */
+    Map<String, String> findSkillCategories(List<String> skillIds);
 
     /** 获取合法分支行的展示名称，不依赖执行结果。 */
     ReportOrganization findOrganization(String bbkId, String orgId);
