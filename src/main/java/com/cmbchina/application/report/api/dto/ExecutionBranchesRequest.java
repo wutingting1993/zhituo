@@ -20,4 +20,13 @@ public class ExecutionBranchesRequest {
     private String sortKey;
     private String sortDir;
 
+    /** 空字符串与未传参数保持一致。 */
+    public String getSortKey() {
+        return sortKey != null && sortKey.isEmpty() ? null : sortKey;
+    }
+
+    /** 空字符串与未传参数保持一致。 */
+    public String getSortDir() {
+        return sortDir != null && sortDir.isEmpty() ? null : sortDir;
+    }
 }

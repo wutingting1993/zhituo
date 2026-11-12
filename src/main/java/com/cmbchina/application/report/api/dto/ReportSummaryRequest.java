@@ -33,4 +33,19 @@ public class ReportSummaryRequest {
     public List<String> getSkillIds() {
         return Collections.unmodifiableList(skillIds == null ? Lists.newArrayList() : Lists.newArrayList(skillIds));
     }
+
+    /** 空字符串与未传参数保持一致。 */
+    public String getBbkId() {
+        return bbkId != null && bbkId.isEmpty() ? null : bbkId;
+    }
+
+    /** 空字符串与未传参数保持一致。 */
+    public String getOrgId() {
+        return orgId != null && orgId.isEmpty() ? null : orgId;
+    }
+
+    /** 空字符串与未传参数保持一致。 */
+    public String getLevel() {
+        return level != null && level.isEmpty() ? null : level;
+    }
 }

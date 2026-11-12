@@ -19,4 +19,14 @@ public class PlanDetailsRequest {
     private String scopeBbkId;
     private String scopeOrgId;
     private String source;
+
+    /** 空字符串与未传参数保持一致。 */
+    public String getScopeOrgId() {
+        return scopeOrgId != null && scopeOrgId.isEmpty() ? null : scopeOrgId;
+    }
+
+    /** 空字符串与未传参数保持一致。 */
+    public String getSource() {
+        return source != null && source.isEmpty() ? null : source;
+    }
 }
