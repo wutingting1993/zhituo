@@ -15,6 +15,7 @@ import com.cmbchina.domain.report.support.ReportDataSupport;
 import com.cmbchina.infrastructure.report.dao.mapper.ReportMapper;
 import com.cmbchina.infrastructure.report.dao.converter.ReportDataConverter;
 import com.cmbchina.infrastructure.report.dao.po.ReportTargetPo;
+import com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo;
 import com.cmbchina.infrastructure.report.dao.po.ReportJobPo;
 import com.cmbchina.infrastructure.report.dao.po.ReportExecutionPo;
 import com.cmbchina.infrastructure.report.dao.po.ReportResultPo;
@@ -76,8 +77,17 @@ public class ReportDataSupportImpl implements ReportDataSupport {
     public List<ReportRelation> findRelations(ReportQuery query) {
         List<ReportRelation> result = Lists.newArrayList();
         Set<String> skills = Sets.newHashSet(query.getSkillIds());
-        for (List<ReportTargetPo> batch : Lists.partition(mapper.targets(query), BATCH_SIZE)) {
-            Map<List<String>, List<ReportJobPo>> jobs = mapper.jobs(batch).stream().filter(j -> skills.isEmpty() || skills.contains(j.getSkillId()))
+        for (List<ReportPlanSkillPo> scheduled : Lists.partition(mapper.scheduledSkills(query), BATCH_SIZE)) {
+            List<String> planIds = scheduled.stream().map(ReportPlanSkillPo::getPlanId).distinct().collect(Collectors.toList());
+            addRelations(query, scheduled, planIds, skills, result);
+        }
+        return result;
+    }
+
+    private void addRelations(ReportQuery query, List<ReportPlanSkillPo> scheduled, List<String> planIds, Set<String> skills,
+            List<ReportRelation> result) {
+        for (List<ReportTargetPo> batch : Lists.partition(mapper.targets(query, planIds), BATCH_SIZE)) {
+            Map<List<String>, List<ReportJobPo>> jobs = loadJobs(batch, skills, scheduled).stream()
                     .collect(Collectors.groupingBy(j -> Lists.newArrayList(j.getPlanId(), j.getSapId())));
             for (ReportTargetPo target : batch) {
                 List<ReportJobPo> matches = jobs.get(Lists.newArrayList(target.getPlanId(), target.getSapId()));
@@ -87,6 +97,16 @@ public class ReportDataSupportImpl implements ReportDataSupport {
                     }
                 }
             }
+        }
+    }
+
+    private List<ReportJobPo> loadJobs(List<ReportTargetPo> targets, Set<String> skills, List<ReportPlanSkillPo> scheduled) {
+        if (skills.isEmpty()) {
+            return mapper.jobs(targets, Lists.newArrayList(), scheduled);
+        }
+        List<ReportJobPo> result = Lists.newArrayList();
+        for (List<String> batch : Lists.partition(Lists.newArrayList(skills), BATCH_SIZE)) {
+            result.addAll(mapper.jobs(targets, batch, scheduled));
         }
         return result;
     }

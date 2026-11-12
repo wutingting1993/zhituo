@@ -20,11 +20,15 @@ public interface ReportMapper {
     /** 获取三类来源的规划与负责人信息。 */
     List<ReportPlanPo> plans(@Param("ids") List<String> ids);
 
-    /** 查询人员与有效规划目标。 */
-    List<ReportTargetPo> targets(@Param("query") ReportQuery query);
+    /** 查询日期范围内的规划与技能组合。 */
+    List<com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo> scheduledSkills(@Param("query") ReportQuery query);
+
+    /** 查询候选规划的人员与有效目标。 */
+    List<ReportTargetPo> targets(@Param("query") ReportQuery query, @Param("planIds") List<String> planIds);
 
     /** 查询目标对应的技能任务。 */
-    List<ReportJobPo> jobs(@Param("rows") List<ReportTargetPo> rows);
+    List<ReportJobPo> jobs(@Param("rows") List<ReportTargetPo> rows, @Param("skills") List<String> skills,
+            @Param("scheduled") List<com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo> scheduled);
 
     /** 按技能编号批量查询同入口分类名称。 */
     List<ReportSkillCategoryPo> skillCategories(@Param("ids") List<String> ids);

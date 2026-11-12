@@ -10,6 +10,14 @@
     WHERE p.deleted = 0 AND p.source_label IN ('我的关注', '分行中台', '行长关注') AND p.id IN
     <foreach collection="ids" item="id" open="(" close=")" separator=",">#{id}</foreach>
   </select>
+  <select id="scheduledSkills" resultType="com.cmbchina.infrastructure.report.dao.po.ReportPlanSkillPo">
+    SELECT DISTINCT plan_id, sence_id AS skill_id FROM swe_plan_sence_cron
+    WHERE execute_day &gt;= #{query.startDate} AND execute_day &lt;= #{query.endDate}
+    <if test="!query.skillIds.isEmpty()">
+      AND sence_id IN
+      <foreach collection="query.skillIds" item="skill" open="(" close=")" separator=",">#{skill}</foreach>
+    </if>
+  </select>
   <select id="targets" resultType="com.cmbchina.infrastructure.report.dao.po.ReportTargetPo">
     SELECT DISTINCT u.first_bbk_id AS bbk_id, u.first_bbk_nm AS bbk_name,
       u.org_id, u.org_nm AS org_name, u.pst_lvl AS level, u.user_name, t.sap_id, p.id AS plan_id, p.created_at
@@ -17,6 +25,8 @@
     JOIN swe_wealth_plan_targets t ON t.sap_id COLLATE utf8mb4_bin = u.user_id AND t.deleted = 0
     JOIN swe_wealth_plans p ON p.id = t.plan_id AND p.deleted = 0
     <where>
+      AND p.id IN
+      <foreach collection="planIds" item="id" open="(" close=")" separator=",">#{id}</foreach>
       <if test="query.bbkId != null">AND u.first_bbk_id = #{query.bbkId}</if>
       <if test="query.orgId != null">AND u.org_id = #{query.orgId}</if>
       <if test="query.level != null">AND u.pst_lvl = #{query.level}</if>
@@ -47,6 +57,14 @@
     <foreach collection="rows" item="r" open="(" close=")" separator=" OR ">
       (s.plan_id = #{r.planId} AND j.tenant_id = #{r.sapId})
     </foreach>
+    AND
+    <foreach collection="scheduled" item="r" open="(" close=")" separator=" OR ">
+      (s.plan_id = #{r.planId} AND s.scene_id = #{r.skillId})
+    </foreach>
+    <if test="!skills.isEmpty()">
+      AND s.scene_id IN
+      <foreach collection="skills" item="skill" open="(" close=")" separator=",">#{skill}</foreach>
+    </if>
   </select>
   <select id="candidates" resultType="com.cmbchina.infrastructure.report.dao.po.ReportExecutionPo">
     SELECT DISTINCT e.job_id, e.trace_id, e.actual_time, e.is_read AS `read`

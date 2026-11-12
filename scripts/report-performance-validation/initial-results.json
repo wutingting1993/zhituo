@@ -1,0 +1,26 @@
+[
+  {
+    "name": "report-validation: missing dates",
+    "path": "summary",
+    "request": {},
+    "before": {
+      "httpStatus": 200,
+      "body": {
+        "code": 10000,
+        "message": "endDate：日期不能为空；startDate：日期不能为空",
+        "data": null,
+        "success": false
+      }
+    },
+    "after": {
+      "httpStatus": 200,
+      "body": {
+        "code": 10000,
+        "message": "startDate：日期不能为空；endDate：日期不能为空",
+        "data": null,
+        "success": false
+      }
+    },
+    "equal": false
+  }
+]
