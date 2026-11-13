@@ -1,0 +1,29 @@
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "planCount": 8,
+    "skillCount": 3,
+    "taskCount": 15,
+    "scheduledTaskCount": 13,
+    "executedTaskCount": 11,
+    "pendingTaskCount": 2,
+    "failedTaskCount": 1,
+    "recommendedCustomerCount": 8,
+    "coveredSubBranchCount": 4,
+    "mostUsedSkill": {
+      "id": "3286c1a62df4ed87",
+      "name": "同名验证技能",
+      "userCount": 2
+    },
+    "averageTaskCount": 4,
+    "averageRecommendedCustomerCount": 2,
+    "viewRate": 0.0,
+    "contactRate": 0.0,
+    "benchmarkViewRate": 0.0,
+    "benchmarkContactRate": 0.0,
+    "viewRateDifference": 0.0,
+    "contactRateDifference": 0.0
+  },
+  "success": true
+}

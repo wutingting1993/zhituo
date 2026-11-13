@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "case": "完整查询",
+      "knowledge": 24,
+      "relations": 0,
+      "inputs": 6,
+      "outputs": 25,
+      "rules": 22,
+      "examples": 1,
+      "errors": 2
+    },
+    {
+      "case": "component-only",
+      "passed": true
+    },
+    {
+      "case": "missing-component",
+      "passed": true
+    },
+    {
+      "case": "wrong-method",
+      "passed": true
+    },
+    {
+      "case": "partial-interface",
+      "passed": true
+    },
+    {
+      "case": "missing-page",
+      "passed": true
+    }
+  ]
+}

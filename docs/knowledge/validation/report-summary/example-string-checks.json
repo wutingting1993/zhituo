@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "checks": [
+    "full: 示例为字符串，解析内容正确，其他字段保持一致",
+    "component-only: 示例为字符串，解析内容正确，其他字段保持一致",
+    "missing-component: 示例为字符串，解析内容正确，其他字段保持一致",
+    "wrong-method: 示例为字符串，解析内容正确，其他字段保持一致",
+    "partial-interface: 示例为字符串，解析内容正确，其他字段保持一致",
+    "missing-page: 示例为字符串，解析内容正确，其他字段保持一致"
+  ]
+}

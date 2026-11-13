@@ -1,0 +1,133 @@
+[
+  {
+    "key": "COMPONENT-KPI",
+    "id": "328937da8e01ed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "COMPONENT"
+    ]
+  },
+  {
+    "key": "COMPONENT-QUERY",
+    "id": "328937da8e02ed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "COMPONENT"
+    ]
+  },
+  {
+    "key": "FLOW-DATE",
+    "id": "328937da8e03ed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "FLOW",
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "PAGE-FILTER",
+    "id": "328937da8e04ed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "PAGE",
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "METRIC-PLAN",
+    "id": "328937da8e05ed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "COMPONENT",
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "METRIC-SKILL",
+    "id": "328937da8e06ed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "COMPONENT",
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "METRIC-TASK",
+    "id": "328937da8e07ed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "COMPONENT",
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "METRIC-CUSTOMER",
+    "id": "328937da8e08ed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "COMPONENT",
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "METRIC-VIEW",
+    "id": "328937da8e09ed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "COMPONENT",
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "METRIC-CONTACT",
+    "id": "328937da8e0aed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "COMPONENT",
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "RULE-BASELINE",
+    "id": "328937da8e0bed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "COMPONENT",
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "RULE-PRECISION",
+    "id": "328937da8e0ced87",
+    "status": "CONFIRMED",
+    "targets": [
+      "COMPONENT",
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "API-SUMMARY",
+    "id": "328937da8e0ded87",
+    "status": "CONFIRMED",
+    "targets": [
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "API-SQL",
+    "id": "328937da8e0eed87",
+    "status": "CONFIRMED",
+    "targets": [
+      "INTERFACE"
+    ]
+  },
+  {
+    "key": "PAGE-BACKEND-DIFFERENCE",
+    "id": "328937da8e0fed87",
+    "status": "PENDING",
+    "targets": [
+      "COMPONENT",
+      "INTERFACE"
+    ]
+  }
+]

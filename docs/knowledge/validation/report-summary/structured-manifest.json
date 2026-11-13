@@ -1,0 +1,305 @@
+{
+  "activeKnowledge": [
+    {
+      "id": "328937da8e01ed87",
+      "title": "顶部指标业务用途",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328937da8e02ed87",
+      "title": "顶部指标检索行为",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328937da8e0eed87",
+      "title": "顶部统计SQL实现",
+      "type": "TECHNICAL",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e00584ed87",
+      "title": "统计日期与执行范围",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e00587ed87",
+      "title": "执行记录选择",
+      "type": "TECHNICAL",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e0058aed87",
+      "title": "顶部指标筛选与去重",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e0058ded87",
+      "title": "筛选参数处理",
+      "type": "TECHNICAL",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e00590ed87",
+      "title": "规划和覆盖支行业务口径",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e00593ed87",
+      "title": "规划与机构去重实现",
+      "type": "TECHNICAL",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e00596ed87",
+      "title": "技能数量与最广使用技能",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e00599ed87",
+      "title": "技能名称冲突处理",
+      "type": "TECHNICAL",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e0059ced87",
+      "title": "任务与客户方案计量口径",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e0059fed87",
+      "title": "任务及成功方案实现",
+      "type": "TECHNICAL",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e005a2ed87",
+      "title": "推荐客户与人均口径",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e005a5ed87",
+      "title": "推荐客户与人均实现",
+      "type": "TECHNICAL",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e005a8ed87",
+      "title": "方案查看率业务口径",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e005abed87",
+      "title": "方案查看率计算实现",
+      "type": "TECHNICAL",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e005aeed87",
+      "title": "接触率业务口径",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e005b1ed87",
+      "title": "接触明细关联实现",
+      "type": "TECHNICAL",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e005b4ed87",
+      "title": "机构基准与差值业务口径",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e005b7ed87",
+      "title": "机构基准差值实现",
+      "type": "TECHNICAL",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e005baed87",
+      "title": "数值单位与空值约定",
+      "type": "BUSINESS",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328940e005bded87",
+      "title": "数值精度实现",
+      "type": "TECHNICAL",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "328937da8e0fed87",
+      "title": "页面业务说明与接口口径差异",
+      "type": "BUSINESS",
+      "status": "PENDING"
+    }
+  ],
+  "fields": [
+    {
+      "id": "328940e00562ed87",
+      "direction": "REQUEST",
+      "path": "bbkId"
+    },
+    {
+      "id": "328940e00563ed87",
+      "direction": "REQUEST",
+      "path": "orgId"
+    },
+    {
+      "id": "328940e00564ed87",
+      "direction": "REQUEST",
+      "path": "level"
+    },
+    {
+      "id": "328940e00565ed87",
+      "direction": "REQUEST",
+      "path": "skillIds"
+    },
+    {
+      "id": "328940e00566ed87",
+      "direction": "REQUEST",
+      "path": "startDate"
+    },
+    {
+      "id": "328940e00567ed87",
+      "direction": "REQUEST",
+      "path": "endDate"
+    },
+    {
+      "id": "328940e00568ed87",
+      "direction": "RESPONSE",
+      "path": "code"
+    },
+    {
+      "id": "328940e00569ed87",
+      "direction": "RESPONSE",
+      "path": "message"
+    },
+    {
+      "id": "328940e0056aed87",
+      "direction": "RESPONSE",
+      "path": "success"
+    },
+    {
+      "id": "328940e0056bed87",
+      "direction": "RESPONSE",
+      "path": "data"
+    },
+    {
+      "id": "328940e0056ced87",
+      "direction": "RESPONSE",
+      "path": "data.planCount"
+    },
+    {
+      "id": "328940e0056ded87",
+      "direction": "RESPONSE",
+      "path": "data.skillCount"
+    },
+    {
+      "id": "328940e0056eed87",
+      "direction": "RESPONSE",
+      "path": "data.taskCount"
+    },
+    {
+      "id": "328940e0056fed87",
+      "direction": "RESPONSE",
+      "path": "data.scheduledTaskCount"
+    },
+    {
+      "id": "328940e00570ed87",
+      "direction": "RESPONSE",
+      "path": "data.executedTaskCount"
+    },
+    {
+      "id": "328940e00571ed87",
+      "direction": "RESPONSE",
+      "path": "data.pendingTaskCount"
+    },
+    {
+      "id": "328940e00572ed87",
+      "direction": "RESPONSE",
+      "path": "data.failedTaskCount"
+    },
+    {
+      "id": "328940e00573ed87",
+      "direction": "RESPONSE",
+      "path": "data.recommendedCustomerCount"
+    },
+    {
+      "id": "328940e00574ed87",
+      "direction": "RESPONSE",
+      "path": "data.coveredSubBranchCount"
+    },
+    {
+      "id": "328940e00575ed87",
+      "direction": "RESPONSE",
+      "path": "data.mostUsedSkill"
+    },
+    {
+      "id": "328940e00576ed87",
+      "direction": "RESPONSE",
+      "path": "data.mostUsedSkill.id"
+    },
+    {
+      "id": "328940e00577ed87",
+      "direction": "RESPONSE",
+      "path": "data.mostUsedSkill.name"
+    },
+    {
+      "id": "328940e00578ed87",
+      "direction": "RESPONSE",
+      "path": "data.mostUsedSkill.userCount"
+    },
+    {
+      "id": "328940e00579ed87",
+      "direction": "RESPONSE",
+      "path": "data.averageTaskCount"
+    },
+    {
+      "id": "328940e0057aed87",
+      "direction": "RESPONSE",
+      "path": "data.averageRecommendedCustomerCount"
+    },
+    {
+      "id": "328940e0057bed87",
+      "direction": "RESPONSE",
+      "path": "data.viewRate"
+    },
+    {
+      "id": "328940e0057ced87",
+      "direction": "RESPONSE",
+      "path": "data.contactRate"
+    },
+    {
+      "id": "328940e0057ded87",
+      "direction": "RESPONSE",
+      "path": "data.benchmarkViewRate"
+    },
+    {
+      "id": "328940e0057eed87",
+      "direction": "RESPONSE",
+      "path": "data.benchmarkContactRate"
+    },
+    {
+      "id": "328940e0057fed87",
+      "direction": "RESPONSE",
+      "path": "data.viewRateDifference"
+    },
+    {
+      "id": "328940e00580ed87",
+      "direction": "RESPONSE",
+      "path": "data.contactRateDifference"
+    }
+  ]
+}
