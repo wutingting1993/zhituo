@@ -64,4 +64,3 @@ check_name	invalid_count
 invalid_relations	0
 component_id	name	id
 MetricsStrip	核心指标总览	328937da8dfded87
-
