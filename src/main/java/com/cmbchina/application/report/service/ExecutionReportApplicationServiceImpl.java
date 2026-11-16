@@ -23,29 +23,24 @@ import com.cmbchina.application.report.api.dto.ExecutionSkillOption;
 import com.cmbchina.application.report.api.dto.ExecutionSkillRow;
 import com.cmbchina.application.report.api.dto.ExecutionSkillSummary;
 import com.cmbchina.application.report.api.dto.ReportSummaryRequest;
-import com.cmbchina.domain.report.model.ExecutionDataset;
+import com.cmbchina.domain.report.model.ReportAggregate;
+import com.cmbchina.domain.report.model.ReportDimension;
 import com.cmbchina.domain.report.model.ExecutionMetrics;
-import com.cmbchina.domain.report.model.ReportExecution;
-import com.cmbchina.domain.report.model.ReportCustomerAction;
 import com.cmbchina.domain.report.model.ReportOrganization;
 import com.cmbchina.domain.report.model.ReportQuery;
-import com.cmbchina.domain.report.model.ReportRecommendation;
 import com.cmbchina.domain.report.model.ReportRelation;
 import com.cmbchina.domain.report.model.ReportStatistics;
-import com.cmbchina.domain.report.service.ExecutionStatisticsService;
 import com.cmbchina.domain.report.support.ExecutionCalculations;
 import com.cmbchina.domain.report.support.ReportDataSupport;
 import com.cmbchina.infrastructure.common.ResponseEnum;
 import com.cmbchina.infrastructure.common.exception.BusinessException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -58,25 +53,15 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
             Lists.newArrayList("skillCount", "taskCount", "recommendedCustomerCount", "viewRate", "insightRate", "callRate", "contactRate"));
     @Autowired
     private ReportDataSupport data;
-    @Autowired
-    private ExecutionStatisticsService statistics;
 
     @Override
     public ExecutionTrendResponse trend(ReportSummaryRequest request) {
-        ExecutionDataset dataset = load(request);
-        Map<LocalDate, List<ReportExecution>> executions = dataset.getExecutions().stream()
-                .collect(Collectors.groupingBy(ReportExecution::getExecutionDay));
-        Map<LocalDate, List<ReportRecommendation>> recommendations = dataset.getRecommendations().stream()
-                .collect(Collectors.groupingBy(r -> r.getExecution().getExecutionDay()));
-        Map<LocalDate, List<ReportCustomerAction>> actions = dataset.getActions().stream()
-                .collect(Collectors.groupingBy(a -> a.getRecommendation().getExecution().getExecutionDay()));
+        Map<LocalDate, ExecutionMetrics> daily = data.aggregates(query(request), ReportDimension.DAY, false, false).stream()
+                .collect(Collectors.toMap(ReportAggregate::getDay, ReportAggregate::getMetrics));
         List<ExecutionTrendPoint> points = Lists.newArrayList();
         LocalDate day = request.getStartDate();
         while (true) {
-            ExecutionMetrics metrics = statistics.summarize(executions.getOrDefault(day, java.util.Collections.emptyList()),
-                    recommendations.getOrDefault(day, java.util.Collections.emptyList()),
-                    actions.getOrDefault(day, java.util.Collections.emptyList()));
-            points.add(ExecutionTrendPoint.builder().date(day).metrics(response(metrics)).build());
+            points.add(ExecutionTrendPoint.builder().date(day).metrics(response(daily.getOrDefault(day, emptyMetrics()))).build());
             if (day.equals(request.getEndDate())) {
                 break;
             }
@@ -92,25 +77,12 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
         if (!Lists.newArrayList("participantCount", "participationRate", "assignedManagerCount").contains(key)) {
             throw invalid("技能参与度排序字段不支持");
         }
-        ReportQuery query = query(request.getFilters());
-        List<ReportRelation> relations = data.findRelations(query);
-        Map<String, List<ReportRelation>> assigned = relations.stream().collect(Collectors.groupingBy(ReportRelation::getSkillId));
-        Map<String, Set<String>> participants = Maps.newHashMap();
-        for (ReportExecution execution : data.findExecutions(query, relations)) {
-            if (execution.isRead()) {
-                ReportRelation relation = execution.getRelation();
-                participants.computeIfAbsent(relation.getSkillId(), id -> Sets.newHashSet()).add(relation.getSapId());
-            }
-        }
-        List<SkillParticipationRow> rows = Lists.newArrayList();
-        for (Map.Entry<String, List<ReportRelation>> entry : assigned.entrySet()) {
-            Set<String> managers = entry.getValue().stream().map(ReportRelation::getSapId).collect(Collectors.toSet());
-            long count = participants.getOrDefault(entry.getKey(), java.util.Collections.emptySet()).stream().filter(managers::contains).count();
-            rows.add(SkillParticipationRow.builder().skillId(entry.getKey()).skillName(entry.getValue().get(0).getSkillName()).participantCount(count)
-                    .assignedManagerCount(managers.size()).participationRate(ExecutionCalculations.rate(count, managers.size())).build());
-        }
-        Comparator<SkillParticipationRow> primary = participationComparator(key);
-        rows.sort(primary.thenComparing(SkillParticipationRow::getSkillId));
+        List<SkillParticipationRow> rows = data.participation(query(request.getFilters())).stream()
+                .map(row -> SkillParticipationRow.builder().skillId(row.getKey()).skillName(row.getRelation().getSkillName())
+                        .participantCount(row.getParticipantCount()).assignedManagerCount(row.getAssignedManagerCount())
+                        .participationRate(ExecutionCalculations.rate(row.getParticipantCount(), row.getAssignedManagerCount())).build())
+                .collect(Collectors.toList());
+        rows.sort(participationComparator(key).thenComparing(SkillParticipationRow::getSkillId));
         return SkillParticipationResponse.builder().rows(Lists.newArrayList(rows.subList(0, Math.min(topN, rows.size())))).build();
     }
 
@@ -126,19 +98,17 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
 
     @Override
     public AttentionBranchesResponse attention(ReportSummaryRequest request) {
-        ExecutionDataset dataset = load(request);
-        ExecutionMetrics baseline = summarize(load(
-                ReportSummaryRequest.builder().startDate(request.getStartDate()).endDate(request.getEndDate()).bbkId(request.getBbkId()).build()));
-        Map<List<String>, List<ReportExecution>> groups = dataset.getExecutions().stream()
-                .collect(Collectors.groupingBy(e -> Lists.newArrayList(e.getRelation().getBbkId(), e.getRelation().getOrgId())));
+        ReportQuery currentQuery = query(request);
+        ExecutionMetrics baseline = load(
+                ReportSummaryRequest.builder().startDate(request.getStartDate()).endDate(request.getEndDate()).bbkId(request.getBbkId()).build());
         List<AttentionBranchRow> rows = Lists.newArrayList();
-        for (List<ReportExecution> group : groups.values()) {
-            ExecutionMetrics current = summarize(dataset, group);
+        for (ReportAggregate group : data.aggregates(currentQuery, ReportDimension.BRANCH, false, false)) {
+            ExecutionMetrics current = group.getMetrics();
             boolean viewLow = below(current, baseline, "viewRate");
             boolean contactLow = below(current, baseline, "contactRate");
             if (viewLow || contactLow) {
                 String diagnosis = viewLow && contactLow ? "bothLow" : (viewLow ? "usageLow" : "contactLow");
-                rows.add(attentionRow(group.get(0).getRelation(), current, baseline, diagnosis));
+                rows.add(attentionRow(group.getRelation(), current, baseline, diagnosis));
             }
         }
         rows.sort(attentionComparator());
@@ -180,7 +150,7 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
 
     @Override
     public ExecutionOverviewResponse overview(ReportSummaryRequest request) {
-        ExecutionMetrics metrics = summarize(load(request));
+        ExecutionMetrics metrics = load(request);
         ReportStatistics totals = metrics.getStatistics();
         return ExecutionOverviewResponse.builder().metrics(response(metrics)).managerCount(totals.getUserCount())
                 .customersPerTask(ExecutionCalculations.divide(totals.getRecommendedCustomerCount(), totals.getTaskCount(), 1))
@@ -194,11 +164,17 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
         return value == null ? null : value.longValueExact();
     }
 
-    private ExecutionDataset load(ReportSummaryRequest request) {
-        ReportQuery query = query(request);
-        List<ReportExecution> executions = data.findExecutions(query, data.findRelations(query));
-        List<ReportRecommendation> recommendations = data.findRecommendations(executions);
-        return ExecutionDataset.builder().executions(executions).recommendations(recommendations).actions(data.findActions(recommendations)).build();
+    private ExecutionMetrics load(ReportSummaryRequest request) {
+        return total(query(request));
+    }
+
+    private ExecutionMetrics total(ReportQuery query) {
+        List<ReportAggregate> rows = data.aggregates(query, ReportDimension.TOTAL, false, false);
+        return rows.isEmpty() ? emptyMetrics() : rows.get(0).getMetrics();
+    }
+
+    private ExecutionMetrics emptyMetrics() {
+        return ExecutionMetrics.builder().statistics(ReportStatistics.builder().build()).build();
     }
 
     private ReportQuery query(ReportSummaryRequest request) {
@@ -211,17 +187,6 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
 
     private BusinessException invalid(String message) {
         return new BusinessException(ResponseEnum.VALIDATION_ERROR.getCode(), message, null);
-    }
-
-    private ExecutionMetrics summarize(ExecutionDataset dataset) {
-        return statistics.summarize(dataset.getExecutions(), dataset.getRecommendations(), dataset.getActions());
-    }
-
-    private ExecutionMetrics summarize(ExecutionDataset dataset, List<ReportExecution> executions) {
-        Set<ReportExecution> selected = Sets.newHashSet(executions);
-        return statistics.summarize(executions,
-                dataset.getRecommendations().stream().filter(r -> selected.contains(r.getExecution())).collect(Collectors.toList()),
-                dataset.getActions().stream().filter(a -> selected.contains(a.getRecommendation().getExecution())).collect(Collectors.toList()));
     }
 
     private ExecutionMetricsResponse response(ExecutionMetrics metrics) {
@@ -262,18 +227,16 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
         if (!SORT_KEYS.contains(key) || !Lists.newArrayList("asc", "desc").contains(direction)) {
             throw invalid("排序字段或方向不支持，请使用约定的排序字段及asc或desc");
         }
-        ExecutionDataset dataset = load(request.getFilters());
+        ReportQuery currentQuery = query(request.getFilters());
         ReportSummaryRequest filters = request.getFilters();
-        ExecutionMetrics baseline = summarize(load(
-                ReportSummaryRequest.builder().startDate(filters.getStartDate()).endDate(filters.getEndDate()).bbkId(filters.getBbkId()).build()));
-        Map<List<String>, List<ReportExecution>> groups = dataset.getExecutions().stream()
-                .collect(Collectors.groupingBy(e -> Lists.newArrayList(e.getRelation().getBbkId(), e.getRelation().getOrgId())));
+        ExecutionMetrics baseline = load(
+                ReportSummaryRequest.builder().startDate(filters.getStartDate()).endDate(filters.getEndDate()).bbkId(filters.getBbkId()).build());
         Map<List<String>, ExecutionMetrics> metrics = Maps.newHashMap();
         List<ExecutionBranchRow> rows = Lists.newArrayList();
-        for (Map.Entry<List<String>, List<ReportExecution>> entry : groups.entrySet()) {
-            ExecutionMetrics current = summarize(dataset, entry.getValue());
-            metrics.put(entry.getKey(), current);
-            rows.add(branchRow(entry.getValue().get(0).getRelation(), current, baseline));
+        for (ReportAggregate group : data.aggregates(currentQuery, ReportDimension.BRANCH, false, false)) {
+            ReportRelation relation = group.getRelation();
+            metrics.put(Lists.newArrayList(relation.getBbkId(), relation.getOrgId()), group.getMetrics());
+            rows.add(branchRow(relation, group.getMetrics(), baseline));
         }
         rows.sort(branchComparator(metrics, key, direction));
         ExecutionMetricsResponse base = response(baseline);
@@ -338,27 +301,29 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
                 .callRateStatus(status(current, baseline, "callRate")).contactRateStatus(status(current, baseline, "contactRate")).build();
     }
 
-    private ExecutionDataset scoped(ExecutionDetailsRequest request) {
+    private ReportQuery scoped(ExecutionDetailsRequest request) {
         ReportSummaryRequest filters = request.getFilters();
         if (filters.getBbkId() != null && !filters.getBbkId().equals(request.getScopeBbkId())
                 || filters.getOrgId() != null && !filters.getOrgId().equals(request.getScopeOrgId())) {
             throw invalid("下钻机构超出当前检索范围");
         }
-        return load(ReportSummaryRequest.builder().startDate(filters.getStartDate()).endDate(filters.getEndDate()).bbkId(request.getScopeBbkId())
+        return query(ReportSummaryRequest.builder().startDate(filters.getStartDate()).endDate(filters.getEndDate()).bbkId(request.getScopeBbkId())
                 .orgId(request.getScopeOrgId()).level(filters.getLevel()).skillIds(filters.getSkillIds()).build());
     }
 
     @Override
     public ExecutionManagerDetailsResponse managers(ExecutionDetailsRequest request) {
-        ExecutionDataset dataset = scoped(request);
+        ReportQuery scopedQuery = scoped(request);
         ReportOrganization organization = data.findOrganization(request.getScopeBbkId(), request.getScopeOrgId());
-        ExecutionMetrics current = summarize(dataset);
+        ExecutionMetrics current = total(scopedQuery);
         ExecutionMetricsResponse total = response(current);
         ReportStatistics summary = current.getStatistics();
-        Map<String, List<ReportExecution>> groups = dataset.getExecutions().stream().collect(Collectors.groupingBy(e -> e.getRelation().getSapId()));
+        Map<String, List<ExecutionSkillOption>> options = data.aggregateOptions(scopedQuery, ReportDimension.MANAGER_SKILL, false, false).stream()
+                .collect(Collectors.groupingBy(ReportAggregate::getKey, Collectors.mapping(row -> ExecutionSkillOption.builder()
+                        .skillId(row.getRelation().getSkillId()).skillName(row.getRelation().getSkillName()).build(), Collectors.toList())));
         List<ExecutionManagerRow> rows = Lists.newArrayList();
-        for (List<ReportExecution> group : groups.values()) {
-            rows.add(managerRow(dataset, group));
+        for (ReportAggregate group : data.aggregates(scopedQuery, ReportDimension.MANAGER, false, false)) {
+            rows.add(managerRow(group, options.getOrDefault(group.getKey(), Lists.newArrayList())));
         }
         rows.sort(Comparator.comparingLong(ExecutionManagerRow::getTaskCount).reversed().thenComparing(ExecutionManagerRow::getSapId));
         return ExecutionManagerDetailsResponse.builder().bbkId(request.getScopeBbkId()).orgId(request.getScopeOrgId())
@@ -370,15 +335,11 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
                 .rows(rows).build();
     }
 
-    private ExecutionManagerRow managerRow(ExecutionDataset dataset, List<ReportExecution> executions) {
-        ReportRelation first = executions.get(0).getRelation();
-        ExecutionMetricsResponse metrics = response(summarize(dataset, executions));
-        Map<String, ExecutionSkillOption> skills = executions.stream().map(ReportExecution::getRelation)
-                .collect(Collectors.toMap(ReportRelation::getSkillId,
-                        r -> ExecutionSkillOption.builder().skillId(r.getSkillId()).skillName(r.getSkillName()).build(), (a, b) -> a,
-                        Maps::newTreeMap));
-        return ExecutionManagerRow.builder().sapId(first.getSapId()).userName(first.getUserName()).level(first.getLevel())
-                .skills(Lists.newArrayList(skills.values())).taskCount(metrics.getTaskCount()).scheduledTaskCount(metrics.getScheduledTaskCount())
+    private ExecutionManagerRow managerRow(ReportAggregate group, List<ExecutionSkillOption> skills) {
+        ReportRelation first = group.getRelation();
+        ExecutionMetricsResponse metrics = response(group.getMetrics());
+        return ExecutionManagerRow.builder().sapId(first.getSapId()).userName(first.getUserName()).level(first.getLevel()).skills(skills)
+                .taskCount(metrics.getTaskCount()).scheduledTaskCount(metrics.getScheduledTaskCount())
                 .executedTaskCount(metrics.getExecutedTaskCount()).pendingTaskCount(metrics.getPendingTaskCount())
                 .failedTaskCount(metrics.getFailedTaskCount()).recommendedCustomerCount(metrics.getRecommendedCustomerCount())
                 .viewRate(metrics.getViewRate()).insightRate(metrics.getInsightRate()).callRate(metrics.getCallRate())
@@ -387,15 +348,14 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
 
     @Override
     public ExecutionSkillDetailsResponse skills(ExecutionDetailsRequest request) {
-        ExecutionDataset dataset = scoped(request);
+        ReportQuery scopedQuery = scoped(request);
         ReportOrganization organization = data.findOrganization(request.getScopeBbkId(), request.getScopeOrgId());
-        ReportStatistics summary = summarize(dataset).getStatistics();
-        Map<String, List<ReportExecution>> groups = dataset.getExecutions().stream()
-                .collect(Collectors.groupingBy(e -> e.getRelation().getSkillId()));
-        Map<String, String> categories = data.findSkillCategories(Lists.newArrayList(groups.keySet()));
+        ReportStatistics summary = total(scopedQuery).getStatistics();
+        List<ReportAggregate> groups = data.aggregates(scopedQuery, ReportDimension.SKILL, false, false);
+        Map<String, String> categories = data.findSkillCategories(groups.stream().map(ReportAggregate::getKey).collect(Collectors.toList()));
         List<ExecutionSkillRow> rows = Lists.newArrayList();
-        for (List<ReportExecution> group : groups.values()) {
-            rows.add(skillRow(dataset, group, categories.get(group.get(0).getRelation().getSkillId())));
+        for (ReportAggregate group : groups) {
+            rows.add(skillRow(group, categories.get(group.getKey())));
         }
         rows.sort(Comparator.comparingLong(ExecutionSkillRow::getTaskCount).reversed().thenComparing(ExecutionSkillRow::getSkillId));
         return ExecutionSkillDetailsResponse.builder().bbkId(request.getScopeBbkId()).orgId(request.getScopeOrgId())
@@ -407,15 +367,14 @@ public class ExecutionReportApplicationServiceImpl implements ExecutionReportApp
                 .rows(rows).build();
     }
 
-    private ExecutionSkillRow skillRow(ExecutionDataset dataset, List<ReportExecution> executions, String categoryName) {
-        ReportRelation first = executions.get(0).getRelation();
-        ExecutionMetrics current = summarize(dataset, executions);
-        ReportStatistics summary = current.getStatistics();
-        ExecutionMetricsResponse metrics = response(current);
+    private ExecutionSkillRow skillRow(ReportAggregate group, String categoryName) {
+        ReportRelation first = group.getRelation();
+        ReportStatistics summary = group.getMetrics().getStatistics();
+        ExecutionMetricsResponse metrics = response(group.getMetrics());
         return ExecutionSkillRow.builder().skillId(first.getSkillId()).skillName(first.getSkillName()).categoryName(categoryName)
                 .managerCount(summary.getUserCount()).taskCount(summary.getTaskCount()).scheduledTaskCount(summary.getScheduledTaskCount())
                 .executedTaskCount(summary.getExecutedTaskCount()).pendingTaskCount(summary.getPendingTaskCount())
-                .failedTaskCount(summary.getFailedTaskCount()).recommendedCustomerCount(summary.getRecommendedCustomerCount())
+                .failedTaskCount(summary.getFailedTaskCount()).recommendedCustomerCount(metrics.getRecommendedCustomerCount())
                 .viewRate(metrics.getViewRate()).contactRate(metrics.getContactRate()).planCount(summary.getPlanCount()).build();
     }
 }

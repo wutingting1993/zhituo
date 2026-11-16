@@ -1,10 +1,10 @@
 -- 结构化summary契约及业务/技术知识拆分迁移。先执行structured-interface-context.sql。
 SET NAMES utf8mb4;
 START TRANSACTION;
-SET @api_id=(SELECT i.id FROM knowledge_interface i JOIN knowledge_service s ON s.id=i.service_id WHERE s.system_code='LQ13.03' AND s.project_code='zhituo' AND s.service_code='zhituo_stat' AND i.method='POST' AND i.path='/api/v1/reports/summary');
+SET @api_id=(SELECT i.id FROM knowledge_interface i JOIN knowledge_service s ON s.id=i.service_id WHERE s.system_code='LQ13.03' AND s.project_code='zhituo' AND s.service_code='zhituo_stat' AND s.service_type='BACKEND' AND i.method='POST' AND i.path='/api/v1/reports/summary');
 UPDATE knowledge_interface SET name='顶部指标统计',description='获取当前筛选范围的顶部指标及机构基准',request_content_type='application/json',response_content_type='application/json' WHERE id=@api_id;
 UPDATE knowledge_page SET name='智拓报表' WHERE system_code='LQ13.03' AND project_code='zhituo' AND page_path='/Users/natasha/Downloads/智拓报表.html';
-UPDATE knowledge_component c JOIN knowledge_page p ON p.id=c.page_id SET c.name='顶部指标统计' WHERE p.system_code='LQ13.03' AND p.project_code='zhituo' AND c.component_id='kpiStrip';
+UPDATE knowledge_component c JOIN knowledge_page p ON p.id=c.page_id SET c.name='核心指标总览' WHERE p.system_code='LQ13.03' AND p.project_code='zhituo' AND c.component_id='MetricsStrip';
 INSERT INTO knowledge_interface_field (id, interface_id, direction, location, parent_id, field_name, field_path, value_type, item_type, required_flag, nullable_flag, business_meaning, technical_description, validation_text, sort_order) VALUES ('328940e00562ed87', @api_id, 'REQUEST', 'BODY', NULL, 'bbkId', 'bbkId', 'string', NULL, 0, 1, '分行编号；请求未传、null或空字符串表示全部', NULL, NULL, 6) ON DUPLICATE KEY UPDATE id=id;
 INSERT INTO knowledge_interface_field (id, interface_id, direction, location, parent_id, field_name, field_path, value_type, item_type, required_flag, nullable_flag, business_meaning, technical_description, validation_text, sort_order) VALUES ('328940e00563ed87', @api_id, 'REQUEST', 'BODY', NULL, 'orgId', 'orgId', 'string', NULL, 0, 1, '支行编号；请求未传、null或空字符串表示全部', NULL, NULL, 7) ON DUPLICATE KEY UPDATE id=id;
 INSERT INTO knowledge_interface_field (id, interface_id, direction, location, parent_id, field_name, field_path, value_type, item_type, required_flag, nullable_flag, business_meaning, technical_description, validation_text, sort_order) VALUES ('328940e00564ed87', @api_id, 'REQUEST', 'BODY', NULL, 'level', 'level', 'string', NULL, 0, 1, '客户经理等级，使用数据库实际值', NULL, NULL, 8) ON DUPLICATE KEY UPDATE id=id;

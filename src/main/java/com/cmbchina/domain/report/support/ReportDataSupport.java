@@ -10,6 +10,20 @@ import java.util.List;
 import java.util.Map;
 /** 报表分批读取契约。 */
 public interface ReportDataSupport {
+    /** 技能参与度分子分母，不读取客户结果。 */
+    List<com.cmbchina.domain.report.model.ReportAggregate> participation(ReportQuery query);
+
+    /** 返回固定维度的统计汇总，不读取客户明细。 */
+    List<com.cmbchina.domain.report.model.ReportAggregate> aggregates(ReportQuery query, com.cmbchina.domain.report.model.ReportDimension dimension,
+            boolean planOnly, boolean executedOnly);
+
+    /** 返回客户经理或规划对应的技能展示选项。 */
+    List<com.cmbchina.domain.report.model.ReportAggregate> aggregateOptions(ReportQuery query,
+            com.cmbchina.domain.report.model.ReportDimension dimension, boolean planOnly, boolean executedOnly);
+
+    /** 聚合顶部统计。 */
+    com.cmbchina.domain.report.model.ReportStatistics summarize(ReportQuery query);
+
     /** 直接读取人员表去重后的机构。 */
     List<ReportOrganization> findFilterOrganizations();
 

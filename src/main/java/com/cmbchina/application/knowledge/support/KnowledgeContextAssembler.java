@@ -1,4 +1,11 @@
 package com.cmbchina.application.knowledge.support;
+import com.cmbchina.application.knowledge.api.dto.ComponentInteractionResponse;
+import com.cmbchina.application.knowledge.api.dto.ComponentRelationResponse;
+import com.cmbchina.application.knowledge.api.dto.ComponentRelationGroup;
+import com.cmbchina.application.knowledge.api.dto.LinkedComponentResponse;
+import com.cmbchina.domain.knowledge.model.ComponentInteraction;
+import com.cmbchina.domain.knowledge.model.ComponentRelation;
+import java.util.Objects;
 import com.cmbchina.application.knowledge.api.dto.RelatedComponent;
 import com.cmbchina.application.knowledge.api.dto.RelatedComponentGroup;
 import com.cmbchina.application.knowledge.api.dto.KnowledgeCondition;
@@ -82,14 +89,12 @@ public class KnowledgeContextAssembler {
 
     private void remember(KnowledgeItemResponse entry, List<RelatedComponent> items) {
         for (RelatedComponent item : items) {
-            boolean exists = entry.getConditions().stream()
-                    .anyMatch(value -> value.isUnconditional() == item.isUnconditional()
-                            && java.util.Objects.equals(value.getCondition(), item.getCondition())
-                            && java.util.Objects.equals(value.getException(), item.getException())
-                            && java.util.Objects.equals(value.getReplacesKnowledgeId(), item.getReplacesKnowledgeId()));
+            boolean exists = entry.getConditions().stream().anyMatch(value -> java.util.Objects.equals(value.getId(), item.getId()));
             if (!exists) {
-                entry.getConditions().add(KnowledgeCondition.builder().unconditional(item.isUnconditional()).condition(item.getCondition())
-                        .exception(item.getException()).replacesKnowledgeId(item.getReplacesKnowledgeId()).build());
+                entry.getConditions()
+                        .add(KnowledgeCondition.builder().id(item.getId()).targetType(item.getTargetType()).targetId(item.getComponentId())
+                                .unconditional(item.isUnconditional()).condition(item.getCondition()).exception(item.getException())
+                                .replacesKnowledgeId(item.getReplacesKnowledgeId()).build());
             }
         }
     }
@@ -97,6 +102,10 @@ public class KnowledgeContextAssembler {
     /** 创建精简适用关系。 */
     public RelatedComponent relation(KnowledgeItem row) {
         return RelatedComponent.builder().id(row.getId()).targetType(row.getTargetType()).componentId(row.getTargetId())
+                .component(row.getComponentKey() == null
+                        ? null
+                        : LinkedComponentResponse.builder().id(row.getTargetId()).componentId(row.getComponentKey()).name(row.getName())
+                                .pagePath(row.getPath()).build())
                 .unconditional(row.isUnconditional()).condition(row.getConditionText()).exception(row.getExceptionText())
                 .replacesKnowledgeId(row.getReplacesKnowledgeId()).build();
     }
@@ -154,5 +163,49 @@ public class KnowledgeContextAssembler {
 
     private void issue(ComponentKnowledgeResponse response, String type, String target) {
         response.getIssues().add(KnowledgeIssue.builder().type(type).target(target).build());
+    }
+
+    /** 当前组件不存在时不推断联动，保留其他已查询知识。 */
+    public void interactions(KnowledgeQuery query, ComponentKnowledgeResponse response) {
+        if (response.getComponent() == null) {
+            return;
+        }
+        query.setCurrentComponentId(response.getComponent().getId());
+        for (ComponentInteraction item : support.interactions(query)) {
+            response.getInteractions().add(ComponentInteractionResponse.builder().id(item.getId()).action(item.getAction())
+                    .triggerCondition(item.getTriggerCondition()).providedContent(item.getProvidedContent()).response(item.getResponse()).build());
+        }
+        Map<String, ComponentRelationGroup> inputs = Maps.newLinkedHashMap();
+        Map<String, ComponentRelationGroup> outputs = Maps.newLinkedHashMap();
+        for (ComponentRelation item : support.componentRelations(query)) {
+            ComponentRelationResponse relation = componentRelation(item);
+            if (Objects.equals(item.getTargetId(), query.getCurrentComponentId())) {
+                appendRelation(inputs, relation.getSource(), relation);
+            }
+            if (Objects.equals(item.getSourceId(), query.getCurrentComponentId())) {
+                appendRelation(outputs, relation.getTarget(), relation);
+            }
+        }
+        response.getCollaboration().getInputs().addAll(inputs.values());
+        response.getCollaboration().getOutputs().addAll(outputs.values());
+    }
+
+    private void appendRelation(Map<String, ComponentRelationGroup> groups, LinkedComponentResponse component, ComponentRelationResponse relation) {
+        ComponentRelationGroup group = groups.get(component.getId());
+        if (group == null) {
+            group = ComponentRelationGroup.builder().component(component).build();
+            groups.put(component.getId(), group);
+        }
+        group.getItems().add(relation);
+    }
+
+    private ComponentRelationResponse componentRelation(ComponentRelation item) {
+        return ComponentRelationResponse.builder().id(item.getId()).interactionId(item.getInteractionId())
+                .source(LinkedComponentResponse.builder().id(item.getSourceId()).componentId(item.getSourceComponentId()).name(item.getSourceName())
+                        .pagePath(item.getSourcePagePath()).build())
+                .target(LinkedComponentResponse.builder().id(item.getTargetId()).componentId(item.getTargetComponentId()).name(item.getTargetName())
+                        .pagePath(item.getTargetPagePath()).build())
+                .action(item.getAction()).triggerCondition(item.getTriggerCondition()).providedContent(item.getProvidedContent())
+                .response(item.getResponse()).effect(item.getEffect()).condition(item.getCondition()).build();
     }
 }

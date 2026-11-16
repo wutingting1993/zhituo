@@ -1,11 +1,12 @@
-INSERT INTO `knowledge_project` (`id`, `system_code`, `project_code`, `local_path`) VALUES ('328937da8dfaed87','LQ13.03','zhituo','/Users/natasha/Downloads');
-INSERT INTO `knowledge_service` (`id`, `system_code`, `project_code`, `service_code`, `local_path`) VALUES ('328937da8dfbed87','LQ13.03','zhituo','zhituo_stat','/Users/natasha/data/code/zhituo');
+INSERT INTO `knowledge_project` (`id`, `system_code`, `project_code`) VALUES ('328937da8dfaed87','LQ13.03','zhituo');
+INSERT INTO `knowledge_service` (`id`, `system_code`, `project_code`, `service_code`, `service_type`, `local_path`) VALUES ('328937da8dfbed87','LQ13.03','zhituo','zhituo_stat','BACKEND','/Users/natasha/data/code/zhituo');
+INSERT INTO `knowledge_service` (`id`, `system_code`, `project_code`, `service_code`, `service_type`, `local_path`) VALUES ('328937da8dfaed87','LQ13.03','zhituo','zhituo','FRONTEND','/Users/natasha/Downloads');
 INSERT INTO `knowledge_page` (`id`, `system_code`, `project_code`, `page_path`, `name`, `description`) VALUES ('328937da8dfced87','LQ13.03','zhituo','/Users/natasha/Downloads/智拓报表.html','智拓报表','提供规划与执行报表的检索和统计分析，可按日期、分行、支行、客户经理等级及技能查看相关数据。');
-INSERT INTO `knowledge_component` (`id`, `page_id`, `component_id`, `name`, `description`) VALUES ('328937da8dfded87','328937da8dfced87','kpiStrip','顶部指标统计','位于检索框下方，通过统计接口获取当前筛选范围的规划数、技能数、任务或客户方案数、推荐客户数、方案查看率和接触率，并提供覆盖支行、人均数量、最广使用技能及机构基准比较。');
+INSERT INTO `knowledge_component` (`id`, `page_id`, `component_id`, `name`, `description`) VALUES ('328937da8dfded87','328937da8dfced87','MetricsStrip','核心指标总览','位于检索框下方，通过统计接口获取当前筛选范围的规划数、技能数、任务或客户方案数、推荐客户数、方案查看率和接触率，并提供覆盖支行、人均数量、最广使用技能及机构基准比较。');
 INSERT INTO `knowledge_flow` (`id`, `system_code`, `project_code`, `name`) VALUES ('328937da8dfeed87','LQ13.03','zhituo','报表检索与顶部指标查看');
 INSERT INTO `knowledge_page_flow` (`id`, `page_id`, `flow_id`) VALUES ('328937da8dffed87','328937da8dfced87','328937da8dfeed87');
 INSERT INTO `knowledge_interface` (`id`, `service_id`, `method`, `path`, `name`, `description`, `request_content_type`, `response_content_type`) VALUES ('328937da8e00ed87','328937da8dfbed87','POST','/api/v1/reports/summary','顶部指标统计','获取当前筛选范围的顶部指标及机构基准','application/json','application/json');
-INSERT INTO `knowledge_entry` (`id`, `system_code`, `project_code`, `kind`, `content`, `source`, `status`, `title`, `knowledge_type`) VALUES ('328937da8e01ed87','LQ13.03','zhituo','BUSINESS_RULE','检索框下的指标统计组件ID为kpiStrip，数据通过统计接口获取。统计内容包括生效中规划、涉及技能、当日或周期任务数、推荐客户数、方案被查看率和接触率，以及覆盖支行、使用人数最多技能、人均数量和机构基准差值。','file:///Users/natasha/Downloads/智拓报表.html；指标条section与renderKPI','CONFIRMED','顶部指标业务用途','BUSINESS');
+INSERT INTO `knowledge_entry` (`id`, `system_code`, `project_code`, `kind`, `content`, `source`, `status`, `title`, `knowledge_type`) VALUES ('328937da8e01ed87','LQ13.03','zhituo','BUSINESS_RULE','检索框下的指标统计组件ID为MetricsStrip，数据通过统计接口获取。统计内容包括生效中规划、涉及技能、当日或周期任务数、推荐客户数、方案被查看率和接触率，以及覆盖支行、使用人数最多技能、人均数量和机构基准差值。','file:///Users/natasha/Downloads/智拓报表.html；指标条section与renderKPI','CONFIRMED','顶部指标业务用途','BUSINESS');
 INSERT INTO `knowledge_entry` (`id`, `system_code`, `project_code`, `kind`, `content`, `source`, `status`, `title`, `knowledge_type`) VALUES ('328937da8e02ed87','LQ13.03','zhituo','BUSINESS_RULE','指标统计按当前日期区间、分行、支行、客户经理等级和技能条件调用接口获取结果。单日与多日分别对应当日和周期统计；机构基准用于比较当前范围与所选分行整体水平。','file:///Users/natasha/Downloads/智拓报表.html；renderKPI、filteredManagers、renderAll','CONFIRMED','顶部指标检索行为','BUSINESS');
 INSERT INTO `knowledge_entry` (`id`, `system_code`, `project_code`, `kind`, `content`, `source`, `status`, `title`, `knowledge_type`) VALUES ('328937da8e0eed87','LQ13.03','zhituo','TECHNICAL_RULE','当前顶部统计由MySQL显式JOIN和非递归CTE完成执行范围选择、去重和聚合，仅向Java返回汇总结果。Java计算比率、精确差值并组装响应；当前范围与机构基准独立聚合。执行时间并列时按执行主键倒序取一条。已有功能对照记录不代表所有后续改动已验证，也不代表已达到性能预算。','docs/report-api.md 统计实现说明；docs/report-summary-sql-validation.md','CONFIRMED','顶部统计SQL实现','TECHNICAL');
 INSERT INTO `knowledge_entry` (`id`, `system_code`, `project_code`, `kind`, `content`, `source`, `status`, `title`, `knowledge_type`) VALUES ('328937da8e0fed87','LQ13.03','zhituo','CONFLICT','页面业务说明与当前后端契约存在待确认的口径差异：页面生效中规划说明按当前状态、不受日期影响且按规划负责人机构归集；后端按排程及执行范围、目标客户经理机构，不额外限制生效状态。页面任务数解释为下发任务，后端taskCount表示成功推荐客户方案数，另有scheduledTaskCount等任务指标。页面接触解释为有效接通、到店或线上互动，后端按接触明细关联去重，不附加有效接通条件。页面数据按接口获取，聚合与去重以接口业务契约为依据。后续需求澄清应明确这些业务口径的取舍，不自动修改现有实现。','file:///Users/natasha/Downloads/智拓报表.html 指标口径、页脚及aggManagers；docs/report-api.md；docs/knowledge/shared/report-rules.md','PENDING','页面业务说明与接口口径差异','BUSINESS');
@@ -114,7 +115,7 @@ INSERT INTO `knowledge_interface_error` (`id`, `interface_id`, `code`, `http_sta
 
 -- 导出行数核对
 -- knowledge_project: 1
--- knowledge_service: 1
+-- knowledge_service: 2
 -- knowledge_page: 1
 -- knowledge_component: 1
 -- knowledge_flow: 1

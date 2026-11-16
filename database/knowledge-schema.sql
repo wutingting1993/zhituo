@@ -1,4 +1,4 @@
--- 知识模块完整DDL：当前最终结构，共12张表。
+-- 知识模块完整DDL：当前最终结构，共14张表。
 -- 用于新库初始化；不含业务数据、历史迁移、清表或覆盖操作。
 -- 已存在的同名表不会自动升级，执行前选择目标数据库。
 SET NAMES utf8mb4;
@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS knowledge_project (
     id varchar(64) NOT NULL COMMENT '主键由CUuid生成',
     system_code varchar(64) NOT NULL COMMENT '系统编号',
     project_code varchar(64) NOT NULL COMMENT '项目号',
-    local_path varchar(1024) NULL COMMENT '前端本地代码目录',
     PRIMARY KEY (id), UNIQUE KEY uk_project (system_code, project_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='知识查询project';
 
@@ -16,8 +15,9 @@ CREATE TABLE IF NOT EXISTS knowledge_service (
     system_code varchar(64) NOT NULL COMMENT '系统编号',
     project_code varchar(64) NOT NULL COMMENT '项目号',
     service_code varchar(64) NOT NULL COMMENT '服务标识',
-    local_path varchar(1024) NULL COMMENT '后端本地代码目录',
-    PRIMARY KEY (id), UNIQUE KEY uk_service (system_code, project_code, service_code)
+    service_type varchar(16) NOT NULL COMMENT '代码类型FRONTEND前端BACKEND后端',
+    local_path varchar(1024) NULL COMMENT '本地代码目录',
+    PRIMARY KEY (id), UNIQUE KEY uk_service (system_code, project_code, service_type, service_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='知识查询service';
 
 CREATE TABLE IF NOT EXISTS knowledge_page (
@@ -131,3 +131,27 @@ CREATE TABLE IF NOT EXISTS knowledge_interface_error (
     sort_order int NOT NULL COMMENT '排序序号',
     PRIMARY KEY(id), UNIQUE KEY uk_interface_error(interface_id,code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='结构化接口error';
+
+CREATE TABLE IF NOT EXISTS knowledge_component_interaction (
+    id varchar(64) NOT NULL COMMENT '交互主键由CUuid生成',
+    component_id varchar(64) NOT NULL COMMENT '所属组件knowledge_component数据库主键',
+    action_name varchar(255) NOT NULL COMMENT '用户操作或组件触发行为名称',
+    trigger_condition text NULL COMMENT '操作触发条件，空表示未登记条件而非无条件',
+    provided_content text NULL COMMENT '传递给关联组件的业务内容',
+    response_text text NULL COMMENT '当前组件自身的响应或界面变化',
+    sort_order int NOT NULL DEFAULT 0 COMMENT '所属组件内交互展示顺序',
+    PRIMARY KEY (id),
+    KEY idx_interaction_component (component_id,sort_order,id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='组件交互逻辑';
+
+CREATE TABLE IF NOT EXISTS knowledge_component_relation (
+    id varchar(64) NOT NULL COMMENT '联动关系主键由CUuid生成',
+    interaction_id varchar(64) NOT NULL COMMENT '来源交互knowledge_component_interaction主键',
+    target_component_id varchar(64) NOT NULL COMMENT '目标组件knowledge_component数据库主键',
+    effect_text text NOT NULL COMMENT '操作对目标组件产生的具体影响',
+    condition_text text NULL COMMENT '本条联动的生效条件，空表示未登记条件',
+    sort_order int NOT NULL DEFAULT 0 COMMENT '同一交互下目标联动展示顺序',
+    PRIMARY KEY (id),
+    KEY idx_relation_interaction (interaction_id,sort_order,id),
+    KEY idx_relation_target (target_component_id,interaction_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='组件有向联动关系';

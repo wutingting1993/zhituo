@@ -1,0 +1,195 @@
+{
+  "database": "zhituo",
+  "componentCount": 26,
+  "interactionCount": 39,
+  "matchedRelationPairs": 56,
+  "inputCount": 56,
+  "outputCount": 56,
+  "legacyIdNotMatched": true,
+  "otherProjectIsolated": true,
+  "repeatOrderStable": true,
+  "rows": [
+    {
+      "componentId": "DrawerFrame",
+      "name": "抽屉外壳",
+      "interactionCount": 0,
+      "inputCount": 0,
+      "outputCount": 0
+    },
+    {
+      "componentId": "DetailDrawer / Glossary",
+      "name": "指标口径抽屉",
+      "interactionCount": 1,
+      "inputCount": 2,
+      "outputCount": 0
+    },
+    {
+      "componentId": "DetailDrawer / ManagersDrawer",
+      "name": "支行客户经理明细抽屉",
+      "interactionCount": 1,
+      "inputCount": 5,
+      "outputCount": 0
+    },
+    {
+      "componentId": "DetailDrawer / PlansDrawer",
+      "name": "规划明细抽屉",
+      "interactionCount": 2,
+      "inputCount": 5,
+      "outputCount": 0
+    },
+    {
+      "componentId": "DetailDrawer / SkillsDrawer",
+      "name": "支行技能明细抽屉",
+      "interactionCount": 1,
+      "inputCount": 4,
+      "outputCount": 0
+    },
+    {
+      "componentId": "DetailDrawer",
+      "name": "明细抽屉",
+      "interactionCount": 0,
+      "inputCount": 0,
+      "outputCount": 0
+    },
+    {
+      "componentId": "BranchWatch",
+      "name": "需关注支行",
+      "interactionCount": 1,
+      "inputCount": 3,
+      "outputCount": 1
+    },
+    {
+      "componentId": "ExecutionFunnel",
+      "name": "执行链路漏斗",
+      "interactionCount": 0,
+      "inputCount": 3,
+      "outputCount": 0
+    },
+    {
+      "componentId": "ExecutionTable",
+      "name": "支行执行明细表",
+      "interactionCount": 4,
+      "inputCount": 3,
+      "outputCount": 3
+    },
+    {
+      "componentId": "SkillRanking",
+      "name": "技能参与度排行",
+      "interactionCount": 1,
+      "inputCount": 3,
+      "outputCount": 0
+    },
+    {
+      "componentId": "TrendChart",
+      "name": "执行走势图",
+      "interactionCount": 2,
+      "inputCount": 3,
+      "outputCount": 0
+    },
+    {
+      "componentId": "ExecutionView",
+      "name": "执行视角",
+      "interactionCount": 0,
+      "inputCount": 2,
+      "outputCount": 0
+    },
+    {
+      "componentId": "DateFilter",
+      "name": "统计日期筛选",
+      "interactionCount": 5,
+      "inputCount": 0,
+      "outputCount": 2
+    },
+    {
+      "componentId": "ManagerLevelFilter",
+      "name": "客户经理等级筛选",
+      "interactionCount": 1,
+      "inputCount": 0,
+      "outputCount": 1
+    },
+    {
+      "componentId": "OrganizationFilter",
+      "name": "分行/支行筛选",
+      "interactionCount": 4,
+      "inputCount": 0,
+      "outputCount": 3
+    },
+    {
+      "componentId": "SkillFilter",
+      "name": "技能筛选",
+      "interactionCount": 3,
+      "inputCount": 0,
+      "outputCount": 2
+    },
+    {
+      "componentId": "FiltersBar",
+      "name": "筛选栏",
+      "interactionCount": 4,
+      "inputCount": 10,
+      "outputCount": 33
+    },
+    {
+      "componentId": "MetricsStrip",
+      "name": "核心指标总览",
+      "interactionCount": 0,
+      "inputCount": 3,
+      "outputCount": 0
+    },
+    {
+      "componentId": "PlanCoverageTable",
+      "name": "分支行规划覆盖表",
+      "interactionCount": 4,
+      "inputCount": 3,
+      "outputCount": 3
+    },
+    {
+      "componentId": "PlanInsights",
+      "name": "规划洞察",
+      "interactionCount": 0,
+      "inputCount": 0,
+      "outputCount": 0
+    },
+    {
+      "componentId": "PlanSourceBreakdown",
+      "name": "规划来源结构",
+      "interactionCount": 0,
+      "inputCount": 3,
+      "outputCount": 0
+    },
+    {
+      "componentId": "PlanningView",
+      "name": "规划视角",
+      "interactionCount": 0,
+      "inputCount": 2,
+      "outputCount": 0
+    },
+    {
+      "componentId": "ReportHeader",
+      "name": "报表标题与操作",
+      "interactionCount": 2,
+      "inputCount": 2,
+      "outputCount": 1
+    },
+    {
+      "componentId": "Topbar",
+      "name": "顶部导航栏",
+      "interactionCount": 1,
+      "inputCount": 0,
+      "outputCount": 1
+    },
+    {
+      "componentId": "ViewSwitcher",
+      "name": "视角切换",
+      "interactionCount": 2,
+      "inputCount": 0,
+      "outputCount": 6
+    },
+    {
+      "componentId": "Layout",
+      "name": "页面主体区域",
+      "interactionCount": 0,
+      "inputCount": 0,
+      "outputCount": 0
+    }
+  ]
+}

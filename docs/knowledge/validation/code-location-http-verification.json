@@ -1,0 +1,126 @@
+{
+  "baseUrl": "http://127.0.0.1:8080",
+  "checks": [
+    {
+      "name": "component_with_interface",
+      "path": "/api/v1/knowledge/component-context",
+      "httpStatus": 200,
+      "code": 200,
+      "success": true,
+      "codeLocations": [
+        {
+          "id": "328937da8dfaed87",
+          "systemCode": "LQ13.03",
+          "projectCode": "zhituo",
+          "serviceCode": "zhituo",
+          "serviceType": "FRONTEND",
+          "localPath": "/Users/natasha/Downloads"
+        },
+        {
+          "id": "328937da8dfbed87",
+          "systemCode": "LQ13.03",
+          "projectCode": "zhituo",
+          "serviceCode": "zhituo_stat",
+          "serviceType": "BACKEND",
+          "localPath": "/Users/natasha/data/code/zhituo"
+        }
+      ],
+      "issues": [
+        {
+          "type": "KNOWLEDGE_PENDING",
+          "target": "328937da8e0fed87"
+        },
+        {
+          "type": "KNOWLEDGE_PENDING",
+          "target": "328937da8e0fed87"
+        }
+      ]
+    },
+    {
+      "name": "component_without_interface",
+      "path": "/api/v1/knowledge/component-context",
+      "httpStatus": 200,
+      "code": 200,
+      "success": true,
+      "codeLocations": [
+        {
+          "id": "328937da8dfaed87",
+          "systemCode": "LQ13.03",
+          "projectCode": "zhituo",
+          "serviceCode": "zhituo",
+          "serviceType": "FRONTEND",
+          "localPath": "/Users/natasha/Downloads"
+        }
+      ],
+      "issues": [
+        {
+          "type": "KNOWLEDGE_PENDING",
+          "target": "328937da8e0fed87"
+        }
+      ]
+    },
+    {
+      "name": "model_component",
+      "path": "/api/v1/model-context/component",
+      "httpStatus": 200,
+      "code": 200,
+      "success": true,
+      "codeLocations": [],
+      "issues": [
+        {
+          "type": "KNOWLEDGE_PENDING",
+          "target": "328937da8e0fed87"
+        }
+      ]
+    },
+    {
+      "name": "model_details_with_interface",
+      "path": "/api/v1/model-context/details",
+      "httpStatus": 200,
+      "code": 200,
+      "success": true,
+      "codeLocations": [
+        {
+          "id": "328937da8dfaed87",
+          "serviceCode": "zhituo",
+          "serviceType": "FRONTEND",
+          "localPath": "/Users/natasha/Downloads"
+        },
+        {
+          "id": "328937da8dfbed87",
+          "serviceCode": "zhituo_stat",
+          "serviceType": "BACKEND",
+          "localPath": "/Users/natasha/data/code/zhituo"
+        }
+      ],
+      "issues": [
+        {
+          "type": "KNOWLEDGE_PENDING",
+          "target": "328937da8e0fed87"
+        }
+      ]
+    },
+    {
+      "name": "model_details_without_interface",
+      "path": "/api/v1/model-context/details",
+      "httpStatus": 200,
+      "code": 200,
+      "success": true,
+      "codeLocations": [
+        {
+          "id": "328937da8dfaed87",
+          "serviceCode": "zhituo",
+          "serviceType": "FRONTEND",
+          "localPath": "/Users/natasha/Downloads"
+        }
+      ],
+      "issues": [
+        {
+          "type": "KNOWLEDGE_PENDING",
+          "target": "328937da8e0fed87"
+        }
+      ]
+    }
+  ],
+  "passed": 5
+}

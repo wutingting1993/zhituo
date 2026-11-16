@@ -7,6 +7,9 @@ import lombok.Builder;
 @Setter
 @Builder
 public class KnowledgeCondition {
+    private String id;
+    private String targetType;
+    private String targetId;
     private boolean unconditional;
     private String condition;
     private String exception;

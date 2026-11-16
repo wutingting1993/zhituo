@@ -1,0 +1,347 @@
+[
+  {
+    "name": "seven branches truncated to five",
+    "actual": [
+      {
+        "id": "3288060f50eaed87",
+        "name": "来源排名3288060f50eaed87",
+        "planCount": 7,
+        "myCount": 3,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5102ed87",
+        "name": "来源排名3288060f5102ed87",
+        "planCount": 6,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5117ed87",
+        "name": "来源排名3288060f5117ed87",
+        "planCount": 5,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5129ed87",
+        "name": "来源排名3288060f5129ed87",
+        "planCount": 4,
+        "myCount": 2,
+        "branchCount": 1,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5138ed87",
+        "name": "来源排名3288060f5138ed87",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "independent descending counts",
+    "actual": [
+      {
+        "id": "3288060f50eaed87",
+        "name": "来源排名3288060f50eaed87",
+        "planCount": 7,
+        "myCount": 3,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5102ed87",
+        "name": "来源排名3288060f5102ed87",
+        "planCount": 6,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5117ed87",
+        "name": "来源排名3288060f5117ed87",
+        "planCount": 5,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5129ed87",
+        "name": "来源排名3288060f5129ed87",
+        "planCount": 4,
+        "myCount": 2,
+        "branchCount": 1,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5138ed87",
+        "name": "来源排名3288060f5138ed87",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "tie at cutoff uses ascending id",
+    "actual": [
+      {
+        "id": "3288060f50eaed87",
+        "name": "来源排名3288060f50eaed87",
+        "planCount": 7,
+        "myCount": 3,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5102ed87",
+        "name": "来源排名3288060f5102ed87",
+        "planCount": 6,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5117ed87",
+        "name": "来源排名3288060f5117ed87",
+        "planCount": 5,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5129ed87",
+        "name": "来源排名3288060f5129ed87",
+        "planCount": 4,
+        "myCount": 2,
+        "branchCount": 1,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5138ed87",
+        "name": "来源排名3288060f5138ed87",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "three source counts",
+    "actual": [
+      {
+        "id": "3288060f50eaed87",
+        "name": "来源排名3288060f50eaed87",
+        "planCount": 7,
+        "myCount": 3,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5102ed87",
+        "name": "来源排名3288060f5102ed87",
+        "planCount": 6,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5117ed87",
+        "name": "来源排名3288060f5117ed87",
+        "planCount": 5,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5129ed87",
+        "name": "来源排名3288060f5129ed87",
+        "planCount": 4,
+        "myCount": 2,
+        "branchCount": 1,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5138ed87",
+        "name": "来源排名3288060f5138ed87",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "stable ordering 1",
+    "actual": [
+      {
+        "id": "3288060f50eaed87",
+        "name": "来源排名3288060f50eaed87",
+        "planCount": 7,
+        "myCount": 3,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5102ed87",
+        "name": "来源排名3288060f5102ed87",
+        "planCount": 6,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5117ed87",
+        "name": "来源排名3288060f5117ed87",
+        "planCount": 5,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5129ed87",
+        "name": "来源排名3288060f5129ed87",
+        "planCount": 4,
+        "myCount": 2,
+        "branchCount": 1,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5138ed87",
+        "name": "来源排名3288060f5138ed87",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "stable ordering 2",
+    "actual": [
+      {
+        "id": "3288060f50eaed87",
+        "name": "来源排名3288060f50eaed87",
+        "planCount": 7,
+        "myCount": 3,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5102ed87",
+        "name": "来源排名3288060f5102ed87",
+        "planCount": 6,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5117ed87",
+        "name": "来源排名3288060f5117ed87",
+        "planCount": 5,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5129ed87",
+        "name": "来源排名3288060f5129ed87",
+        "planCount": 4,
+        "myCount": 2,
+        "branchCount": 1,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5138ed87",
+        "name": "来源排名3288060f5138ed87",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "stable ordering 3",
+    "actual": [
+      {
+        "id": "3288060f50eaed87",
+        "name": "来源排名3288060f50eaed87",
+        "planCount": 7,
+        "myCount": 3,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5102ed87",
+        "name": "来源排名3288060f5102ed87",
+        "planCount": 6,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 2
+      },
+      {
+        "id": "3288060f5117ed87",
+        "name": "来源排名3288060f5117ed87",
+        "planCount": 5,
+        "myCount": 2,
+        "branchCount": 2,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5129ed87",
+        "name": "来源排名3288060f5129ed87",
+        "planCount": 4,
+        "myCount": 2,
+        "branchCount": 1,
+        "presidentCount": 1
+      },
+      {
+        "id": "3288060f5138ed87",
+        "name": "来源排名3288060f5138ed87",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "excluded branch selected",
+    "actual": [
+      {
+        "id": "3288060f5150ed87",
+        "name": "来源排名3288060f5150ed87",
+        "planCount": 1,
+        "myCount": 1,
+        "branchCount": 0,
+        "presidentCount": 0
+      }
+    ]
+  },
+  {
+    "name": "excluded organization selected",
+    "actual": [
+      {
+        "id": "3288060f5150ed87",
+        "name": "来源排名3288060f5150ed87",
+        "planCount": 1,
+        "myCount": 1,
+        "branchCount": 0,
+        "presidentCount": 0
+      }
+    ]
+  },
+  {
+    "name": "filter no matches",
+    "actual": []
+  }
+]

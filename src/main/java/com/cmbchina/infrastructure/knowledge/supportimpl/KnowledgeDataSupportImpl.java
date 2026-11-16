@@ -21,6 +21,11 @@ public class KnowledgeDataSupportImpl implements KnowledgeDataSupport {
         return mapper.components(query).stream().map(KnowledgeDataConverter::convert).collect(java.util.stream.Collectors.toList());
     }
 
+    /** 读取页面内登记的组件名称。 */
+    public java.util.List<KnowledgeItem> pageComponents(KnowledgeQuery query) {
+        return mapper.pageComponents(query).stream().map(KnowledgeDataConverter::convert).collect(java.util.stream.Collectors.toList());
+    }
+
     /** 读取知识关联数据。 */
     public java.util.List<KnowledgeItem> scopes(KnowledgeQuery query) {
         return mapper.scopes(query).stream().map(KnowledgeDataConverter::convert).collect(java.util.stream.Collectors.toList());
@@ -64,5 +69,25 @@ public class KnowledgeDataSupportImpl implements KnowledgeDataSupport {
     /** 查询其他组件的知识关系。 */
     public java.util.List<KnowledgeItem> relatedComponents(KnowledgeQuery query) {
         return mapper.relatedComponents(query).stream().map(KnowledgeDataConverter::convert).collect(java.util.stream.Collectors.toList());
+    }
+
+    /** 读取模型补充资料。 */
+    public java.util.List<KnowledgeItem> knowledgeByIds(KnowledgeQuery query) {
+        return mapper.knowledgeByIds(query).stream().map(KnowledgeDataConverter::convert).collect(java.util.stream.Collectors.toList());
+    }
+
+    /** 读取模型补充资料。 */
+    public java.util.List<KnowledgeItem> interfacesByIds(KnowledgeQuery query) {
+        return mapper.interfacesByIds(query).stream().map(KnowledgeDataConverter::convert).collect(java.util.stream.Collectors.toList());
+    }
+
+    /** 读取组件交互。 */
+    public java.util.List<com.cmbchina.domain.knowledge.model.ComponentInteraction> interactions(KnowledgeQuery query) {
+        return mapper.interactions(query).stream().map(KnowledgeDataConverter::convert).collect(java.util.stream.Collectors.toList());
+    }
+
+    /** 读取组件有向联动。 */
+    public java.util.List<com.cmbchina.domain.knowledge.model.ComponentRelation> componentRelations(KnowledgeQuery query) {
+        return mapper.componentRelations(query).stream().map(KnowledgeDataConverter::convert).collect(java.util.stream.Collectors.toList());
     }
 }

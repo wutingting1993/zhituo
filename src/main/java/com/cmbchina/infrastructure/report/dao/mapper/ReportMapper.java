@@ -17,6 +17,22 @@ import org.apache.ibatis.annotations.Param;
 /** 报表只读分阶段查询。 */
 @Mapper
 public interface ReportMapper {
+    /** 技能参与度聚合。 */
+    List<com.cmbchina.infrastructure.report.dao.po.ReportAggregatePo> participation(@Param("query") ReportQuery query);
+
+    /** 数据库按固定维度聚合。 */
+    List<com.cmbchina.infrastructure.report.dao.po.ReportAggregatePo> aggregates(@Param("query") ReportQuery query,
+            @Param("dimension") com.cmbchina.domain.report.model.ReportDimension dimension, @Param("planOnly") boolean planOnly,
+            @Param("executedOnly") boolean executedOnly);
+
+    /** 只读取展示所需技能关系。 */
+    List<com.cmbchina.infrastructure.report.dao.po.ReportAggregatePo> aggregateOptions(@Param("query") ReportQuery query,
+            @Param("dimension") com.cmbchina.domain.report.model.ReportDimension dimension, @Param("planOnly") boolean planOnly,
+            @Param("executedOnly") boolean executedOnly);
+
+    /** 直接聚合顶部统计，不返回客户明细。 */
+    com.cmbchina.infrastructure.report.dao.po.ReportSummaryPo summary(@Param("query") ReportQuery query);
+
     /** 只取机构去重结果，不读取人员明细。 */
     List<ReportOrganizationPo> filterOrganizations();
 

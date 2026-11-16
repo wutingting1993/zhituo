@@ -8,11 +8,8 @@ import com.cmbchina.application.report.api.dto.ReportOption;
 import com.cmbchina.application.report.api.dto.ReportBranchOption;
 import com.cmbchina.application.report.api.dto.MostUsedSkillResponse;
 import com.cmbchina.domain.report.model.ReportQuery;
-import com.cmbchina.domain.report.model.ReportExecution;
-import com.cmbchina.domain.report.model.ReportRecommendation;
 import com.cmbchina.domain.report.model.ReportStatistics;
 import com.cmbchina.domain.report.model.MostUsedSkill;
-import com.cmbchina.domain.report.service.ReportStatisticsService;
 import com.cmbchina.domain.report.support.ReportDataSupport;
 import com.cmbchina.infrastructure.common.ResponseEnum;
 import com.cmbchina.infrastructure.common.exception.BusinessException;
@@ -31,8 +28,6 @@ public class ReportApplicationServiceImpl implements ReportApplicationService {
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
     @Autowired
     private ReportDataSupport data;
-    @Autowired
-    private ReportStatisticsService statistics;
 
     @Override
     public ReportFiltersResponse filters(ReportFilterRequest request) {
@@ -65,9 +60,7 @@ public class ReportApplicationServiceImpl implements ReportApplicationService {
     }
 
     private ReportStatistics summarize(ReportQuery query) {
-        List<ReportExecution> executions = data.findExecutions(query, data.findRelations(query));
-        List<ReportRecommendation> recommendations = data.findRecommendations(executions);
-        return statistics.summarize(executions, recommendations, data.findContacts(recommendations));
+        return data.summarize(query);
     }
 
     private ReportSummaryResponse response(ReportStatistics current, ReportStatistics benchmark) {

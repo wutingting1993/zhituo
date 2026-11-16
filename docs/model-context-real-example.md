@@ -1,0 +1,1070 @@
+# 模型上下文接口真实出入参
+
+记录日期：2026-11-13。真实HTTP查询结果；现有前端接口保持不变。本模型接口不包含字段类型或首包样例，两个口径字段直接读取数据库列，未自动摘要。
+
+## 首包
+
+POST /api/v1/model-context/component，Content-Type: application/json。
+
+### 入参
+
+```json
+{
+  "systemCode": "LQ13.03",
+  "projectCode": "zhituo",
+  "pagePath": "/Users/natasha/Downloads/智拓报表.html",
+  "componentId": "kpiStrip",
+  "interfaces": [
+    {
+      "method": "POST",
+      "address": "/zhituo_stat/api/v1/reports/summary"
+    }
+  ]
+}
+```
+
+### 完整出参
+
+```json
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "systemCode": "LQ13.03",
+    "projectCode": "zhituo",
+    "page": {
+      "path": "/Users/natasha/Downloads/智拓报表.html",
+      "name": "智拓报表",
+      "description": "提供规划与执行报表的检索和统计分析，可按日期、分行、支行、客户经理等级及技能查看相关数据。"
+    },
+    "component": {
+      "id": "328937da8dfded87",
+      "componentId": "kpiStrip",
+      "name": "顶部指标统计",
+      "description": "位于检索框下方，通过统计接口获取当前筛选范围的规划数、技能数、任务或客户方案数、推荐客户数、方案查看率和接触率，并提供覆盖支行、人均数量、最广使用技能及机构基准比较。"
+    },
+    "businessKnowledge": [
+      {
+        "id": "328937da8e01ed87",
+        "title": "顶部指标业务用途",
+        "content": "检索框下的指标统计组件ID为kpiStrip，数据通过统计接口获取。统计内容包括生效中规划、涉及技能、当日或周期任务数、推荐客户数、方案被查看率和接触率，以及覆盖支行、使用人数最多技能、人均数量和机构基准差值。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": true
+          }
+        ]
+      },
+      {
+        "id": "328937da8e02ed87",
+        "title": "顶部指标检索行为",
+        "content": "指标统计按当前日期区间、分行、支行、客户经理等级和技能条件调用接口获取结果。单日与多日分别对应当日和周期统计；机构基准用于比较当前范围与所选分行整体水平。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": true
+          }
+        ]
+      },
+      {
+        "id": "328937da8e0fed87",
+        "title": "页面业务说明与接口口径差异",
+        "content": "页面业务说明与当前后端契约存在待确认的口径差异：页面生效中规划说明按当前状态、不受日期影响且按规划负责人机构归集；后端按排程及执行范围、目标客户经理机构，不额外限制生效状态。页面任务数解释为下发任务，后端taskCount表示成功推荐客户方案数，另有scheduledTaskCount等任务指标。页面接触解释为有效接通、到店或线上互动，后端按接触明细关联去重，不附加有效接通条件。页面数据按接口获取，聚合与去重以接口业务契约为依据。后续需求澄清应明确这些业务口径的取舍，不自动修改现有实现。",
+        "status": "PENDING",
+        "conditions": [
+          {
+            "unconditional": true,
+            "exception": "页面业务说明与当前后端契约并存；不得按来源日期、层级或代码事实自动裁决业务意图。"
+          }
+        ]
+      },
+      {
+        "id": "328940e00584ed87",
+        "title": "统计日期与执行范围",
+        "content": "所选排程日期含首尾。排程表示计划安排，不等于已经执行；常规指标只统计已执行范围，任务执行补充指标包含未执行任务。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": false,
+            "condition": "应用于当前summary顶部统计；不自动推广到未声明遵循该规则的其他模块。"
+          }
+        ]
+      },
+      {
+        "id": "328940e0058aed87",
+        "title": "顶部指标筛选与去重",
+        "content": "机构按目标客户经理归属；分行、支行、等级单选，技能多选取或。各范围独立去重，不能累加每日或子维度数值替代整体。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": false,
+            "condition": "仅适用于本页面顶部指标统计和summary接口，其他模块以各自口径为准。"
+          }
+        ]
+      },
+      {
+        "id": "328940e00590ed87",
+        "title": "规划和覆盖支行业务口径",
+        "content": "规划数为当前执行范围的规划去重数，覆盖支行按分行和支行组合去重。当前接口不额外按生效状态或有效期筛选，不套用规划覆盖模块的三类来源限制。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": true
+          }
+        ]
+      },
+      {
+        "id": "328940e00596ed87",
+        "title": "技能数量与最广使用技能",
+        "content": "技能数按技能编号去重；使用人数最多技能按客户经理去重人数排名，人数并列按技能编号升序，无数据为空。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": true
+          }
+        ]
+      },
+      {
+        "id": "328940e0059ced87",
+        "title": "任务与客户方案计量口径",
+        "content": "成功推荐客户方案按客户方案计数，与任务数量单位不同。应执行=已执行+待执行；失败也属于已执行。待执行不区分未来未到期与到期未执行。客户方案数可以大于任务数。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": true
+          }
+        ]
+      },
+      {
+        "id": "328940e005a2ed87",
+        "title": "推荐客户与人均口径",
+        "content": "推荐客户按当前范围整体去重，跨技能同一客户只计一次；人均客户方案数和人均推荐客户数分别除以执行客户经理人数，无人员时为空。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": true
+          }
+        ]
+      },
+      {
+        "id": "328940e005a8ed87",
+        "title": "方案查看率业务口径",
+        "content": "查看率为已查看方案客户数除以推荐客户数；客户在当前范围去重，推荐客户为0时比率为空。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": true
+          }
+        ]
+      },
+      {
+        "id": "328940e005aeed87",
+        "title": "接触率业务口径",
+        "content": "接触率以推荐客户数为分母，当前接口按关联接触明细中的客户去重，未附加接通等有效性条件，允许超过100%。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": true
+          }
+        ]
+      },
+      {
+        "id": "328940e005b4ed87",
+        "title": "机构基准与差值业务口径",
+        "content": "基准保留日期及分行，移除支行、等级、技能；按整体去重数据计算，不平均支行率。差值为当前率减机构基准率，单位百分点。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": true
+          }
+        ]
+      },
+      {
+        "id": "328940e005baed87",
+        "title": "数值单位与空值约定",
+        "content": "数量无数据为0，分母为0时比率为空。比率返回百分比数值，百分比和百分点差值保留两位，人均值取整数。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": true
+          }
+        ]
+      }
+    ],
+    "technicalKnowledge": [
+      {
+        "id": "328937da8e0eed87",
+        "title": "顶部统计SQL实现",
+        "status": "CONFIRMED"
+      },
+      {
+        "id": "328940e00587ed87",
+        "title": "执行记录选择",
+        "status": "CONFIRMED"
+      },
+      {
+        "id": "328940e0058ded87",
+        "title": "筛选参数处理",
+        "status": "CONFIRMED"
+      },
+      {
+        "id": "328940e00593ed87",
+        "title": "规划与机构去重实现",
+        "status": "CONFIRMED"
+      },
+      {
+        "id": "328940e00599ed87",
+        "title": "技能名称冲突处理",
+        "status": "CONFIRMED"
+      },
+      {
+        "id": "328940e0059fed87",
+        "title": "任务及成功方案实现",
+        "status": "CONFIRMED"
+      },
+      {
+        "id": "328940e005a5ed87",
+        "title": "推荐客户与人均实现",
+        "status": "CONFIRMED"
+      },
+      {
+        "id": "328940e005abed87",
+        "title": "方案查看率计算实现",
+        "status": "CONFIRMED"
+      },
+      {
+        "id": "328940e005b1ed87",
+        "title": "接触明细关联实现",
+        "status": "CONFIRMED"
+      },
+      {
+        "id": "328940e005b7ed87",
+        "title": "机构基准差值实现",
+        "status": "CONFIRMED"
+      },
+      {
+        "id": "328940e005bded87",
+        "title": "数值精度实现",
+        "status": "CONFIRMED"
+      }
+    ],
+    "interfaces": [
+      {
+        "id": "328937da8e00ed87",
+        "name": "顶部指标统计",
+        "description": "获取当前筛选范围的顶部指标及机构基准",
+        "serviceCode": "zhituo_stat",
+        "method": "POST",
+        "path": "/api/v1/reports/summary",
+        "inputs": [
+          {
+            "location": "BODY",
+            "fields": [
+              {
+                "name": "bbkId",
+                "path": "bbkId",
+                "businessRule": "分行编号；请求未传、null或空字符串表示全部",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "name": "orgId",
+                "path": "orgId",
+                "businessRule": "支行编号；请求未传、null或空字符串表示全部",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "name": "level",
+                "path": "level",
+                "businessRule": "客户经理等级，使用数据库实际值",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "name": "skillIds",
+                "path": "skillIds",
+                "businessRule": "技能编号数组，多选取或；未传、null或空数组表示全部",
+                "technicalRule": "数组元素为技能编号，多个编号取或；省略、null、空数组表示全部。",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "name": "startDate",
+                "path": "startDate",
+                "validation": "必填，yyyy-MM-dd，含当日",
+                "businessRule": "排程开始日期，yyyy-MM-dd，含当日",
+                "technicalRule": "日期格式yyyy-MM-dd，表示排程日期。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "endDate",
+                "path": "endDate",
+                "validation": "必填，yyyy-MM-dd，含当日，不得早于startDate",
+                "businessRule": "排程结束日期，yyyy-MM-dd，含当日，不得早于开始日期",
+                "technicalRule": "日期格式yyyy-MM-dd，表示排程日期。",
+                "required": true,
+                "nullable": false
+              }
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "name": "code",
+            "path": "code",
+            "location": "BODY",
+            "businessRule": "处理结果业务码",
+            "technicalRule": "业务码，成功为200。",
+            "required": true,
+            "nullable": false
+          },
+          {
+            "name": "message",
+            "path": "message",
+            "location": "BODY",
+            "businessRule": "处理结果说明",
+            "technicalRule": "结果说明。",
+            "required": true,
+            "nullable": false
+          },
+          {
+            "name": "success",
+            "path": "success",
+            "location": "BODY",
+            "businessRule": "是否处理成功",
+            "technicalRule": "成功为true。",
+            "required": true,
+            "nullable": false
+          },
+          {
+            "name": "data",
+            "path": "data",
+            "location": "BODY",
+            "businessRule": "当前筛选范围的顶部统计结果",
+            "technicalRule": "成功时为下列业务对象，失败时为null。",
+            "required": true,
+            "nullable": true,
+            "children": [
+              {
+                "name": "planCount",
+                "path": "data.planCount",
+                "location": "BODY",
+                "businessRule": "规划数量",
+                "technicalRule": "规划数，按规划编号去重。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "skillCount",
+                "path": "data.skillCount",
+                "location": "BODY",
+                "businessRule": "涉及技能数量",
+                "technicalRule": "技能数，按技能编号去重。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "taskCount",
+                "path": "data.taskCount",
+                "location": "BODY",
+                "businessRule": "成功推荐客户方案数量",
+                "technicalRule": "任务数；成功推荐客户方案数，仅统计plan类型成功最新结果，排除空客户标识，按(trace_id,custuid)去重。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "scheduledTaskCount",
+                "path": "data.scheduledTaskCount",
+                "location": "BODY",
+                "businessRule": "应执行任务数量",
+                "technicalRule": "应执行任务数；按目标客户经理工号、规划编号、技能编号、排程日期、任务编号去重，包含未执行任务；无数据为0。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "executedTaskCount",
+                "path": "data.executedTaskCount",
+                "location": "BODY",
+                "businessRule": "已执行任务数量，包含失败任务",
+                "technicalRule": "已执行任务数；应执行任务中存在执行记录，失败也算已执行；无数据为0。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "pendingTaskCount",
+                "path": "data.pendingTaskCount",
+                "location": "BODY",
+                "businessRule": "待执行任务数量",
+                "technicalRule": "待执行任务数；应执行任务中无执行记录，不区分未来和已到期；无数据为0。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "failedTaskCount",
+                "path": "data.failedTaskCount",
+                "location": "BODY",
+                "businessRule": "已执行任务中的失败任务数量",
+                "technicalRule": "失败任务数；已执行任务最新记录的status不为success；无数据为0。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "recommendedCustomerCount",
+                "path": "data.recommendedCustomerCount",
+                "location": "BODY",
+                "businessRule": "去重推荐客户数量",
+                "technicalRule": "推荐客户数，非空custuid在当前范围整体去重。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "coveredSubBranchCount",
+                "path": "data.coveredSubBranchCount",
+                "location": "BODY",
+                "businessRule": "覆盖支行数量",
+                "technicalRule": "覆盖支行数，按(分行编号,支行编号)去重。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "mostUsedSkill",
+                "path": "data.mostUsedSkill",
+                "location": "BODY",
+                "businessRule": "使用人数最多的技能",
+                "technicalRule": "使用人数最多的技能；并列按技能编号升序取第一项，无数据为null。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true,
+                "children": [
+                  {
+                    "name": "id",
+                    "path": "data.mostUsedSkill.id",
+                    "location": "BODY",
+                    "businessRule": "技能编号",
+                    "technicalRule": "编号，按编号识别对象。父对象非null时该字段适用。",
+                    "required": true,
+                    "nullable": true
+                  },
+                  {
+                    "name": "name",
+                    "path": "data.mostUsedSkill.name",
+                    "location": "BODY",
+                    "businessRule": "技能名称",
+                    "technicalRule": "展示名称。父对象非null时该字段适用。",
+                    "required": true,
+                    "nullable": true
+                  },
+                  {
+                    "name": "userCount",
+                    "path": "data.mostUsedSkill.userCount",
+                    "location": "BODY",
+                    "businessRule": "使用该技能的客户经理人数",
+                    "technicalRule": "该技能使用人数，按工号去重。父对象非null时该字段适用。64位整数。",
+                    "required": true,
+                    "nullable": false
+                  }
+                ]
+              },
+              {
+                "name": "averageTaskCount",
+                "path": "data.averageTaskCount",
+                "location": "BODY",
+                "businessRule": "人均成功推荐客户方案数量",
+                "technicalRule": "人均任务数，四舍五入为整数，无人员为null。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "averageRecommendedCustomerCount",
+                "path": "data.averageRecommendedCustomerCount",
+                "location": "BODY",
+                "businessRule": "人均推荐客户数量",
+                "technicalRule": "人均推荐客户数，四舍五入为整数，无人员为null。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "viewRate",
+                "path": "data.viewRate",
+                "location": "BODY",
+                "businessRule": "方案被查看客户占推荐客户的比例",
+                "technicalRule": "方案被查看率，百分比数值。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "contactRate",
+                "path": "data.contactRate",
+                "location": "BODY",
+                "businessRule": "接触客户占推荐客户的比例",
+                "technicalRule": "接触率，百分比数值，可能超过100。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "benchmarkViewRate",
+                "path": "data.benchmarkViewRate",
+                "location": "BODY",
+                "businessRule": "机构方案查看基准率",
+                "technicalRule": "机构方案查看基准率。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "benchmarkContactRate",
+                "path": "data.benchmarkContactRate",
+                "location": "BODY",
+                "businessRule": "机构接触基准率",
+                "technicalRule": "机构接触基准率。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "viewRateDifference",
+                "path": "data.viewRateDifference",
+                "location": "BODY",
+                "businessRule": "当前查看率与机构基准的差值",
+                "technicalRule": "查看率减机构基准率，单位百分点。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "contactRateDifference",
+                "path": "data.contactRateDifference",
+                "location": "BODY",
+                "businessRule": "当前接触率与机构基准的差值",
+                "technicalRule": "接触率减机构基准率，单位百分点。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              }
+            ]
+          }
+        ],
+        "rules": [
+          {
+            "knowledgeId": "328937da8e0eed87",
+            "content": "当前顶部统计由MySQL显式JOIN和非递归CTE完成执行范围选择、去重和聚合，仅向Java返回汇总结果。Java计算比率、精确差值并组装响应；当前范围与机构基准独立聚合。执行时间并列时按执行主键倒序取一条。已有功能对照记录不代表所有后续改动已验证，也不代表已达到性能预算。",
+            "status": "CONFIRMED",
+            "conditions": [
+              {
+                "unconditional": true
+              }
+            ]
+          },
+          {
+            "knowledgeId": "328937da8e0fed87"
+          },
+          {
+            "knowledgeId": "328940e00584ed87"
+          },
+          {
+            "knowledgeId": "328940e00587ed87",
+            "content": "实际执行日期匹配execute_day且不早于规划创建时间。每任务每天取最新执行记录；时间并列按执行主键倒序。",
+            "status": "CONFIRMED",
+            "conditions": [
+              {
+                "unconditional": false,
+                "condition": "应用于当前summary顶部统计；不自动推广到未声明遵循该规则的其他模块。"
+              }
+            ]
+          },
+          {
+            "knowledgeId": "328940e0058aed87"
+          },
+          {
+            "knowledgeId": "328940e0058ded87",
+            "content": "bbkId、orgId、level省略、null、空字符串视为未筛选；skillIds省略、null、空数组表示全部。不校验分支行归属，正常执行查询。",
+            "status": "CONFIRMED",
+            "conditions": [
+              {
+                "unconditional": false,
+                "condition": "仅适用于本页面顶部指标统计和summary接口，其他模块以各自口径为准。"
+              }
+            ]
+          },
+          {
+            "knowledgeId": "328940e00590ed87"
+          },
+          {
+            "knowledgeId": "328940e00593ed87",
+            "content": "planCount按规划编号去重；coveredSubBranchCount按(bbkId,orgId)组合去重；统计归属来自目标客户经理，不使用负责人机构。",
+            "status": "CONFIRMED",
+            "conditions": [
+              {
+                "unconditional": true
+              }
+            ]
+          },
+          {
+            "knowledgeId": "328940e00596ed87"
+          },
+          {
+            "knowledgeId": "328940e00599ed87",
+            "content": "同一技能编号出现多个名称时，当前SQL选取名称最小值，仅影响名称展示，不作为新的业务标识。",
+            "status": "CONFIRMED",
+            "conditions": [
+              {
+                "unconditional": true
+              }
+            ]
+          },
+          {
+            "knowledgeId": "328940e0059ced87"
+          },
+          {
+            "knowledgeId": "328940e0059fed87",
+            "content": "taskCount筛选result_type=plan、最新成功标记=1、结果状态SUC且custuid非空，按(trace_id,custuid)去重。scheduledTaskCount按目标工号、规划、技能、排程日、任务去重；存在执行即executedTaskCount，无执行为pendingTaskCount，最新status非success为failedTaskCount。",
+            "status": "CONFIRMED",
+            "conditions": [
+              {
+                "unconditional": true
+              }
+            ]
+          },
+          {
+            "knowledgeId": "328940e005a2ed87"
+          },
+          {
+            "knowledgeId": "328940e005a5ed87",
+            "content": "recommendedCustomerCount按成功推荐结果中非空custuid去重；averageTaskCount=taskCount/userCount，averageRecommendedCustomerCount=recommendedCustomerCount/userCount。Java以BigDecimal及HALF_UP取整数。",
+            "status": "CONFIRMED",
+            "conditions": [
+              {
+                "unconditional": true
+              }
+            ]
+          },
+          {
+            "knowledgeId": "328940e005a8ed87"
+          },
+          {
+            "knowledgeId": "328940e005abed87",
+            "content": "viewRate将is_read=1执行对应的成功推荐客户去重数除以recommendedCustomerCount并乘100。",
+            "status": "CONFIRMED",
+            "conditions": [
+              {
+                "unconditional": true
+              }
+            ]
+          },
+          {
+            "knowledgeId": "328940e005aeed87"
+          },
+          {
+            "knowledgeId": "328940e005b1ed87",
+            "content": "接触通过click_event_id关联点击；事件为button_click或preview_view且template_type=sub。trace_id匹配执行，customer_id匹配推荐客户，点击与执行同日；cust_uid忽略NULL保留空字符串，不额外等于推荐客户标识；contactRate=接触客户去重数/推荐客户数×100。",
+            "status": "CONFIRMED",
+            "conditions": [
+              {
+                "unconditional": true
+              }
+            ]
+          },
+          {
+            "knowledgeId": "328940e005b4ed87"
+          },
+          {
+            "knowledgeId": "328940e005b7ed87",
+            "content": "benchmarkViewRate、benchmarkContactRate独立聚合计算；viewRateDifference及contactRateDifference使用双方未舍入值相减，任一分母为0则差值为null。",
+            "status": "CONFIRMED",
+            "conditions": [
+              {
+                "unconditional": true
+              }
+            ]
+          },
+          {
+            "knowledgeId": "328940e005baed87"
+          },
+          {
+            "knowledgeId": "328940e005bded87",
+            "content": "Java使用BigDecimal与HALF_UP；JSON数值不保证尾随零，差值以未舍入值计算后舍入，不使用已舍入展示值。",
+            "status": "CONFIRMED",
+            "conditions": [
+              {
+                "unconditional": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "type": "KNOWLEDGE_PENDING",
+        "target": "328937da8e0fed87"
+      }
+    ]
+  },
+  "success": true
+}
+```
+
+## 批量补充
+
+POST /api/v1/model-context/details，本例读取一条技术知识，并将同一接口重复请求的inputs/outputs合并返回。
+
+### 入参
+
+```json
+{
+  "systemCode": "LQ13.03",
+  "projectCode": "zhituo",
+  "pagePath": "/Users/natasha/Downloads/智拓报表.html",
+  "componentId": "kpiStrip",
+  "knowledgeIds": [
+    "328937da8e0eed87",
+    "328937da8e0eed87"
+  ],
+  "interfaces": [
+    {
+      "id": "328937da8e00ed87",
+      "parts": [
+        "inputs",
+        "inputs"
+      ]
+    },
+    {
+      "id": "328937da8e00ed87",
+      "parts": [
+        "outputs"
+      ]
+    }
+  ]
+}
+```
+
+### 完整出参
+
+```json
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "knowledge": [
+      {
+        "id": "328937da8e0eed87",
+        "title": "顶部统计SQL实现",
+        "content": "当前顶部统计由MySQL显式JOIN和非递归CTE完成执行范围选择、去重和聚合，仅向Java返回汇总结果。Java计算比率、精确差值并组装响应；当前范围与机构基准独立聚合。执行时间并列时按执行主键倒序取一条。已有功能对照记录不代表所有后续改动已验证，也不代表已达到性能预算。",
+        "status": "CONFIRMED",
+        "conditions": [
+          {
+            "unconditional": true
+          }
+        ]
+      }
+    ],
+    "interfaces": [
+      {
+        "id": "328937da8e00ed87",
+        "name": "顶部指标统计",
+        "description": "获取当前筛选范围的顶部指标及机构基准",
+        "serviceCode": "zhituo_stat",
+        "method": "POST",
+        "path": "/api/v1/reports/summary",
+        "inputs": [
+          {
+            "location": "BODY",
+            "fields": [
+              {
+                "name": "bbkId",
+                "path": "bbkId",
+                "businessRule": "分行编号；请求未传、null或空字符串表示全部",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "name": "orgId",
+                "path": "orgId",
+                "businessRule": "支行编号；请求未传、null或空字符串表示全部",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "name": "level",
+                "path": "level",
+                "businessRule": "客户经理等级，使用数据库实际值",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "name": "skillIds",
+                "path": "skillIds",
+                "businessRule": "技能编号数组，多选取或；未传、null或空数组表示全部",
+                "technicalRule": "数组元素为技能编号，多个编号取或；省略、null、空数组表示全部。",
+                "required": false,
+                "nullable": true
+              },
+              {
+                "name": "startDate",
+                "path": "startDate",
+                "validation": "必填，yyyy-MM-dd，含当日",
+                "businessRule": "排程开始日期，yyyy-MM-dd，含当日",
+                "technicalRule": "日期格式yyyy-MM-dd，表示排程日期。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "endDate",
+                "path": "endDate",
+                "validation": "必填，yyyy-MM-dd，含当日，不得早于startDate",
+                "businessRule": "排程结束日期，yyyy-MM-dd，含当日，不得早于开始日期",
+                "technicalRule": "日期格式yyyy-MM-dd，表示排程日期。",
+                "required": true,
+                "nullable": false
+              }
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "name": "code",
+            "path": "code",
+            "location": "BODY",
+            "businessRule": "处理结果业务码",
+            "technicalRule": "业务码，成功为200。",
+            "required": true,
+            "nullable": false
+          },
+          {
+            "name": "message",
+            "path": "message",
+            "location": "BODY",
+            "businessRule": "处理结果说明",
+            "technicalRule": "结果说明。",
+            "required": true,
+            "nullable": false
+          },
+          {
+            "name": "success",
+            "path": "success",
+            "location": "BODY",
+            "businessRule": "是否处理成功",
+            "technicalRule": "成功为true。",
+            "required": true,
+            "nullable": false
+          },
+          {
+            "name": "data",
+            "path": "data",
+            "location": "BODY",
+            "businessRule": "当前筛选范围的顶部统计结果",
+            "technicalRule": "成功时为下列业务对象，失败时为null。",
+            "required": true,
+            "nullable": true,
+            "children": [
+              {
+                "name": "planCount",
+                "path": "data.planCount",
+                "location": "BODY",
+                "businessRule": "规划数量",
+                "technicalRule": "规划数，按规划编号去重。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "skillCount",
+                "path": "data.skillCount",
+                "location": "BODY",
+                "businessRule": "涉及技能数量",
+                "technicalRule": "技能数，按技能编号去重。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "taskCount",
+                "path": "data.taskCount",
+                "location": "BODY",
+                "businessRule": "成功推荐客户方案数量",
+                "technicalRule": "任务数；成功推荐客户方案数，仅统计plan类型成功最新结果，排除空客户标识，按(trace_id,custuid)去重。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "scheduledTaskCount",
+                "path": "data.scheduledTaskCount",
+                "location": "BODY",
+                "businessRule": "应执行任务数量",
+                "technicalRule": "应执行任务数；按目标客户经理工号、规划编号、技能编号、排程日期、任务编号去重，包含未执行任务；无数据为0。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "executedTaskCount",
+                "path": "data.executedTaskCount",
+                "location": "BODY",
+                "businessRule": "已执行任务数量，包含失败任务",
+                "technicalRule": "已执行任务数；应执行任务中存在执行记录，失败也算已执行；无数据为0。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "pendingTaskCount",
+                "path": "data.pendingTaskCount",
+                "location": "BODY",
+                "businessRule": "待执行任务数量",
+                "technicalRule": "待执行任务数；应执行任务中无执行记录，不区分未来和已到期；无数据为0。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "failedTaskCount",
+                "path": "data.failedTaskCount",
+                "location": "BODY",
+                "businessRule": "已执行任务中的失败任务数量",
+                "technicalRule": "失败任务数；已执行任务最新记录的status不为success；无数据为0。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "recommendedCustomerCount",
+                "path": "data.recommendedCustomerCount",
+                "location": "BODY",
+                "businessRule": "去重推荐客户数量",
+                "technicalRule": "推荐客户数，非空custuid在当前范围整体去重。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "coveredSubBranchCount",
+                "path": "data.coveredSubBranchCount",
+                "location": "BODY",
+                "businessRule": "覆盖支行数量",
+                "technicalRule": "覆盖支行数，按(分行编号,支行编号)去重。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": false
+              },
+              {
+                "name": "mostUsedSkill",
+                "path": "data.mostUsedSkill",
+                "location": "BODY",
+                "businessRule": "使用人数最多的技能",
+                "technicalRule": "使用人数最多的技能；并列按技能编号升序取第一项，无数据为null。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true,
+                "children": [
+                  {
+                    "name": "id",
+                    "path": "data.mostUsedSkill.id",
+                    "location": "BODY",
+                    "businessRule": "技能编号",
+                    "technicalRule": "编号，按编号识别对象。父对象非null时该字段适用。",
+                    "required": true,
+                    "nullable": true
+                  },
+                  {
+                    "name": "name",
+                    "path": "data.mostUsedSkill.name",
+                    "location": "BODY",
+                    "businessRule": "技能名称",
+                    "technicalRule": "展示名称。父对象非null时该字段适用。",
+                    "required": true,
+                    "nullable": true
+                  },
+                  {
+                    "name": "userCount",
+                    "path": "data.mostUsedSkill.userCount",
+                    "location": "BODY",
+                    "businessRule": "使用该技能的客户经理人数",
+                    "technicalRule": "该技能使用人数，按工号去重。父对象非null时该字段适用。64位整数。",
+                    "required": true,
+                    "nullable": false
+                  }
+                ]
+              },
+              {
+                "name": "averageTaskCount",
+                "path": "data.averageTaskCount",
+                "location": "BODY",
+                "businessRule": "人均成功推荐客户方案数量",
+                "technicalRule": "人均任务数，四舍五入为整数，无人员为null。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "averageRecommendedCustomerCount",
+                "path": "data.averageRecommendedCustomerCount",
+                "location": "BODY",
+                "businessRule": "人均推荐客户数量",
+                "technicalRule": "人均推荐客户数，四舍五入为整数，无人员为null。父对象非null时该字段适用。64位整数。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "viewRate",
+                "path": "data.viewRate",
+                "location": "BODY",
+                "businessRule": "方案被查看客户占推荐客户的比例",
+                "technicalRule": "方案被查看率，百分比数值。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "contactRate",
+                "path": "data.contactRate",
+                "location": "BODY",
+                "businessRule": "接触客户占推荐客户的比例",
+                "technicalRule": "接触率，百分比数值，可能超过100。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "benchmarkViewRate",
+                "path": "data.benchmarkViewRate",
+                "location": "BODY",
+                "businessRule": "机构方案查看基准率",
+                "technicalRule": "机构方案查看基准率。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "benchmarkContactRate",
+                "path": "data.benchmarkContactRate",
+                "location": "BODY",
+                "businessRule": "机构接触基准率",
+                "technicalRule": "机构接触基准率。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "viewRateDifference",
+                "path": "data.viewRateDifference",
+                "location": "BODY",
+                "businessRule": "当前查看率与机构基准的差值",
+                "technicalRule": "查看率减机构基准率，单位百分点。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              },
+              {
+                "name": "contactRateDifference",
+                "path": "data.contactRateDifference",
+                "location": "BODY",
+                "businessRule": "当前接触率与机构基准的差值",
+                "technicalRule": "接触率减机构基准率，单位百分点。父对象非null时该字段适用。",
+                "required": true,
+                "nullable": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "type": "KNOWLEDGE_PENDING",
+        "target": "328937da8e0fed87"
+      }
+    ]
+  },
+  "success": true
+}
+```
+
+## 说明
+
+首包包含业务正文、技术目录、接口字段及原文口径；接口公共规则已在业务列表或前面规则给出全文时，仅引用knowledgeId。详情只返回明确请求部分。先前端29.7KB与模型18.8KB是紧凑JSON字节比较，不是token计数。
+
+- [完整接口契约](model-context-api.md)
+- [真实验证记录](knowledge/validation/model-context/README.md)
+- [分项及缺失验证](knowledge/validation/model-context/checks.json)

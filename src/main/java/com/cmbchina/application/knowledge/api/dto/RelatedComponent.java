@@ -11,6 +11,7 @@ public class RelatedComponent {
     @com.fasterxml.jackson.annotation.JsonIgnore
     private String targetType;
     private String componentId;
+    private LinkedComponentResponse component;
     private boolean unconditional;
     private String condition;
     private String exception;

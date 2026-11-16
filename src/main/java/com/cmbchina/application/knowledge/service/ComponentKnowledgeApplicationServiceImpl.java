@@ -1,5 +1,7 @@
 package com.cmbchina.application.knowledge.service;
 import com.cmbchina.application.knowledge.api.ComponentKnowledgeApplicationService;
+import com.cmbchina.application.knowledge.api.dto.PageComponentsRequest;
+import com.cmbchina.application.knowledge.api.dto.ComponentNameResponse;
 import com.cmbchina.application.knowledge.api.dto.ComponentKnowledgeRequest;
 import com.cmbchina.application.knowledge.api.dto.ComponentKnowledgeResponse;
 import com.cmbchina.application.knowledge.api.dto.InterfaceKnowledgeRequest;
@@ -41,6 +43,11 @@ public class ComponentKnowledgeApplicationServiceImpl implements ComponentKnowle
         loadPage(query, response);
         Set<String> scopeIds = loadScopes(query, response);
         List<KnowledgeItem> services = support.services(query);
+        for (KnowledgeItem service : services) {
+            if ("FRONTEND".equals(service.getServiceType())) {
+                location(response, service);
+            }
+        }
         List<KnowledgeItem> interfaces = support.interfaces(query);
 
         if (request.getInterfaces() != null) {
@@ -59,16 +66,23 @@ public class ComponentKnowledgeApplicationServiceImpl implements ComponentKnowle
         collectKnowledge(query, response);
         assembler.fill(query, response);
         assembler.related(query, response);
+        assembler.interactions(query, response);
         return response;
+    }
+
+    /** 查询指定页面的组件名称，不加载知识正文。 */
+    public List<ComponentNameResponse> pageComponents(PageComponentsRequest request) {
+        KnowledgeQuery query = KnowledgeQuery.builder().systemCode(request.getSystemCode()).projectCode(request.getProjectCode())
+                .pagePath(request.getPagePath()).build();
+        return support.pageComponents(query).stream()
+                .map(item -> ComponentNameResponse.builder().componentId(item.getComponentKey()).name(item.getName()).build())
+                .collect(java.util.stream.Collectors.toList());
     }
 
     private void loadProject(KnowledgeQuery query, ComponentKnowledgeResponse response) {
         List<KnowledgeItem> projects = support.projects(query);
         if (projects.isEmpty()) {
             issue(response, "PROJECT_NOT_FOUND", query.getProjectCode());
-        }
-        for (KnowledgeItem project : projects) {
-            location(response, project);
         }
     }
 
@@ -166,7 +180,7 @@ public class ComponentKnowledgeApplicationServiceImpl implements ComponentKnowle
         response.getInterfaceContexts().add(context);
         boolean found = false;
         for (KnowledgeItem service : services) {
-            if (context.getServiceCode().equals(service.getServiceCode())) {
+            if ("BACKEND".equals(service.getServiceType()) && context.getServiceCode().equals(service.getServiceCode())) {
                 found = true;
                 location(response, service);
             }
@@ -216,8 +230,9 @@ public class ComponentKnowledgeApplicationServiceImpl implements ComponentKnowle
                 return;
             }
         }
-        response.getCodeLocations().add(CodeLocationResponse.builder().id(item.getId()).systemCode(item.getSystemCode())
-                .projectCode(item.getProjectCode()).serviceCode(item.getServiceCode()).localPath(item.getLocalPath()).build());
+        response.getCodeLocations()
+                .add(CodeLocationResponse.builder().id(item.getId()).systemCode(item.getSystemCode()).projectCode(item.getProjectCode())
+                        .serviceCode(item.getServiceCode()).serviceType(item.getServiceType()).localPath(item.getLocalPath()).build());
     }
 
     private void issue(ComponentKnowledgeResponse response, String type, String target) {

@@ -12,6 +12,10 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ComponentKnowledgeResponse {
+    @Builder.Default
+    private java.util.List<ComponentInteractionResponse> interactions = com.google.common.collect.Lists.newArrayList();
+    @Builder.Default
+    private ComponentCollaborationResponse collaboration = ComponentCollaborationResponse.builder().build();
     private java.util.List<RelatedComponentGroup> relatedComponents;
     private PageResponse page;
     private ComponentResponse component;

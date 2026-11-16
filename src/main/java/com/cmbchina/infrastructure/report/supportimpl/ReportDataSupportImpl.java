@@ -34,8 +34,32 @@ import org.springframework.stereotype.Component;
 @Component
 public class ReportDataSupportImpl implements ReportDataSupport {
     private static final int BATCH_SIZE = 200;
+
     @Autowired
     private ReportMapper mapper;
+
+    @Override
+    public List<com.cmbchina.domain.report.model.ReportAggregate> participation(ReportQuery query) {
+        return mapper.participation(query).stream().map(ReportDataConverter::aggregate).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<com.cmbchina.domain.report.model.ReportAggregate> aggregates(ReportQuery query,
+            com.cmbchina.domain.report.model.ReportDimension dimension, boolean planOnly, boolean executedOnly) {
+        return mapper.aggregates(query, dimension, planOnly, executedOnly).stream().map(ReportDataConverter::aggregate).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<com.cmbchina.domain.report.model.ReportAggregate> aggregateOptions(ReportQuery query,
+            com.cmbchina.domain.report.model.ReportDimension dimension, boolean planOnly, boolean executedOnly) {
+        return mapper.aggregateOptions(query, dimension, planOnly, executedOnly).stream().map(ReportDataConverter::aggregate)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public com.cmbchina.domain.report.model.ReportStatistics summarize(ReportQuery query) {
+        return ReportDataConverter.summary(mapper.summary(query));
+    }
 
     @Override
     public List<ReportOrganization> findFilterOrganizations() {

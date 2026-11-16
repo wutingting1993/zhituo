@@ -157,4 +157,257 @@
         AND c.clicked_at &lt; DATE_ADD(#{r.execution.executionDay}, INTERVAL 1 DAY))
     </foreach>
   </select>
+  <select id="summary" resultType="com.cmbchina.infrastructure.report.dao.po.ReportSummaryPo">
+    <bind name="planOnly" value="false"/>
+    <include refid="aggregateScope"/>
+    , task_rows AS (
+      SELECT DISTINCT s.sap_id, s.plan_id, s.skill_id, s.execution_day, s.job_id,
+        CASE WHEN e.job_id IS NULL THEN 0 ELSE 1 END AS executed,
+        CASE WHEN e.job_id IS NOT NULL AND (e.status IS NULL OR BINARY e.status != 'success') THEN 1 ELSE 0 END AS failed
+      FROM scheduled s
+      LEFT JOIN selected e ON e.job_id = s.job_id AND e.execution_day = s.execution_day
+    ), task_stats AS (
+      SELECT COUNT(*) AS scheduled_task_count, COALESCE(SUM(executed), 0) AS executed_task_count,
+        COALESCE(SUM(1 - executed), 0) AS pending_task_count, COALESCE(SUM(failed), 0) AS failed_task_count
+      FROM task_rows
+    ), base_stats AS (
+      SELECT COUNT(DISTINCT plan_id) AS plan_count, COUNT(DISTINCT skill_id) AS skill_count,
+        COUNT(DISTINCT sap_id) AS user_count FROM executed
+    ), branch_rows AS (
+      SELECT DISTINCT bbk_id, org_id FROM executed
+    ), branch_stats AS (
+      SELECT COUNT(*) AS covered_sub_branch_count FROM branch_rows
+    ), skill_users AS (
+      SELECT DISTINCT skill_id, skill_name, sap_id FROM executed
+    ), top_skill AS (
+      SELECT skill_id, MIN(skill_name) AS skill_name, COUNT(DISTINCT sap_id) AS user_count
+      FROM skill_users GROUP BY skill_id ORDER BY user_count DESC, skill_id ASC LIMIT 1
+    ), recommendations AS (
+      SELECT DISTINCT e.job_id, e.skill_id, e.trace_id, e.execution_day, e.is_read, CAST(r.custuid AS BINARY) AS custuid
+      FROM executed e
+      INNER JOIN swe_cron_result_index r ON r.job_id = e.job_id AND r.skill_id = e.skill_id AND r.trace_id = e.trace_id
+        AND r.result_type = 'plan' AND r.is_latest_success = 1 AND r.status = 'SUC'
+    ), plan_rows AS (
+      SELECT DISTINCT trace_id, custuid FROM recommendations WHERE custuid != ''
+    ), plan_stats AS (
+      SELECT COUNT(*) AS task_count FROM plan_rows
+    ), customer_stats AS (
+      SELECT COUNT(DISTINCT CASE WHEN custuid != '' THEN custuid END) AS recommended_customer_count,
+        COUNT(DISTINCT CASE WHEN custuid != '' AND is_read = 1 THEN custuid END) AS viewed_customer_count
+      FROM recommendations
+    ), contact_stats AS (
+      SELECT COUNT(DISTINCT CAST(d.cust_uid AS BINARY)) AS contacted_customer_count
+      FROM recommendations r
+      INNER JOIN swe_html_preview_click_events c ON c.trace_id = r.trace_id AND c.customer_id = r.custuid
+        AND c.clicked_at &gt;= r.execution_day AND c.clicked_at &lt; DATE_ADD(r.execution_day, INTERVAL 1 DAY)
+        AND (c.event_type = 'button_click' OR (c.event_type = 'preview_view' AND c.template_type = 'sub'))
+      INNER JOIN swe_skill_contact_detail d ON d.click_id = c.id
+    )
+    SELECT b.plan_count, b.skill_count, p.task_count, t.scheduled_task_count, t.executed_task_count,
+      t.pending_task_count, t.failed_task_count, c.recommended_customer_count, c.viewed_customer_count,
+      a.contacted_customer_count, b.user_count, o.covered_sub_branch_count,
+      CONVERT(k.skill_id USING utf8mb4) AS most_used_skill_id, k.skill_name AS most_used_skill_name,
+      COALESCE(k.user_count, 0) AS most_used_skill_user_count
+    FROM base_stats b
+    INNER JOIN task_stats t ON 1 = 1
+    INNER JOIN branch_stats o ON 1 = 1
+    INNER JOIN plan_stats p ON 1 = 1
+    INNER JOIN customer_stats c ON 1 = 1
+    INNER JOIN contact_stats a ON 1 = 1
+    LEFT JOIN top_skill k ON 1 = 1
+  </select>
+  <sql id="aggregateScope">
+    WITH relations AS (
+      SELECT DISTINCT CAST(u.first_bbk_id AS BINARY) AS bbk_id, CAST(u.org_id AS BINARY) AS org_id,
+        CAST(t.sap_id AS BINARY) AS sap_id, CAST(p.id AS BINARY) AS plan_id,
+        u.first_bbk_nm AS bbk_name, u.org_nm AS org_name, u.user_name, u.pst_lvl AS level, p.source_label,
+        p.created_at, CAST(s.scene_id AS BINARY) AS skill_id, k.skill_name, CAST(j.id AS BINARY) AS job_id
+      FROM swe_wealth_plans p
+      INNER JOIN swe_wealth_plan_targets t ON t.plan_id = p.id AND t.deleted = 0
+      INNER JOIN rm_jkh_user_info u ON t.sap_id COLLATE utf8mb4_bin = u.user_id
+      INNER JOIN swe_wealth_plan_scenes s ON s.plan_id = p.id AND s.deleted = 0
+      INNER JOIN swe_marketplace_skills k ON k.skill_id = s.scene_id AND k.source_id = 'RMASSIST'
+      INNER JOIN swe_cron_jobs j ON j.plan_id = p.id AND j.tenant_id = t.sap_id
+        AND j.skill_ids = s.scene_id AND j.source_id = 'RMASSIST' AND j.status != 'deleted'
+      WHERE p.deleted = 0
+      <if test="planOnly">AND p.source_label IN ('我的关注', '分行中台', '行长关注')</if>
+      <if test="query.bbkId != null">AND u.first_bbk_id = #{query.bbkId}</if>
+      <if test="query.orgId != null">AND u.org_id = #{query.orgId}</if>
+      <if test="query.level != null">AND u.pst_lvl = #{query.level}</if>
+      <if test="!query.skillIds.isEmpty()">
+        AND s.scene_id IN
+        <foreach collection="query.skillIds" item="skill" open="(" close=")" separator=",">#{skill}</foreach>
+      </if>
+    ), scheduled AS (
+      SELECT DISTINCT r.bbk_id, r.org_id, r.sap_id, r.plan_id, r.created_at,
+        r.skill_id, r.skill_name, r.job_id, r.bbk_name, r.org_name, r.user_name, r.level, r.source_label, CAST(c.execute_day AS DATE) AS execution_day
+      FROM relations r
+      INNER JOIN swe_plan_sence_cron c ON c.plan_id = r.plan_id AND c.sence_id = r.skill_id
+      WHERE c.execute_day &gt;= #{query.startDate} AND c.execute_day &lt;= #{query.endDate}
+    ), candidates AS (
+      SELECT DISTINCT s.job_id, s.execution_day, e.id, CAST(e.trace_id AS BINARY) AS trace_id, e.actual_time, e.status
+      FROM scheduled s
+      INNER JOIN swe_cron_executions e ON e.job_id = s.job_id
+        AND e.actual_time &gt;= s.execution_day
+        AND e.actual_time &lt; DATE_ADD(s.execution_day, INTERVAL 1 DAY)
+        AND e.actual_time &gt;= s.created_at
+    ), ranked AS (
+      SELECT job_id, execution_day, trace_id, actual_time, status,
+        ROW_NUMBER() OVER (PARTITION BY job_id, execution_day ORDER BY actual_time DESC, id DESC) AS row_num
+      FROM candidates
+    ), selected AS (
+      SELECT job_id, execution_day, trace_id, actual_time, status FROM ranked WHERE row_num = 1
+    ), executed AS (
+      SELECT DISTINCT s.bbk_id, s.org_id, s.sap_id, s.plan_id, s.skill_id, s.skill_name,
+        s.job_id, s.execution_day, s.bbk_name, s.org_name, s.user_name, s.level, s.source_label, CAST(x.trace_id AS BINARY) AS trace_id, x.is_read
+      FROM scheduled s
+      INNER JOIN selected e ON e.job_id = s.job_id AND e.execution_day = s.execution_day
+      INNER JOIN swe_cron_executions x ON x.job_id = s.job_id
+        AND ((e.trace_id IS NOT NULL AND x.trace_id = e.trace_id) OR (e.trace_id IS NULL AND x.actual_time = e.actual_time))
+        AND x.actual_time &gt;= s.execution_day
+        AND x.actual_time &lt; DATE_ADD(s.execution_day, INTERVAL 1 DAY)
+        AND x.actual_time &gt;= s.created_at
+    )
+  </sql>
+  <sql id="aggregateGroups">
+    , group_scheduled AS (
+      SELECT r.bbk_id, r.org_id, r.sap_id, r.plan_id, r.skill_id, r.skill_name, r.job_id, r.execution_day, r.bbk_name, r.org_name, r.user_name, r.level, r.source_label, <choose>
+          <when test="dimension.name() == 'DAY'">CAST(r.execution_day AS BINARY)</when>
+          <when test="dimension.name() == 'BRANCH' or dimension.name() == 'BANK'">r.bbk_id</when>
+          <when test="dimension.name() == 'MANAGER' or dimension.name() == 'MANAGER_SKILL'">r.sap_id</when>
+          <when test="dimension.name() == 'SKILL'">r.skill_id</when>
+          <when test="dimension.name() == 'PLAN' or dimension.name() == 'PLAN_SKILL'">r.plan_id</when>
+          <otherwise>CAST('TOTAL' AS BINARY)</otherwise>
+        </choose> AS group_key, <choose>
+          <when test="dimension.name() == 'BRANCH'">r.org_id</when>
+          <when test="dimension.name() == 'MANAGER_SKILL' or dimension.name() == 'PLAN_SKILL'">r.skill_id</when>
+          <otherwise>CAST('' AS BINARY)</otherwise>
+        </choose> AS second_key
+      FROM <choose><when test="executedOnly">executed</when><otherwise>scheduled</otherwise></choose> r
+    ), group_executed AS (
+      SELECT r.bbk_id, r.org_id, r.sap_id, r.plan_id, r.skill_id, r.skill_name, r.job_id, r.execution_day, r.bbk_name, r.org_name, r.user_name, r.level, r.source_label, r.trace_id, r.is_read, <choose>
+          <when test="dimension.name() == 'DAY'">CAST(r.execution_day AS BINARY)</when>
+          <when test="dimension.name() == 'BRANCH' or dimension.name() == 'BANK'">r.bbk_id</when>
+          <when test="dimension.name() == 'MANAGER' or dimension.name() == 'MANAGER_SKILL'">r.sap_id</when>
+          <when test="dimension.name() == 'SKILL'">r.skill_id</when>
+          <when test="dimension.name() == 'PLAN' or dimension.name() == 'PLAN_SKILL'">r.plan_id</when>
+          <otherwise>CAST('TOTAL' AS BINARY)</otherwise>
+        </choose> AS group_key, <choose>
+          <when test="dimension.name() == 'BRANCH'">r.org_id</when>
+          <when test="dimension.name() == 'MANAGER_SKILL' or dimension.name() == 'PLAN_SKILL'">r.skill_id</when>
+          <otherwise>CAST('' AS BINARY)</otherwise>
+        </choose> AS second_key FROM executed r
+    )
+  </sql>
+  <select id="aggregates" resultType="com.cmbchina.infrastructure.report.dao.po.ReportAggregatePo">
+    <include refid="aggregateScope"/>
+    <include refid="aggregateGroups"/>
+    , report_groups AS (
+      SELECT group_key, second_key, MIN(bbk_id) AS bbk_id, MIN(bbk_name) AS bbk_name,
+        MIN(org_id) AS org_id, MIN(org_name) AS org_name, MIN(sap_id) AS sap_id,
+        MIN(user_name) AS user_name, MIN(level) AS level, MIN(plan_id) AS plan_id,
+        MIN(skill_id) AS skill_id, MIN(skill_name) AS skill_name, MIN(execution_day) AS execution_day,
+        COUNT(DISTINCT sap_id) AS assigned_manager_count
+      FROM group_scheduled GROUP BY group_key, second_key
+    ), task_rows AS (
+      SELECT DISTINCT s.group_key, s.second_key, s.sap_id, s.plan_id, s.skill_id, s.execution_day, s.job_id,
+        CASE WHEN e.job_id IS NULL THEN 0 ELSE 1 END AS executed,
+        CASE WHEN e.job_id IS NOT NULL AND (e.status IS NULL OR BINARY e.status != 'success') THEN 1 ELSE 0 END AS failed
+      FROM group_scheduled s
+      LEFT JOIN selected e ON e.job_id = s.job_id AND e.execution_day = s.execution_day
+    ), task_stats AS (
+      SELECT group_key, second_key, COUNT(*) AS scheduled_task_count, SUM(executed) AS executed_task_count,
+        SUM(1 - executed) AS pending_task_count, SUM(failed) AS failed_task_count
+      FROM task_rows GROUP BY group_key, second_key
+    ), base_stats AS (
+      SELECT group_key, second_key, COUNT(DISTINCT plan_id) AS plan_count,
+        COUNT(DISTINCT skill_id) AS skill_count, COUNT(DISTINCT sap_id) AS user_count,
+        COUNT(DISTINCT CASE WHEN is_read = 1 THEN sap_id END) AS participant_count,
+        COUNT(DISTINCT CASE WHEN source_label = '我的关注' THEN plan_id END) AS my_count,
+        COUNT(DISTINCT CASE WHEN source_label = '分行中台' THEN plan_id END) AS branch_count,
+        COUNT(DISTINCT CASE WHEN source_label = '行长关注' THEN plan_id END) AS president_count
+      FROM group_executed GROUP BY group_key, second_key
+    ), source_stats AS (
+      SELECT group_key, second_key,
+        COUNT(DISTINCT CASE WHEN source_label = '我的关注' THEN plan_id END) AS my_count,
+        COUNT(DISTINCT CASE WHEN source_label = '分行中台' THEN plan_id END) AS branch_count,
+        COUNT(DISTINCT CASE WHEN source_label = '行长关注' THEN plan_id END) AS president_count
+      FROM group_scheduled GROUP BY group_key, second_key
+    ), branch_rows AS (
+      SELECT DISTINCT group_key, second_key, bbk_id, org_id FROM group_executed
+    ), branch_stats AS (
+      SELECT group_key, second_key, COUNT(*) AS covered_sub_branch_count FROM branch_rows GROUP BY group_key, second_key
+    ), recommendations AS (
+      SELECT DISTINCT e.group_key, e.second_key, e.trace_id, e.execution_day, e.is_read, CAST(r.custuid AS BINARY) AS custuid
+      FROM group_executed e
+      INNER JOIN swe_cron_result_index r ON r.job_id = e.job_id AND r.skill_id = e.skill_id AND r.trace_id = e.trace_id
+        <if test="planOnly and dimension.name() != 'TOTAL' and dimension.name() != 'PLAN'">AND 1 = 0</if>
+        AND r.result_type = 'plan'  AND r.is_latest_success = 1 AND r.status = 'SUC'
+    ), plan_rows AS (
+      SELECT DISTINCT group_key, second_key, trace_id, custuid FROM recommendations WHERE custuid != ''
+    ), plan_stats AS (
+      SELECT group_key, second_key, COUNT(*) AS task_count FROM plan_rows GROUP BY group_key, second_key
+    ), customer_stats AS (
+      SELECT group_key, second_key,
+        COUNT(DISTINCT CASE WHEN custuid != '' THEN custuid END) AS recommended_customer_count,
+        COUNT(DISTINCT CASE WHEN custuid != '' AND is_read = 1 THEN custuid END) AS viewed_customer_count
+      FROM recommendations GROUP BY group_key, second_key
+    ), action_stats AS (
+      SELECT r.group_key, r.second_key,
+        COUNT(DISTINCT CAST(d.cust_uid AS BINARY)) AS contacted_customer_count,
+        COUNT(DISTINCT CASE WHEN c.event_type = 'button_click' AND BINARY c.button_type = 'insight' AND r.custuid != ''
+          THEN r.custuid END) AS insight_customer_count,
+        COUNT(DISTINCT CASE WHEN c.event_type = 'button_click' AND BINARY c.button_type = 'phone' AND r.custuid != ''
+          THEN r.custuid END) AS call_customer_count
+      FROM recommendations r
+      INNER JOIN swe_html_preview_click_events c ON c.trace_id = r.trace_id
+        <if test="planOnly">AND 1 = 0</if> AND c.customer_id = r.custuid
+        AND c.clicked_at &gt;= r.execution_day AND c.clicked_at &lt; DATE_ADD(r.execution_day, INTERVAL 1 DAY)
+        AND (c.event_type = 'button_click' OR (c.event_type = 'preview_view' AND c.template_type = 'sub'))
+      LEFT JOIN swe_skill_contact_detail d ON d.click_id = c.id
+      GROUP BY r.group_key, r.second_key
+    )
+    SELECT CONVERT(g.group_key USING utf8mb4) AS `key`, CONVERT(g.second_key USING utf8mb4) AS second_key,
+      CONVERT(g.bbk_id USING utf8mb4) AS bbk_id, g.bbk_name, CONVERT(g.org_id USING utf8mb4) AS org_id, g.org_name,
+      CONVERT(g.sap_id USING utf8mb4) AS sap_id, g.user_name, g.level, CONVERT(g.plan_id USING utf8mb4) AS plan_id,
+      CONVERT(g.skill_id USING utf8mb4) AS skill_id, g.skill_name, g.execution_day AS day, g.assigned_manager_count,
+      COALESCE(b.plan_count, 0) AS plan_count, COALESCE(b.skill_count, 0) AS skill_count,
+      COALESCE(b.user_count, 0) AS user_count, COALESCE(b.participant_count, 0) AS participant_count,
+      COALESCE(z.my_count, 0) AS my_count, COALESCE(z.branch_count, 0) AS branch_count,
+      COALESCE(z.president_count, 0) AS president_count, COALESCE(o.covered_sub_branch_count, 0) AS covered_sub_branch_count,
+      t.scheduled_task_count, t.executed_task_count, t.pending_task_count, t.failed_task_count,
+      COALESCE(p.task_count, 0) AS task_count, COALESCE(c.recommended_customer_count, 0) AS recommended_customer_count,
+      COALESCE(c.viewed_customer_count, 0) AS viewed_customer_count,
+      COALESCE(a.contacted_customer_count, 0) AS contacted_customer_count,
+      COALESCE(a.insight_customer_count, 0) AS insight_customer_count, COALESCE(a.call_customer_count, 0) AS call_customer_count
+    FROM report_groups g
+    INNER JOIN task_stats t ON g.group_key &lt;=&gt; t.group_key AND g.second_key &lt;=&gt; t.second_key
+    LEFT JOIN source_stats z ON g.group_key &lt;=&gt; z.group_key AND g.second_key &lt;=&gt; z.second_key
+    LEFT JOIN base_stats b ON g.group_key &lt;=&gt; b.group_key AND g.second_key &lt;=&gt; b.second_key
+    LEFT JOIN branch_stats o ON g.group_key &lt;=&gt; o.group_key AND g.second_key &lt;=&gt; o.second_key
+    LEFT JOIN plan_stats p ON g.group_key &lt;=&gt; p.group_key AND g.second_key &lt;=&gt; p.second_key
+    LEFT JOIN customer_stats c ON g.group_key &lt;=&gt; c.group_key AND g.second_key &lt;=&gt; c.second_key
+    LEFT JOIN action_stats a ON g.group_key &lt;=&gt; a.group_key AND g.second_key &lt;=&gt; a.second_key
+    ORDER BY g.group_key, g.second_key
+  </select>
+  <select id="aggregateOptions" resultType="com.cmbchina.infrastructure.report.dao.po.ReportAggregatePo">
+    <include refid="aggregateScope"/>
+    <include refid="aggregateGroups"/>
+    SELECT CONVERT(group_key USING utf8mb4) AS `key`, CONVERT(second_key USING utf8mb4) AS second_key,
+      CONVERT(MIN(skill_id) USING utf8mb4) AS skill_id, MIN(skill_name) AS skill_name, MIN(bbk_name) AS bbk_name, MIN(org_name) AS org_name
+    FROM group_scheduled GROUP BY group_key, second_key ORDER BY group_key, second_key
+  </select>
+  <select id="participation" resultType="com.cmbchina.infrastructure.report.dao.po.ReportAggregatePo">
+    <bind name="planOnly" value="false"/>
+    <include refid="aggregateScope"/>
+    , assigned AS (
+      SELECT skill_id, MIN(skill_name) AS skill_name, COUNT(DISTINCT sap_id) AS assigned_manager_count
+      FROM scheduled GROUP BY skill_id
+    ), participants AS (
+      SELECT skill_id, COUNT(DISTINCT sap_id) AS participant_count FROM executed WHERE is_read = 1 GROUP BY skill_id
+    )
+    SELECT CONVERT(a.skill_id USING utf8mb4) AS `key`, CONVERT(a.skill_id USING utf8mb4) AS skill_id,
+      a.skill_name, a.assigned_manager_count, COALESCE(p.participant_count, 0) AS participant_count
+    FROM assigned a LEFT JOIN participants p ON p.skill_id = a.skill_id ORDER BY a.skill_id
+  </select>
 </mapper>

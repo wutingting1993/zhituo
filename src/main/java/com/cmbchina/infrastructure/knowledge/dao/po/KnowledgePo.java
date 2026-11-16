@@ -1,4 +1,5 @@
 package com.cmbchina.infrastructure.knowledge.dao.po;
+import com.cmbchina.domain.knowledge.model.KnowledgeKind;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Builder;
@@ -16,10 +17,11 @@ public class KnowledgePo {
     private String systemCode;
     private String projectCode;
     private String serviceCode;
+    private String serviceType;
     private String method;
     private String path;
     private String localPath;
-    private String kind;
+    private KnowledgeKind kind;
     private String content;
     private String source;
     private String status;
@@ -35,6 +37,7 @@ public class KnowledgePo {
     private String knowledgeType;
     private String replacesTitle;
     private String replacesType;
+    private String componentKey;
     private String name;
     private String description;
     private String requestContentType;

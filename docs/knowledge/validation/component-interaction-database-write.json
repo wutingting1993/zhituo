@@ -1,0 +1,13 @@
+{
+  "database": "zhituo",
+  "componentCount": 26,
+  "interactionCount": 39,
+  "relationCount": 56,
+  "summaryComponent": [
+    "MetricsStrip",
+    "核心指标总览"
+  ],
+  "originalKnowledgeLinksBefore": 19,
+  "originalKnowledgeLinksAfter": 19,
+  "newIdGenerator": "CUuid.nextId()"
+}

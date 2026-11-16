@@ -11,5 +11,6 @@ public class CodeLocationResponse {
     private String systemCode;
     private String projectCode;
     private String serviceCode;
+    private String serviceType;
     private String localPath;
 }

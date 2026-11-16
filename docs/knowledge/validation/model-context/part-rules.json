@@ -1,0 +1,91 @@
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "interfaces": [
+      {
+        "id": "328937da8e00ed87",
+        "name": "顶部指标统计",
+        "description": "获取当前筛选范围的顶部指标及机构基准",
+        "serviceCode": "zhituo_stat",
+        "method": "POST",
+        "path": "/api/v1/reports/summary",
+        "rules": [
+          {
+            "knowledgeId": "328937da8e0eed87"
+          },
+          {
+            "knowledgeId": "328937da8e0fed87"
+          },
+          {
+            "knowledgeId": "328940e00584ed87"
+          },
+          {
+            "knowledgeId": "328940e00587ed87"
+          },
+          {
+            "knowledgeId": "328940e0058aed87"
+          },
+          {
+            "knowledgeId": "328940e0058ded87"
+          },
+          {
+            "knowledgeId": "328940e00590ed87"
+          },
+          {
+            "knowledgeId": "328940e00593ed87"
+          },
+          {
+            "knowledgeId": "328940e00596ed87"
+          },
+          {
+            "knowledgeId": "328940e00599ed87"
+          },
+          {
+            "knowledgeId": "328940e0059ced87"
+          },
+          {
+            "knowledgeId": "328940e0059fed87"
+          },
+          {
+            "knowledgeId": "328940e005a2ed87"
+          },
+          {
+            "knowledgeId": "328940e005a5ed87"
+          },
+          {
+            "knowledgeId": "328940e005a8ed87"
+          },
+          {
+            "knowledgeId": "328940e005abed87"
+          },
+          {
+            "knowledgeId": "328940e005aeed87"
+          },
+          {
+            "knowledgeId": "328940e005b1ed87"
+          },
+          {
+            "knowledgeId": "328940e005b4ed87"
+          },
+          {
+            "knowledgeId": "328940e005b7ed87"
+          },
+          {
+            "knowledgeId": "328940e005baed87"
+          },
+          {
+            "knowledgeId": "328940e005bded87"
+          }
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "type": "KNOWLEDGE_PENDING",
+        "target": "328937da8e0fed87"
+      }
+    ]
+  },
+  "success": true
+}

@@ -1,0 +1,385 @@
+[
+  {
+    "name": "omitted",
+    "response": {
+      "code": 200,
+      "message": "成功",
+      "data": {
+        "branches": [
+          {
+            "id": "3288060f50eaed87",
+            "name": "来源排名3288060f50eaed87",
+            "planCount": 7,
+            "myCount": 3,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5102ed87",
+            "name": "来源排名3288060f5102ed87",
+            "planCount": 6,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5117ed87",
+            "name": "来源排名3288060f5117ed87",
+            "planCount": 5,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5129ed87",
+            "name": "来源排名3288060f5129ed87",
+            "planCount": 4,
+            "myCount": 2,
+            "branchCount": 1,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5138ed87",
+            "name": "来源排名3288060f5138ed87",
+            "planCount": 3,
+            "myCount": 1,
+            "branchCount": 1,
+            "presidentCount": 1
+          }
+        ]
+      },
+      "success": true
+    }
+  },
+  {
+    "name": "null",
+    "response": {
+      "code": 200,
+      "message": "成功",
+      "data": {
+        "branches": [
+          {
+            "id": "3288060f50eaed87",
+            "name": "来源排名3288060f50eaed87",
+            "planCount": 7,
+            "myCount": 3,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5102ed87",
+            "name": "来源排名3288060f5102ed87",
+            "planCount": 6,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5117ed87",
+            "name": "来源排名3288060f5117ed87",
+            "planCount": 5,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5129ed87",
+            "name": "来源排名3288060f5129ed87",
+            "planCount": 4,
+            "myCount": 2,
+            "branchCount": 1,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5138ed87",
+            "name": "来源排名3288060f5138ed87",
+            "planCount": 3,
+            "myCount": 1,
+            "branchCount": 1,
+            "presidentCount": 1
+          }
+        ]
+      },
+      "success": true
+    }
+  },
+  {
+    "name": "one",
+    "response": {
+      "code": 200,
+      "message": "成功",
+      "data": {
+        "branches": [
+          {
+            "id": "3288060f50eaed87",
+            "name": "来源排名3288060f50eaed87",
+            "planCount": 7,
+            "myCount": 3,
+            "branchCount": 2,
+            "presidentCount": 2
+          }
+        ]
+      },
+      "success": true
+    }
+  },
+  {
+    "name": "three",
+    "response": {
+      "code": 200,
+      "message": "成功",
+      "data": {
+        "branches": [
+          {
+            "id": "3288060f50eaed87",
+            "name": "来源排名3288060f50eaed87",
+            "planCount": 7,
+            "myCount": 3,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5102ed87",
+            "name": "来源排名3288060f5102ed87",
+            "planCount": 6,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5117ed87",
+            "name": "来源排名3288060f5117ed87",
+            "planCount": 5,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 1
+          }
+        ]
+      },
+      "success": true
+    }
+  },
+  {
+    "name": "six",
+    "response": {
+      "code": 200,
+      "message": "成功",
+      "data": {
+        "branches": [
+          {
+            "id": "3288060f50eaed87",
+            "name": "来源排名3288060f50eaed87",
+            "planCount": 7,
+            "myCount": 3,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5102ed87",
+            "name": "来源排名3288060f5102ed87",
+            "planCount": 6,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5117ed87",
+            "name": "来源排名3288060f5117ed87",
+            "planCount": 5,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5129ed87",
+            "name": "来源排名3288060f5129ed87",
+            "planCount": 4,
+            "myCount": 2,
+            "branchCount": 1,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5138ed87",
+            "name": "来源排名3288060f5138ed87",
+            "planCount": 3,
+            "myCount": 1,
+            "branchCount": 1,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5144ed87",
+            "name": "来源排名3288060f5144ed87",
+            "planCount": 3,
+            "myCount": 1,
+            "branchCount": 1,
+            "presidentCount": 1
+          }
+        ]
+      },
+      "success": true
+    }
+  },
+  {
+    "name": "all",
+    "response": {
+      "code": 200,
+      "message": "成功",
+      "data": {
+        "branches": [
+          {
+            "id": "3288060f50eaed87",
+            "name": "来源排名3288060f50eaed87",
+            "planCount": 7,
+            "myCount": 3,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5102ed87",
+            "name": "来源排名3288060f5102ed87",
+            "planCount": 6,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5117ed87",
+            "name": "来源排名3288060f5117ed87",
+            "planCount": 5,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5129ed87",
+            "name": "来源排名3288060f5129ed87",
+            "planCount": 4,
+            "myCount": 2,
+            "branchCount": 1,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5138ed87",
+            "name": "来源排名3288060f5138ed87",
+            "planCount": 3,
+            "myCount": 1,
+            "branchCount": 1,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5144ed87",
+            "name": "来源排名3288060f5144ed87",
+            "planCount": 3,
+            "myCount": 1,
+            "branchCount": 1,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5150ed87",
+            "name": "来源排名3288060f5150ed87",
+            "planCount": 1,
+            "myCount": 1,
+            "branchCount": 0,
+            "presidentCount": 0
+          }
+        ]
+      },
+      "success": true
+    }
+  },
+  {
+    "name": "above available",
+    "response": {
+      "code": 200,
+      "message": "成功",
+      "data": {
+        "branches": [
+          {
+            "id": "3288060f50eaed87",
+            "name": "来源排名3288060f50eaed87",
+            "planCount": 7,
+            "myCount": 3,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5102ed87",
+            "name": "来源排名3288060f5102ed87",
+            "planCount": 6,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 2
+          },
+          {
+            "id": "3288060f5117ed87",
+            "name": "来源排名3288060f5117ed87",
+            "planCount": 5,
+            "myCount": 2,
+            "branchCount": 2,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5129ed87",
+            "name": "来源排名3288060f5129ed87",
+            "planCount": 4,
+            "myCount": 2,
+            "branchCount": 1,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5138ed87",
+            "name": "来源排名3288060f5138ed87",
+            "planCount": 3,
+            "myCount": 1,
+            "branchCount": 1,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5144ed87",
+            "name": "来源排名3288060f5144ed87",
+            "planCount": 3,
+            "myCount": 1,
+            "branchCount": 1,
+            "presidentCount": 1
+          },
+          {
+            "id": "3288060f5150ed87",
+            "name": "来源排名3288060f5150ed87",
+            "planCount": 1,
+            "myCount": 1,
+            "branchCount": 0,
+            "presidentCount": 0
+          }
+        ]
+      },
+      "success": true
+    }
+  },
+  {
+    "name": "zero",
+    "response": {
+      "code": 10000,
+      "message": "topN：topN必须为正整数",
+      "data": null,
+      "success": false
+    }
+  },
+  {
+    "name": "negative",
+    "response": {
+      "code": 10000,
+      "message": "topN：topN必须为正整数",
+      "data": null,
+      "success": false
+    }
+  },
+  {
+    "name": "invalid type",
+    "response": {
+      "code": 10000,
+      "message": "topN：类型应为 Integer",
+      "data": null,
+      "success": false
+    }
+  }
+]

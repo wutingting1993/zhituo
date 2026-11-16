@@ -7,6 +7,9 @@ public interface KnowledgeDataSupport {
 
     java.util.List<KnowledgeItem> components(KnowledgeQuery query);
 
+    /** 读取页面内登记的组件名称。 */
+    java.util.List<KnowledgeItem> pageComponents(KnowledgeQuery query);
+
     java.util.List<KnowledgeItem> scopes(KnowledgeQuery query);
 
     java.util.List<KnowledgeItem> services(KnowledgeQuery query);
@@ -29,4 +32,16 @@ public interface KnowledgeDataSupport {
 
     /** 查询同项目中显式关联知识的其他组件。 */
     java.util.List<KnowledgeItem> relatedComponents(KnowledgeQuery query);
+
+    /** 按系统项目及明确ID读取模型补充资料。 */
+    java.util.List<KnowledgeItem> knowledgeByIds(KnowledgeQuery query);
+
+    /** 按系统项目及明确ID读取模型补充资料。 */
+    java.util.List<KnowledgeItem> interfacesByIds(KnowledgeQuery query);
+
+    /** 读取当前组件的交互，按业务顺序返回。 */
+    java.util.List<com.cmbchina.domain.knowledge.model.ComponentInteraction> interactions(KnowledgeQuery query);
+
+    /** 读取同项目内当前组件的依赖和影响关系。 */
+    java.util.List<com.cmbchina.domain.knowledge.model.ComponentRelation> componentRelations(KnowledgeQuery query);
 }

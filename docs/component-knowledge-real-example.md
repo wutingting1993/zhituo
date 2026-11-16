@@ -991,11 +991,16 @@ POST `http://127.0.0.1:18081/api/v1/knowledge/component-context`，Content-Type:
         "id": "328937da8dfaed87",
         "systemCode": "LQ13.03",
         "projectCode": "zhituo",
+        "serviceCode": "zhituo",
+        "serviceType": "FRONTEND",
         "localPath": "/Users/natasha/Downloads"
       },
       {
         "id": "328937da8dfbed87",
+        "systemCode": "LQ13.03",
+        "projectCode": "zhituo",
         "serviceCode": "zhituo_stat",
+        "serviceType": "BACKEND",
         "localPath": "/Users/natasha/data/code/zhituo"
       }
     ],

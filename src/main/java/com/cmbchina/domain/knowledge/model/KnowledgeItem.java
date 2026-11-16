@@ -16,10 +16,11 @@ public class KnowledgeItem {
     private String systemCode;
     private String projectCode;
     private String serviceCode;
+    private String serviceType;
     private String method;
     private String path;
     private String localPath;
-    private String kind;
+    private KnowledgeKind kind;
     private String content;
     private String source;
     private String status;
@@ -35,6 +36,7 @@ public class KnowledgeItem {
     private String knowledgeType;
     private String replacesTitle;
     private String replacesType;
+    private String componentKey;
     private String name;
     private String description;
     private String requestContentType;

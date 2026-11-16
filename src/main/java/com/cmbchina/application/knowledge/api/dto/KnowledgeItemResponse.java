@@ -1,4 +1,5 @@
 package com.cmbchina.application.knowledge.api.dto;
+import com.cmbchina.domain.knowledge.model.KnowledgeKind;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Builder;
@@ -15,7 +16,7 @@ public class KnowledgeItemResponse {
     private String id;
     private String title;
     private String type;
-    private String kind;
+    private KnowledgeKind kind;
     private String content;
     private String status;
     @Builder.Default

@@ -9,6 +9,9 @@ public interface KnowledgeMapper {
 
     java.util.List<KnowledgePo> components(KnowledgeQuery query);
 
+    /** 读取页面内登记的组件名称。 */
+    java.util.List<KnowledgePo> pageComponents(KnowledgeQuery query);
+
     java.util.List<KnowledgePo> scopes(KnowledgeQuery query);
 
     java.util.List<KnowledgePo> services(KnowledgeQuery query);
@@ -31,4 +34,16 @@ public interface KnowledgeMapper {
 
     /** 查询同项目中显式关联知识的其他组件。 */
     java.util.List<KnowledgePo> relatedComponents(KnowledgeQuery query);
+
+    /** 按系统项目及明确ID读取模型补充资料。 */
+    java.util.List<KnowledgePo> knowledgeByIds(KnowledgeQuery query);
+
+    /** 按系统项目及明确ID读取模型补充资料。 */
+    java.util.List<KnowledgePo> interfacesByIds(KnowledgeQuery query);
+
+    /** 读取当前组件的交互，按业务顺序返回。 */
+    java.util.List<com.cmbchina.infrastructure.knowledge.dao.po.ComponentInteractionPo> interactions(KnowledgeQuery query);
+
+    /** 读取同项目内当前组件的依赖和影响关系。 */
+    java.util.List<com.cmbchina.infrastructure.knowledge.dao.po.ComponentRelationPo> componentRelations(KnowledgeQuery query);
 }

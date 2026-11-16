@@ -1,0 +1,77 @@
+{
+  "component": {
+    "id": "328937da8dfded87",
+    "componentId": "MetricsStrip",
+    "name": "核心指标总览",
+    "description": "位于检索框下方，通过统计接口获取当前筛选范围的规划数、技能数、任务或客户方案数、推荐客户数、方案查看率和接触率，并提供覆盖支行、人均数量、最广使用技能及机构基准比较。"
+  },
+  "interactions": [],
+  "collaboration": {
+    "inputs": [
+      {
+        "id": "328da30d6b43ed87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328937da8dfded87",
+          "componentId": "MetricsStrip",
+          "name": "核心指标总览",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "按当前筛选范围重新查询并更新六项汇总指标；当日或周期任务数标题随统计天数变化。"
+      },
+      {
+        "id": "328da30d6b4eed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328937da8dfded87",
+          "componentId": "MetricsStrip",
+          "name": "核心指标总览",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "按当前筛选范围重新查询并更新六项汇总指标；当日或周期任务数标题随统计天数变化。"
+      },
+      {
+        "id": "328da30d6b59ed87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328937da8dfded87",
+          "componentId": "MetricsStrip",
+          "name": "核心指标总览",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "按当前筛选范围重新查询并更新六项汇总指标；当日或周期任务数标题随统计天数变化。"
+      }
+    ],
+    "outputs": []
+  }
+}

@@ -3,7 +3,6 @@ CREATE TABLE IF NOT EXISTS knowledge_project (
  id varchar(64) NOT NULL COMMENT '主键由CUuid生成',
  system_code varchar(64) NOT NULL COMMENT '系统编号',
  project_code varchar(64) NOT NULL COMMENT '项目号',
- local_path varchar(1024) NULL COMMENT '前端本地代码目录',
  PRIMARY KEY (id), UNIQUE KEY uk_project (system_code, project_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='知识查询project';
 
@@ -12,8 +11,9 @@ CREATE TABLE IF NOT EXISTS knowledge_service (
  system_code varchar(64) NOT NULL COMMENT '系统编号',
  project_code varchar(64) NOT NULL COMMENT '项目号',
  service_code varchar(64) NOT NULL COMMENT '服务标识',
- local_path varchar(1024) NULL COMMENT '后端本地代码目录',
- PRIMARY KEY (id), UNIQUE KEY uk_service (system_code, project_code, service_code)
+    service_type varchar(16) NOT NULL COMMENT '代码类型FRONTEND前端BACKEND后端',
+ local_path varchar(1024) NULL COMMENT '本地代码目录',
+ PRIMARY KEY (id), UNIQUE KEY uk_service (system_code, project_code, service_type, service_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='知识查询service';
 
 CREATE TABLE IF NOT EXISTS knowledge_page (

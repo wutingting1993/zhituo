@@ -1,0 +1,135 @@
+[
+  {
+    "name": "all",
+    "coverageCount": 1,
+    "actual": [
+      {
+        "id": "32872541c2cd0b85",
+        "name": "覆盖验证分行1",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "branch",
+    "coverageCount": 1,
+    "actual": [
+      {
+        "id": "32872541c2cd0b85",
+        "name": "覆盖验证分行1",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "organization",
+    "coverageCount": 1,
+    "actual": [
+      {
+        "id": "32872541c2cd0b85",
+        "name": "覆盖验证分行1",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "level",
+    "coverageCount": 1,
+    "actual": [
+      {
+        "id": "32872541c2cd0b85",
+        "name": "覆盖验证分行1",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "skill",
+    "coverageCount": 1,
+    "actual": [
+      {
+        "id": "32872541c2cd0b85",
+        "name": "覆盖验证分行1",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "skills OR",
+    "coverageCount": 1,
+    "actual": [
+      {
+        "id": "32872541c2cd0b85",
+        "name": "覆盖验证分行1",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "first day",
+    "coverageCount": 1,
+    "actual": [
+      {
+        "id": "32872541c2cd0b85",
+        "name": "覆盖验证分行1",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "last day",
+    "coverageCount": 1,
+    "actual": [
+      {
+        "id": "32872541c2cd0b85",
+        "name": "覆盖验证分行1",
+        "planCount": 3,
+        "myCount": 1,
+        "branchCount": 1,
+        "presidentCount": 1
+      }
+    ]
+  },
+  {
+    "name": "empty",
+    "coverageCount": 0,
+    "actual": []
+  },
+  {
+    "name": "missing dates",
+    "code": 10000
+  },
+  {
+    "name": "reversed dates",
+    "code": 10000
+  },
+  {
+    "name": "mismatched organization",
+    "code": 10000
+  },
+  {
+    "name": "invalid date",
+    "code": 10000
+  }
+]

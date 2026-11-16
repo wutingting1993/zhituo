@@ -1,0 +1,951 @@
+{
+  "component": {
+    "id": "328da30d6b13ed87",
+    "componentId": "FiltersBar",
+    "name": "筛选栏",
+    "description": "筛选栏：统计日期、分行、支行、客户经理等级、技能与重置；协调日期/技能浮层互斥"
+  },
+  "interactions": [
+    {
+      "id": "328da30d6b1ced87",
+      "action": "应用筛选条件",
+      "triggerCondition": "子筛选控件回传有效的新条件。",
+      "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+      "response": "页面保存生效条件，并同步各筛选控件。"
+    },
+    {
+      "id": "328da30d6b1ded87",
+      "action": "刷新报表",
+      "triggerCondition": "用户点击筛选栏的刷新按钮。",
+      "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+      "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。"
+    },
+    {
+      "id": "328da30d6b1eed87",
+      "action": "重置筛选",
+      "triggerCondition": "用户点击重置筛选。",
+      "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+      "response": "恢复默认条件并提示筛选条件已重置。"
+    },
+    {
+      "id": "328da30d6b1fed87",
+      "action": "关闭筛选浮层",
+      "triggerCondition": "日期或技能浮层已打开，用户点击浮层外部或按 Esc。",
+      "response": "关闭当前浮层，已应用条件保持不变。"
+    }
+  ],
+  "collaboration": {
+    "inputs": [
+      {
+        "id": "328da30d6b64ed87",
+        "interactionId": "328da30d6b20ed87",
+        "source": {
+          "id": "328da30d6b0fed87",
+          "componentId": "DateFilter",
+          "name": "统计日期筛选",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "选择快捷日期",
+        "triggerCondition": "用户点击今日、近7天或近30天。",
+        "providedContent": "选中的日期范围。",
+        "response": "关闭日期浮层并显示所选日期。",
+        "effect": "用新日期替换生效条件中的统计日期。"
+      },
+      {
+        "id": "328da30d6b69ed87",
+        "interactionId": "328da30d6b29ed87",
+        "source": {
+          "id": "328da30d6b10ed87",
+          "componentId": "ManagerLevelFilter",
+          "name": "客户经理等级筛选",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "选择客户经理等级",
+        "triggerCondition": "用户选择具体等级或全部等级。",
+        "providedContent": "选中的等级或全部等级。",
+        "response": "更新等级选择。",
+        "effect": "更新生效条件中的客户经理等级。"
+      },
+      {
+        "id": "328da30d6b65ed87",
+        "interactionId": "328da30d6b21ed87",
+        "source": {
+          "id": "328da30d6b0fed87",
+          "componentId": "DateFilter",
+          "name": "统计日期筛选",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用自定义日期",
+        "triggerCondition": "起止日期完整且区间不超过一个月，用户点击确定。",
+        "providedContent": "有效的开始和结束日期。",
+        "response": "关闭浮层并提示已切换到自定义区间。",
+        "effect": "将统计日期更新为已应用的自定义区间。"
+      },
+      {
+        "id": "328da30d6b66ed87",
+        "interactionId": "328da30d6b26ed87",
+        "source": {
+          "id": "328da30d6b11ed87",
+          "componentId": "OrganizationFilter",
+          "name": "分行/支行筛选",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "切换分行",
+        "triggerCondition": "用户选择具体分行或全部分行。",
+        "providedContent": "所选分行和全部支行。",
+        "response": "将支行重置为全部支行。",
+        "effect": "同时更新生效条件中的分行与支行。"
+      },
+      {
+        "id": "328da30d6b6aed87",
+        "interactionId": "328da30d6b2bed87",
+        "source": {
+          "id": "328da30d6b12ed87",
+          "componentId": "SkillFilter",
+          "name": "技能筛选",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "勾选或取消技能",
+        "triggerCondition": "用户切换技能复选框。",
+        "providedContent": "更新后的技能编号集合。",
+        "response": "浮层保持打开，已选数量更新。",
+        "effect": "用新的技能集合更新筛选条件。"
+      },
+      {
+        "id": "328da30d6b67ed87",
+        "interactionId": "328da30d6b27ed87",
+        "source": {
+          "id": "328da30d6b11ed87",
+          "componentId": "OrganizationFilter",
+          "name": "分行/支行筛选",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "选择具体支行",
+        "triggerCondition": "选中的支行存在于当前候选列表中。",
+        "providedContent": "支行编号及其所属分行编号。",
+        "response": "分行选择同步到支行的所属分行。",
+        "effect": "用成对的分行和支行标识更新机构条件。"
+      },
+      {
+        "id": "328da30d6b6bed87",
+        "interactionId": "328da30d6b2ced87",
+        "source": {
+          "id": "328da30d6b12ed87",
+          "componentId": "SkillFilter",
+          "name": "技能筛选",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "清空技能",
+        "triggerCondition": "用户点击技能浮层中的清空。",
+        "providedContent": "空技能集合，表示不限制技能。",
+        "response": "取消全部勾选并显示全部技能。",
+        "effect": "清除技能筛选限制。"
+      },
+      {
+        "id": "328da30d6b68ed87",
+        "interactionId": "328da30d6b28ed87",
+        "source": {
+          "id": "328da30d6b11ed87",
+          "componentId": "OrganizationFilter",
+          "name": "分行/支行筛选",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "选择全部支行",
+        "triggerCondition": "用户选择全部支行。",
+        "providedContent": "当前分行和全部支行。",
+        "response": "保留当前分行，不限制支行。",
+        "effect": "清除支行限制并保留分行条件。"
+      },
+      {
+        "id": "328da30d6b74ed87",
+        "interactionId": "328da30d6b32ed87",
+        "source": {
+          "id": "328da30d6b14ed87",
+          "componentId": "PlanCoverageTable",
+          "name": "分支行规划覆盖表",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "空态重置筛选",
+        "triggerCondition": "表格暂无数据，用户点击重置筛选。",
+        "effect": "恢复并显示默认筛选条件。"
+      },
+      {
+        "id": "328da30d6b77ed87",
+        "interactionId": "328da30d6b36ed87",
+        "source": {
+          "id": "328da30d6b0bed87",
+          "componentId": "ExecutionTable",
+          "name": "支行执行明细表",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "空态重置筛选",
+        "triggerCondition": "表格暂无数据，用户点击重置筛选。",
+        "effect": "恢复并显示默认筛选条件。"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "328da30d6b43ed87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328937da8dfded87",
+          "componentId": "MetricsStrip",
+          "name": "核心指标总览",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "按当前筛选范围重新查询并更新六项汇总指标；当日或周期任务数标题随统计天数变化。"
+      },
+      {
+        "id": "328da30d6b44ed87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b14ed87",
+          "componentId": "PlanCoverageTable",
+          "name": "分支行规划覆盖表",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "按当前筛选范围更新分行及支行的规划覆盖结果。"
+      },
+      {
+        "id": "328da30d6b45ed87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b16ed87",
+          "componentId": "PlanSourceBreakdown",
+          "name": "规划来源结构",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "按当前筛选范围更新规划来源结构和分行排名。"
+      },
+      {
+        "id": "328da30d6b46ed87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0aed87",
+          "componentId": "ExecutionFunnel",
+          "name": "执行链路漏斗",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "按当前筛选范围更新执行链路的客户数量与转化结果。"
+      },
+      {
+        "id": "328da30d6b47ed87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0ded87",
+          "componentId": "TrendChart",
+          "name": "执行走势图",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "按当前筛选范围更新逐日执行走势。"
+      },
+      {
+        "id": "328da30d6b48ed87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0bed87",
+          "componentId": "ExecutionTable",
+          "name": "支行执行明细表",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "按当前筛选范围及当前排序更新支行执行明细和机构基准。"
+      },
+      {
+        "id": "328da30d6b49ed87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0ced87",
+          "componentId": "SkillRanking",
+          "name": "技能参与度排行",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "按当前筛选范围更新技能参与度排名。"
+      },
+      {
+        "id": "328da30d6b4aed87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b09ed87",
+          "componentId": "BranchWatch",
+          "name": "需关注支行",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "按当前筛选范围更新需关注支行列表。"
+      },
+      {
+        "id": "328da30d6b4bed87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b06ed87",
+          "componentId": "DetailDrawer / PlansDrawer",
+          "name": "规划明细抽屉",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "沿用已选下钻机构和当前筛选范围更新规划明细。",
+        "condition": "规划明细抽屉当前已打开，且页面报表数据可用。"
+      },
+      {
+        "id": "328da30d6b4ced87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b05ed87",
+          "componentId": "DetailDrawer / ManagersDrawer",
+          "name": "支行客户经理明细抽屉",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "沿用已选支行及所属分行，按当前筛选范围更新客户经理执行明细。",
+        "condition": "客户经理明细抽屉当前已打开，且页面报表数据可用。"
+      },
+      {
+        "id": "328da30d6b4ded87",
+        "interactionId": "328da30d6b1ced87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b07ed87",
+          "componentId": "DetailDrawer / SkillsDrawer",
+          "name": "支行技能明细抽屉",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "应用筛选条件",
+        "triggerCondition": "子筛选控件回传有效的新条件。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "页面保存生效条件，并同步各筛选控件。",
+        "effect": "沿用已选支行及所属分行，按当前筛选范围更新技能执行明细。",
+        "condition": "技能明细抽屉当前已打开，且页面报表数据可用。"
+      },
+      {
+        "id": "328da30d6b4eed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328937da8dfded87",
+          "componentId": "MetricsStrip",
+          "name": "核心指标总览",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "按当前筛选范围重新查询并更新六项汇总指标；当日或周期任务数标题随统计天数变化。"
+      },
+      {
+        "id": "328da30d6b4fed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b14ed87",
+          "componentId": "PlanCoverageTable",
+          "name": "分支行规划覆盖表",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "按当前筛选范围更新分行及支行的规划覆盖结果。"
+      },
+      {
+        "id": "328da30d6b50ed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b16ed87",
+          "componentId": "PlanSourceBreakdown",
+          "name": "规划来源结构",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "按当前筛选范围更新规划来源结构和分行排名。"
+      },
+      {
+        "id": "328da30d6b51ed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0aed87",
+          "componentId": "ExecutionFunnel",
+          "name": "执行链路漏斗",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "按当前筛选范围更新执行链路的客户数量与转化结果。"
+      },
+      {
+        "id": "328da30d6b52ed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0ded87",
+          "componentId": "TrendChart",
+          "name": "执行走势图",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "按当前筛选范围更新逐日执行走势。"
+      },
+      {
+        "id": "328da30d6b53ed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0bed87",
+          "componentId": "ExecutionTable",
+          "name": "支行执行明细表",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "按当前筛选范围及当前排序更新支行执行明细和机构基准。"
+      },
+      {
+        "id": "328da30d6b54ed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0ced87",
+          "componentId": "SkillRanking",
+          "name": "技能参与度排行",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "按当前筛选范围更新技能参与度排名。"
+      },
+      {
+        "id": "328da30d6b55ed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b09ed87",
+          "componentId": "BranchWatch",
+          "name": "需关注支行",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "按当前筛选范围更新需关注支行列表。"
+      },
+      {
+        "id": "328da30d6b56ed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b06ed87",
+          "componentId": "DetailDrawer / PlansDrawer",
+          "name": "规划明细抽屉",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "沿用已选下钻机构和当前筛选范围更新规划明细。",
+        "condition": "规划明细抽屉当前已打开，且页面报表数据可用。"
+      },
+      {
+        "id": "328da30d6b57ed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b05ed87",
+          "componentId": "DetailDrawer / ManagersDrawer",
+          "name": "支行客户经理明细抽屉",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "沿用已选支行及所属分行，按当前筛选范围更新客户经理执行明细。",
+        "condition": "客户经理明细抽屉当前已打开，且页面报表数据可用。"
+      },
+      {
+        "id": "328da30d6b58ed87",
+        "interactionId": "328da30d6b1ded87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b07ed87",
+          "componentId": "DetailDrawer / SkillsDrawer",
+          "name": "支行技能明细抽屉",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "刷新报表",
+        "triggerCondition": "用户点击筛选栏的刷新按钮。",
+        "providedContent": "当前生效的统计日期、分行、支行、客户经理等级和技能条件。",
+        "response": "保留当前筛选条件并重新加载报表；在途请求状态反映到刷新按钮。",
+        "effect": "沿用已选支行及所属分行，按当前筛选范围更新技能执行明细。",
+        "condition": "技能明细抽屉当前已打开，且页面报表数据可用。"
+      },
+      {
+        "id": "328da30d6b59ed87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328937da8dfded87",
+          "componentId": "MetricsStrip",
+          "name": "核心指标总览",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "按当前筛选范围重新查询并更新六项汇总指标；当日或周期任务数标题随统计天数变化。"
+      },
+      {
+        "id": "328da30d6b5aed87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b14ed87",
+          "componentId": "PlanCoverageTable",
+          "name": "分支行规划覆盖表",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "按当前筛选范围更新分行及支行的规划覆盖结果。"
+      },
+      {
+        "id": "328da30d6b5bed87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b16ed87",
+          "componentId": "PlanSourceBreakdown",
+          "name": "规划来源结构",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "按当前筛选范围更新规划来源结构和分行排名。"
+      },
+      {
+        "id": "328da30d6b5ced87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0aed87",
+          "componentId": "ExecutionFunnel",
+          "name": "执行链路漏斗",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "按当前筛选范围更新执行链路的客户数量与转化结果。"
+      },
+      {
+        "id": "328da30d6b5ded87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0ded87",
+          "componentId": "TrendChart",
+          "name": "执行走势图",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "按当前筛选范围更新逐日执行走势。"
+      },
+      {
+        "id": "328da30d6b5eed87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0bed87",
+          "componentId": "ExecutionTable",
+          "name": "支行执行明细表",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "按当前筛选范围及当前排序更新支行执行明细和机构基准。"
+      },
+      {
+        "id": "328da30d6b5fed87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b0ced87",
+          "componentId": "SkillRanking",
+          "name": "技能参与度排行",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "按当前筛选范围更新技能参与度排名。"
+      },
+      {
+        "id": "328da30d6b60ed87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b09ed87",
+          "componentId": "BranchWatch",
+          "name": "需关注支行",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "按当前筛选范围更新需关注支行列表。"
+      },
+      {
+        "id": "328da30d6b61ed87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b06ed87",
+          "componentId": "DetailDrawer / PlansDrawer",
+          "name": "规划明细抽屉",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "沿用已选下钻机构和当前筛选范围更新规划明细。",
+        "condition": "规划明细抽屉当前已打开，且页面报表数据可用。"
+      },
+      {
+        "id": "328da30d6b62ed87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b05ed87",
+          "componentId": "DetailDrawer / ManagersDrawer",
+          "name": "支行客户经理明细抽屉",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "沿用已选支行及所属分行，按当前筛选范围更新客户经理执行明细。",
+        "condition": "客户经理明细抽屉当前已打开，且页面报表数据可用。"
+      },
+      {
+        "id": "328da30d6b63ed87",
+        "interactionId": "328da30d6b1eed87",
+        "source": {
+          "id": "328da30d6b13ed87",
+          "componentId": "FiltersBar",
+          "name": "筛选栏",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "target": {
+          "id": "328da30d6b07ed87",
+          "componentId": "DetailDrawer / SkillsDrawer",
+          "name": "支行技能明细抽屉",
+          "pagePath": "/Users/natasha/Downloads/智拓报表.html"
+        },
+        "action": "重置筛选",
+        "triggerCondition": "用户点击重置筛选。",
+        "providedContent": "当天日期范围、全部机构、全部等级和不限制技能。",
+        "response": "恢复默认条件并提示筛选条件已重置。",
+        "effect": "沿用已选支行及所属分行，按当前筛选范围更新技能执行明细。",
+        "condition": "技能明细抽屉当前已打开，且页面报表数据可用。"
+      }
+    ]
+  }
+}

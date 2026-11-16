@@ -1,24 +1,25 @@
 -- 智拓报表顶部指标知识：仅新增本次明确范围；不覆盖已有知识或业务数据。
--- 系统LQ13.03，项目zhituo，后端服务zhituo_stat，组件kpiStrip。
+-- 系统LQ13.03，项目zhituo，后端服务zhituo_stat，组件MetricsStrip。
 -- 页面登记值为本地文件解码路径；未来部署路径变更需显式维护映射。
 -- 所有新增主键已调用项目CUuid.nextId()生成；脚本固定这些主键以便幂等重放。
 SET NAMES utf8mb4;
 START TRANSACTION;
-INSERT INTO knowledge_project (id, system_code, project_code, local_path) VALUES ('328937da8dfaed87', 'LQ13.03', 'zhituo', '/Users/natasha/Downloads') ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO knowledge_project (id, system_code, project_code) VALUES ('328937da8dfaed87', 'LQ13.03', 'zhituo') ON DUPLICATE KEY UPDATE id=id;
 SET @project_id=(SELECT id FROM knowledge_project WHERE system_code='LQ13.03' AND project_code='zhituo');
-INSERT INTO knowledge_service (id, system_code, project_code, service_code, local_path) VALUES ('328937da8dfbed87', 'LQ13.03', 'zhituo', 'zhituo_stat', '/Users/natasha/data/code/zhituo') ON DUPLICATE KEY UPDATE id=id;
-SET @service_id=(SELECT id FROM knowledge_service WHERE system_code='LQ13.03' AND project_code='zhituo' AND service_code='zhituo_stat');
+INSERT INTO knowledge_service (id, system_code, project_code, service_code, service_type, local_path) VALUES ('328937da8dfbed87', 'LQ13.03', 'zhituo', 'zhituo_stat', 'BACKEND', '/Users/natasha/data/code/zhituo') ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO knowledge_service (id, system_code, project_code, service_code, service_type, local_path) VALUES ('328937da8dfaed87', 'LQ13.03', 'zhituo', 'zhituo', 'FRONTEND', '/Users/natasha/Downloads') ON DUPLICATE KEY UPDATE id=id;
+SET @service_id=(SELECT id FROM knowledge_service WHERE system_code='LQ13.03' AND project_code='zhituo' AND service_code='zhituo_stat' AND service_type='BACKEND');
 INSERT INTO knowledge_page (id, system_code, project_code, page_path) VALUES ('328937da8dfced87', 'LQ13.03', 'zhituo', '/Users/natasha/Downloads/智拓报表.html') ON DUPLICATE KEY UPDATE id=id;
 SET @page_id=(SELECT id FROM knowledge_page WHERE system_code='LQ13.03' AND project_code='zhituo' AND page_path='/Users/natasha/Downloads/智拓报表.html');
-INSERT INTO knowledge_component (id, page_id, component_id) VALUES ('328937da8dfded87', @page_id, 'kpiStrip') ON DUPLICATE KEY UPDATE id=id;
-SET @component_id=(SELECT id FROM knowledge_component WHERE page_id=@page_id AND component_id='kpiStrip');
+INSERT INTO knowledge_component (id, page_id, component_id) VALUES ('328937da8dfded87', @page_id, 'MetricsStrip') ON DUPLICATE KEY UPDATE id=id;
+SET @component_id=(SELECT id FROM knowledge_component WHERE page_id=@page_id AND component_id='MetricsStrip');
 INSERT INTO knowledge_flow (id, system_code, project_code, name) VALUES ('328937da8dfeed87', 'LQ13.03', 'zhituo', '报表检索与顶部指标查看') ON DUPLICATE KEY UPDATE id=id;
 INSERT INTO knowledge_page_flow (id, page_id, flow_id) VALUES ('328937da8dffed87', @page_id, '328937da8dfeed87') ON DUPLICATE KEY UPDATE id=id;
 INSERT INTO knowledge_interface (id, service_id, method, path) VALUES ('328937da8e00ed87', @service_id, 'POST', '/api/v1/reports/summary') ON DUPLICATE KEY UPDATE id=id;
 SET @interface_id=(SELECT id FROM knowledge_interface WHERE service_id=@service_id AND method='POST' AND path='/api/v1/reports/summary');
 
 -- UI-KPI
-INSERT INTO knowledge_entry (id, system_code, project_code, kind, content, source, status) VALUES ('328937da8e01ed87', 'LQ13.03', 'zhituo', 'BUSINESS_RULE', '检索框下的指标统计组件ID为kpiStrip，数据通过统计接口获取。统计内容包括生效中规划、涉及技能、当日或周期任务数、推荐客户数、方案被查看率和接触率，以及覆盖支行、使用人数最多技能、人均数量和机构基准差值。', 'file:///Users/natasha/Downloads/智拓报表.html；指标条section与renderKPI', 'CONFIRMED') ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO knowledge_entry (id, system_code, project_code, kind, content, source, status) VALUES ('328937da8e01ed87', 'LQ13.03', 'zhituo', 'BUSINESS_RULE', '检索框下的指标统计组件ID为MetricsStrip，数据通过统计接口获取。统计内容包括生效中规划、涉及技能、当日或周期任务数、推荐客户数、方案被查看率和接触率，以及覆盖支行、使用人数最多技能、人均数量和机构基准差值。', 'file:///Users/natasha/Downloads/智拓报表.html；指标条section与renderKPI', 'CONFIRMED') ON DUPLICATE KEY UPDATE id=id;
 INSERT INTO knowledge_applicability (id, knowledge_id, target_type, target_id, condition_text, unconditional, exception_text, replaces_knowledge_id) VALUES ('328937da8e10ed87', '328937da8e01ed87', 'COMPONENT', @component_id, NULL, 1, NULL, NULL) ON DUPLICATE KEY UPDATE id=id;
 
 -- UI-REFRESH

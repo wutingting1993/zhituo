@@ -21,6 +21,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 /** 仅压缩组件上下文接口的 JSON 空字段，不改变原始知识数据。 */
 @RestControllerAdvice
 public class ComponentContextResponseAdvice implements ResponseBodyAdvice<Object> {
+    private static final java.util.Set<String> PATHS = com.google.common.collect.ImmutableSet.of("/api/v1/knowledge/component-context",
+            "/api/v1/model-context/component", "/api/v1/model-context/details");
     @Autowired
     private Jackson2ObjectMapperBuilder builder;
     private ObjectMapper contextMapper;
@@ -46,7 +48,10 @@ public class ComponentContextResponseAdvice implements ResponseBodyAdvice<Object
             return body;
         }
         String path = ((ServletServerHttpRequest) request).getServletRequest().getServletPath();
-        if (!"/api/v1/knowledge/component-context".equals(path) && !"/api/v1/knowledge/component-context/".equals(path)) {
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        if (!PATHS.contains(path)) {
             return body;
         }
         try {
