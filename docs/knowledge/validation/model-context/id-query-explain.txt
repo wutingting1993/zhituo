@@ -1,3 +1,0 @@
-1	SIMPLE	e	NULL	const	PRIMARY,idx_entry_project	PRIMARY	258	const	1	100.00	NULL
-1	SIMPLE	i	NULL	const	PRIMARY,uk_interface	PRIMARY	258	const	1	100.00	NULL
-1	SIMPLE	s	NULL	const	PRIMARY,uk_service	PRIMARY	258	const	1	100.00	NULL

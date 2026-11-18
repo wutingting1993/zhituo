@@ -1,4 +1,0 @@
-1	SIMPLE	p	NULL	ref	PRIMARY,uk_page	uk_page	516	const,const	1	100.00	Using index; Using temporary; Using filesort
-1	SIMPLE	c	NULL	ref	PRIMARY,uk_component	uk_component	258	zhituo.p.id	1	100.00	Using where; Using index
-1	SIMPLE	e	NULL	ALL	PRIMARY,idx_entry_project	NULL	NULL	NULL	24	4.17	Using where; Using join buffer (hash join)
-1	SIMPLE	a	NULL	ref	idx_applicability_target,idx_applicability_knowledge	idx_applicability_knowledge	258	zhituo.e.id	1	4.35	Using where

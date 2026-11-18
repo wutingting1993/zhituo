@@ -12,6 +12,8 @@ mvn -Dmaven.repo.local=.tool-cache/m2 spring-boot:run
 
 默认端口 8080。数据库连接使用 MYSQL_HOST、MYSQL_PORT、MYSQL_DATABASE、MYSQL_USER、MYSQL_PASSWORD 环境变量，默认数据库名 zhituo。数据库尚未自动创建，不执行任何业务建表或写入。
 
+组件知识与模型上下文已迁至 [component-knowledge](../component-knowledge/README.md)，独立服务默认 8081，使用原有知识表。
+
 报表提供检索选项、顶部统计、分支行规划覆盖及规划明细接口，参数与响应见 [接口说明](docs/report-api.md)。未匹配路由通过统一异常处理器返回错误响应。
 
 ## 验证

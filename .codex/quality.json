@@ -1,0 +1,6 @@
+{
+  "project_dir": ".",
+  "source_roots": [
+    "src/main/java"
+  ]
+}
