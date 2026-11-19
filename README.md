@@ -24,3 +24,5 @@ bash scripts/backend-gate.sh src/main/java/
 ```
 
 hook 依赖项目自身的 Git 仓库，启用方式见 scripts/HOOKS.md；需用户审查信任。
+
+接口调用监控见 [接口说明](docs/interface-monitor-api.md)。从配置服务迁移数据库时，使用 [合库说明](database/merge-api-config.md)。

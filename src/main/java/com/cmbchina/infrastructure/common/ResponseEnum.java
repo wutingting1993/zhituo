@@ -9,6 +9,7 @@ public enum ResponseEnum {
     METHOD_NOT_ALLOWED(10003, "不支持的请求方法"),
     MEDIA_TYPE_NOT_SUPPORTED(10004, "不支持的请求内容类型"),
     UPLOAD_TOO_LARGE(10005, "上传文件超过大小限制"),
+    MONITOR_UPSTREAM_ERROR(10006, "监控数据服务暂不可用"),
     UNKNOWN_ERROR(99999, "处理失败，请稍后重试");
 
     private final int code;
