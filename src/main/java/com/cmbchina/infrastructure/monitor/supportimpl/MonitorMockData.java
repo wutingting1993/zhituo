@@ -15,6 +15,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -133,15 +134,30 @@ public class MonitorMockData implements MonitorDataSupport {
         long timeout = failed / 4;
         ObjectNode row = mapper.createObjectNode().put("group_key", key).put("metric_scope", scope).put("bucket_start", TIME.format(start))
                 .put("bucket_end", TIME.format(end)).put("effective_seconds", seconds).put("started_count", started)
-                .put("success_count", started - failed).put("failure_count", failed).put("timeout_count", timeout).put("cancelled_count", 0)
-                .put("cache_read_count", execution ? bucket.cacheReads : 0).put("cache_hit_count", execution ? bucket.cacheHits : 0)
-                .put("expert_count", execution ? bucket.experts.size() : 0).put("interface_count", execution ? bucket.interfaces.size() : 0)
-                .put("average_qps", (double) started / seconds).put("success_tps", (double) (started - failed) / seconds);
+                .put("latency_sample_count", started).put("success_count", started - failed).put("failure_count", failed)
+                .put("timeout_count", timeout).put("cancelled_count", 0).put("cache_read_count", execution ? bucket.cacheReads : 0)
+                .put("cache_hit_count", execution ? bucket.cacheHits : 0).put("expert_count", execution ? bucket.experts.size() : 0)
+                .put("interface_count", execution ? bucket.interfaces.size() : 0).put("average_qps", (double) started / seconds)
+                .put("success_tps", (double) (started - failed) / seconds);
         putRatio(row, "error_rate", failed, started);
         putRatio(row, "timeout_rate", timeout, started);
         putRatio(row, "cache_hit_rate", bucket.cacheHits, execution ? bucket.cacheReads : 0);
-        int p95 = bucket.latency + (execution ? 0 : 38);
-        return row.put("p95_millis", p95).put("p99_millis", p95 + 72);
+        if (started == 0) {
+            return row.putNull("p95_millis").putNull("p99_millis");
+        }
+        TreeMap<Integer, Long> samples = execution ? bucket.executionLatencies : bucket.upstreamLatencies;
+        return row.put("p95_millis", percentile(samples, started, 0.95)).put("p99_millis", percentile(samples, started, 0.99));
+    }
+
+    private int percentile(TreeMap<Integer, Long> samples, long count, double quantile) {
+        long remaining = (long) Math.ceil(count * quantile);
+        for (Map.Entry<Integer, Long> sample : samples.entrySet()) {
+            remaining -= sample.getValue();
+            if (remaining <= 0) {
+                return sample.getKey();
+            }
+        }
+        return samples.lastKey();
     }
 
     /** 没有分母时保留空值。 */
@@ -173,7 +189,8 @@ public class MonitorMockData implements MonitorDataSupport {
         private long upstreamFailures;
         private long cacheReads;
         private long cacheHits;
-        private int latency;
+        private final TreeMap<Integer, Long> executionLatencies = new TreeMap<>();
+        private final TreeMap<Integer, Long> upstreamLatencies = new TreeMap<>();
         private final Set<String> experts = Sets.newHashSet();
         private final Set<String> interfaces = Sets.newHashSet();
 
@@ -183,6 +200,8 @@ public class MonitorMockData implements MonitorDataSupport {
                 long variation = Math.floorMod(minute / 600 * 13 + traffic.callsPerBucket, 49);
                 long calls = traffic.callsPerBucket * (76 + variation) / 100;
                 long sent = calls * traffic.upstreamPercent / 100;
+                executionLatencies.merge(traffic.latency, calls, Long::sum);
+                upstreamLatencies.merge(traffic.latency + 38, sent, Long::sum);
                 execution += calls;
                 upstream += sent;
                 executionFailures += sent * 2 / 100;
@@ -196,7 +215,6 @@ public class MonitorMockData implements MonitorDataSupport {
                 experts.add(traffic.agentId);
             }
             interfaces.add(traffic.interfaceId);
-            latency = Math.max(latency, traffic.latency);
         }
     }
 }

@@ -16,14 +16,17 @@ import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /** 校验监控查询，聚合同一统计桶并补全业务名称。 */
 @Service
 public class InterfaceMonitorService implements MonitorApplicationService {
+    private static final int RANK_LIMIT = 10;
     private static final int LOOKBACK_MONTHS = 6;
     private static final int COVERAGE_BUCKET_SECONDS = 600;
     private static final long MAX_OFFSET = 4294967295L;
@@ -51,7 +54,60 @@ public class InterfaceMonitorService implements MonitorApplicationService {
                 .put("agent_id", orEmpty(request.getAgentId())).put("unattributed_only", request.isUnattributedOnly() ? 1 : 0);
         ArrayNode rows = data.query("interface-monitor-statistics", filters);
         ArrayNode coverage = data.query("interface-monitor-offline-coverage", range);
-        return assemble(request, rows, coverage);
+        ObjectNode response = assemble(request, rows, coverage);
+        if ("total".equals(request.getGroupBy()) && request.getBucketSeconds() == 0 && filters.path("interface_id").asText().isEmpty()
+                && filters.path("agent_id").asText().isEmpty() && !request.isUnattributedOnly()) {
+            response.set("overview", overview(response.path("items").path(0).path("execution"), filters));
+        }
+        return response;
+    }
+
+    private ObjectNode overview(JsonNode total, ObjectNode filters) {
+        ArrayNode interfaces = overviewRows(filters, "interface");
+        ArrayNode experts = overviewRows(filters, "expert");
+        ObjectNode result = mapper.createObjectNode().put("executionCount", total.path("started_count").asLong())
+                .put("failureCount", total.path("failure_count").asLong()).put("affectedInterfaceCount", affectedCount(interfaces))
+                .put("affectedExpertCount", affectedCount(experts));
+        result.set("errorRate", total.path("error_rate").isNumber() ? total.path("error_rate") : mapper.getNodeFactory().nullNode());
+        return result.setAll(overviewRanks(total, interfaces, experts));
+    }
+
+    private ObjectNode overviewRanks(JsonNode total, ArrayNode interfaces, ArrayNode experts) {
+        ObjectNode result = mapper.createObjectNode();
+        result.set("p95Millis", total.path("p95_millis").isNumber() ? total.path("p95_millis") : mapper.getNodeFactory().nullNode());
+        result.set("interfaceFailureTop", rank(interfaces, "failure_count", "failure_count"));
+        result.set("interfaceLatencyTop", rank(interfaces, "p95_millis", "latency_sample_count"));
+        result.set("expertFailureTop", rank(experts, "failure_count", "failure_count"));
+        return result;
+    }
+
+    private ArrayNode overviewRows(ObjectNode filters, String group) {
+        Map<String, ObjectNode> items = Maps.newLinkedHashMap();
+        for (JsonNode row : data.query("interface-monitor-statistics", filters.deepCopy().put("group_by", group))) {
+            if ("EXECUTION".equals(row.path("metric_scope").asText()) && !row.path("group_key").asText().isEmpty()) {
+                addMetric(items, row);
+            }
+        }
+        Map<String, String> names = loadNames(group, items);
+        ArrayNode result = mapper.createArrayNode();
+        for (ObjectNode item : items.values()) {
+            item.put("name", displayName(group, item.path("key").asText(), names));
+            result.add(item);
+        }
+        return result;
+    }
+
+    private long affectedCount(ArrayNode items) {
+        return StreamSupport.stream(items.spliterator(), false).filter(item -> item.path("execution").path("failure_count").asLong() > 0).count();
+    }
+
+    private ArrayNode rank(ArrayNode items, String metric, String eligibility) {
+        ArrayNode result = mapper.createArrayNode();
+        StreamSupport.stream(items.spliterator(), false).filter(item -> item.path("execution").path(eligibility).asLong() > 0)
+                .sorted(Comparator.<JsonNode>comparingDouble(item -> item.path("execution").path(metric).asDouble()).reversed()
+                        .thenComparing(item -> item.path("name").asText()).thenComparing(item -> item.path("key").asText()))
+                .limit(RANK_LIMIT).forEach(result::add);
+        return result;
     }
 
     /** 手动重算指定周期，无页面回看窗口限制。 */
@@ -152,6 +208,7 @@ public class InterfaceMonitorService implements MonitorApplicationService {
         for (String field : COUNTS) {
             metric.put(field, row.path(field).asLong());
         }
+        metric.put("latency_sample_count", row.path("latency_sample_count").asLong());
         for (String field : RATES) {
             if (row.hasNonNull(field)) {
                 metric.put(field, row.path(field).asDouble());
