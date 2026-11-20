@@ -1,12 +1,15 @@
 package com.cmbchina.infrastructure.monitor.supportimpl;
 
+import com.cmbchina.domain.monitor.model.MonitorCoverage;
+import com.cmbchina.domain.monitor.model.MonitorFilter;
+import com.cmbchina.domain.monitor.model.MonitorMetric;
+import com.cmbchina.domain.monitor.model.MonitorMetricRow;
+import com.cmbchina.domain.monitor.model.MonitorRange;
+import com.cmbchina.domain.monitor.model.MonitorRefreshCommand;
 import com.cmbchina.domain.monitor.support.MonitorDataSupport;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -19,7 +22,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.function.BiConsumer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -43,48 +46,47 @@ public class MonitorMockData implements MonitorDataSupport {
 
     private final AtomicReference<OffsetDateTime> lastRefresh = new AtomicReference<>();
 
-    @Autowired
-    private ObjectMapper mapper;
-
     /** 记录本地模拟统计的更新时间。 */
     @Override
-    public JsonNode refresh(JsonNode request) {
+    public void refresh(MonitorRefreshCommand request) {
         lastRefresh.set(LocalDateTime.now().atOffset(BEIJING));
-        return mapper.createArrayNode();
     }
 
     /** 模拟统计查询。 */
     @Override
-    public ArrayNode queryStatistics(JsonNode request) {
-        return query(request, false);
+    public List<MonitorMetricRow> queryStatistics(MonitorFilter request) {
+        List<MonitorMetricRow> result = Lists.newArrayList();
+        visitBuckets(request.getRange(), cutoff(), (start, end) -> appendStatistics(result, request, start, end));
+        return result;
     }
 
     /** 模拟离线覆盖查询。 */
     @Override
-    public ArrayNode queryCoverage(JsonNode request) {
-        return query(request, true);
+    public List<MonitorCoverage> queryCoverage(MonitorRange request) {
+        OffsetDateTime cutoff = cutoff();
+        List<MonitorCoverage> result = Lists.newArrayList();
+        visitBuckets(request, cutoff, (start, end) -> result.add(coverage(start, end, cutoff)));
+        return result;
     }
 
-    /** 生成指定查询类型的模拟数据。 */
-    private ArrayNode query(JsonNode request, boolean coverageQuery) {
-        OffsetDateTime start = OffsetDateTime.parse(request.path("start_time").asText());
-        OffsetDateTime requestedEnd = OffsetDateTime.parse(request.path("end_time").asText());
+    /** 获取最近的已闭合桶边界。 */
+    private OffsetDateTime cutoff() {
         OffsetDateTime now = LocalDateTime.now().atOffset(BEIJING).truncatedTo(ChronoUnit.MINUTES);
-        OffsetDateTime cutoff = now.minusMinutes(now.getMinute() % 10);
+        return now.minusMinutes(now.getMinute() % 10);
+    }
+
+    /** 按相同的桶边界生成统计及覆盖数据。 */
+    private void visitBuckets(MonitorRange request, OffsetDateTime cutoff, BiConsumer<OffsetDateTime, OffsetDateTime> visitor) {
+        OffsetDateTime start = OffsetDateTime.parse(request.getStartTime());
+        OffsetDateTime requestedEnd = OffsetDateTime.parse(request.getEndTime());
         OffsetDateTime end = requestedEnd.isBefore(cutoff) ? requestedEnd : cutoff;
-        int bucketSeconds = request.path("bucket_seconds").asInt();
-        ArrayNode result = mapper.createArrayNode();
+        int bucketSeconds = request.getBucketSeconds();
         for (OffsetDateTime cursor = start; cursor.isBefore(end);) {
             OffsetDateTime boundary = bucketSeconds == 0 ? end : cursor.plusSeconds(bucketSeconds);
             OffsetDateTime bucketEnd = boundary.isBefore(end) ? boundary : end;
-            if (coverageQuery) {
-                result.add(coverage(cursor, bucketEnd, cutoff));
-            } else {
-                appendStatistics(result, request, cursor, bucketEnd);
-            }
+            visitor.accept(cursor, bucketEnd);
             cursor = bucketEnd;
         }
-        return result;
     }
 
     /** 模拟标识只映射本地样例名称，无需在业务库写入虚拟专家。 */
@@ -102,17 +104,17 @@ public class MonitorMockData implements MonitorDataSupport {
     }
 
     /** 空流量也可显示离线覆盖时间。 */
-    private ObjectNode coverage(OffsetDateTime start, OffsetDateTime end, OffsetDateTime cutoff) {
+    private MonitorCoverage coverage(OffsetDateTime start, OffsetDateTime end, OffsetDateTime cutoff) {
         OffsetDateTime refreshed = lastRefresh.get();
         OffsetDateTime completed = refreshed != null && refreshed.isAfter(cutoff) ? refreshed : cutoff;
-        return mapper.createObjectNode().put("available_from", TIME.format(start)).put("available_through", TIME.format(end))
-                .put("effective_seconds", ChronoUnit.SECONDS.between(start, end)).put("statistics_completed_at", TIME.format(completed));
+        return MonitorCoverage.builder().availableFrom(TIME.format(start)).availableThrough(TIME.format(end))
+                .effectiveSeconds(ChronoUnit.SECONDS.between(start, end)).statisticsCompletedAt(TIME.format(completed)).build();
     }
 
     /** 汇总同一桶内满足筛选条件的固定调用组合。 */
-    private void appendStatistics(ArrayNode result, JsonNode query, OffsetDateTime start, OffsetDateTime end) {
+    private void appendStatistics(List<MonitorMetricRow> result, MonitorFilter query, OffsetDateTime start, OffsetDateTime end) {
         Map<String, Bucket> buckets = Maps.newLinkedHashMap();
-        String group = query.path("group_by").asText();
+        String group = query.getGroupBy();
         for (Traffic traffic : TRAFFIC) {
             if (matches(query, traffic)) {
                 String key = INTERFACE.equals(group) ? traffic.interfaceId : EXPERT.equals(group) ? traffic.agentId : "";
@@ -128,38 +130,39 @@ public class MonitorMockData implements MonitorDataSupport {
     }
 
     /** 接口筛选和专家筛选可共同生效。 */
-    private boolean matches(JsonNode query, Traffic traffic) {
-        String interfaceId = query.path("interface_id").asText();
-        String agentId = query.path("agent_id").asText();
-        boolean attributed = query.path("unattributed_only").asInt() == 0 || traffic.agentId.isEmpty();
+    private boolean matches(MonitorFilter query, Traffic traffic) {
+        String interfaceId = query.getInterfaceId();
+        String agentId = query.getAgentId();
+        boolean attributed = !query.isUnattributedOnly() || traffic.agentId.isEmpty();
         return (interfaceId.isEmpty() || interfaceId.equals(traffic.interfaceId)) && (agentId.isEmpty() || agentId.equals(traffic.agentId))
                 && attributed;
     }
 
     /** 输出与配置服务消费的字段名和可空口径一致。 */
-    private ObjectNode metric(String key, String scope, Bucket bucket, OffsetDateTime start, OffsetDateTime end) {
+    private MonitorMetricRow metric(String key, String scope, Bucket bucket, OffsetDateTime start, OffsetDateTime end) {
         boolean execution = EXECUTION.equals(scope);
         long seconds = ChronoUnit.SECONDS.between(start, end);
         long started = execution ? bucket.execution : bucket.upstream;
         long failed = execution ? bucket.executionFailures : bucket.upstreamFailures;
         long timeout = failed / 4;
-        ObjectNode row = mapper.createObjectNode().put("group_key", key).put("metric_scope", scope).put("bucket_start", TIME.format(start))
-                .put("bucket_end", TIME.format(end)).put("effective_seconds", seconds).put("started_count", started)
-                .put("latency_sample_count", started).put("success_count", started - failed).put("failure_count", failed)
-                .put("timeout_count", timeout).put("cancelled_count", 0).put("cache_read_count", execution ? bucket.cacheReads : 0)
-                .put("cache_hit_count", execution ? bucket.cacheHits : 0).put("expert_count", execution ? bucket.experts.size() : 0)
-                .put("interface_count", execution ? bucket.interfaces.size() : 0).put("average_qps", (double) started / seconds)
-                .put("success_tps", (double) (started - failed) / seconds);
-        putRatio(row, "error_rate", failed, started);
-        putRatio(row, "timeout_rate", timeout, started);
-        putRatio(row, "cache_hit_rate", bucket.cacheHits, execution ? bucket.cacheReads : 0);
-        if (started == 0) {
-            return row.putNull("p95_millis").putNull("p99_millis");
-        }
         TreeMap<Integer, Long> samples = execution ? bucket.executionLatencies : bucket.upstreamLatencies;
-        return row.put("p95_millis", percentile(samples, started, 0.95)).put("p99_millis", percentile(samples, started, 0.99));
+        MonitorMetric values = MonitorMetric.builder().startedCount(started).latencySampleCount(started).successCount(started - failed)
+                .failureCount(failed).timeoutCount(timeout).cacheReadCount(execution ? bucket.cacheReads : 0)
+                .cacheHitCount(execution ? bucket.cacheHits : 0).expertCount(execution ? bucket.experts.size() : 0)
+                .interfaceCount(execution ? bucket.interfaces.size() : 0).averageQps((double) started / seconds)
+                .successTps((double) (started - failed) / seconds).errorRate(ratio(failed, started)).timeoutRate(ratio(timeout, started))
+                .cacheHitRate(ratio(bucket.cacheHits, execution ? bucket.cacheReads : 0)).p95Millis(nullablePercentile(samples, started, 0.95))
+                .p99Millis(nullablePercentile(samples, started, 0.99)).build();
+        return MonitorMetricRow.builder().groupKey(key).metricScope(scope).bucketStart(TIME.format(start)).bucketEnd(TIME.format(end))
+                .effectiveSeconds(seconds).metric(values).build();
     }
 
+    /** 无耗时样本时保留空值。 */
+    private Double nullablePercentile(TreeMap<Integer, Long> samples, long count, double quantile) {
+        return count == 0 ? null : (double) percentile(samples, count, quantile);
+    }
+
+    /** 查找给定分位的耗时。 */
     private int percentile(TreeMap<Integer, Long> samples, long count, double quantile) {
         long remaining = (long) Math.ceil(count * quantile);
         for (Map.Entry<Integer, Long> sample : samples.entrySet()) {
@@ -172,12 +175,8 @@ public class MonitorMockData implements MonitorDataSupport {
     }
 
     /** 没有分母时保留空值。 */
-    private void putRatio(ObjectNode row, String field, long value, long total) {
-        if (total == 0) {
-            row.putNull(field);
-        } else {
-            row.put(field, (double) value / total);
-        }
+    private Double ratio(long value, long total) {
+        return total == 0 ? null : (double) value / total;
     }
 
     /** 一条固定的专家与接口调用组合。 */
