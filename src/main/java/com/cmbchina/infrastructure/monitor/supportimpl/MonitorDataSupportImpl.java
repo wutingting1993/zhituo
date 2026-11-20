@@ -28,6 +28,12 @@ public class MonitorDataSupportImpl implements MonitorDataSupport {
 
     @Value("${app.monitor.clickhouse-base-url:}")
     private String baseUrl;
+    @Value("${app.monitor.clickhouse-statistics-path}")
+    private String statisticsPath;
+    @Value("${app.monitor.clickhouse-coverage-path}")
+    private String coveragePath;
+    @Value("${app.monitor.clickhouse-refresh-path}")
+    private String refreshPath;
     @Autowired
     private RestTemplateBuilder builder;
     @Autowired
@@ -44,9 +50,20 @@ public class MonitorDataSupportImpl implements MonitorDataSupport {
         refreshClient = base.setReadTimeout(Duration.ofMinutes(2)).build();
     }
 
-    /** 查询指定的平铺 CK 统计结果。 */
+    /** 查询平铺统计结果。 */
     @Override
-    public ArrayNode query(String path, JsonNode request) {
+    public ArrayNode queryStatistics(JsonNode request) {
+        return query(statisticsPath, request);
+    }
+
+    /** 查询离线覆盖结果。 */
+    @Override
+    public ArrayNode queryCoverage(JsonNode request) {
+        return query(coveragePath, request);
+    }
+
+    /** 调用配置的查询接口并检查结果结构。 */
+    private ArrayNode query(String path, JsonNode request) {
         JsonNode data = invoke(queryClient, path, request);
         if (!data.isArray()) {
             throw new BusinessException(ResponseEnum.MONITOR_UPSTREAM_ERROR.getCode(), "监控统计响应格式不正确", null);
@@ -57,7 +74,7 @@ public class MonitorDataSupportImpl implements MonitorDataSupport {
     /** 转发离线更新。 */
     @Override
     public JsonNode refresh(JsonNode request) {
-        return invoke(refreshClient, "interface-monitor-offline-refresh", request);
+        return invoke(refreshClient, refreshPath, request);
     }
 
     /** 从当前数据源批量读取名称。 */
@@ -73,10 +90,13 @@ public class MonitorDataSupportImpl implements MonitorDataSupport {
 
     /** 统一解包 CK 响应，并保留传输异常。 */
     private JsonNode invoke(RestTemplate client, String path, JsonNode request) {
-        if (baseUrl.trim().isEmpty()) {
+        if (baseUrl.trim().isEmpty() || path.trim().isEmpty()) {
             throw new BusinessException(ResponseEnum.MONITOR_UPSTREAM_ERROR.getCode(), "监控数据服务尚未配置", null);
         }
-        String url = baseUrl.endsWith("/") ? baseUrl + path : baseUrl + "/" + path;
+        String base = baseUrl.trim();
+        String endpoint = path.trim();
+        String prefix = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+        String url = endpoint.startsWith("/") ? prefix + endpoint : prefix + "/" + endpoint;
         JsonNode response;
         try {
             response = client.postForObject(url, request, JsonNode.class);

@@ -8,8 +8,11 @@ import java.util.Set;
 /** 监控统计和名称数据来源。 */
 public interface MonitorDataSupport {
 
-    /** 获取已发布的统计或覆盖记录。 */
-    ArrayNode query(String path, JsonNode request);
+    /** 获取已发布的统计记录。 */
+    ArrayNode queryStatistics(JsonNode request);
+
+    /** 获取离线统计覆盖记录。 */
+    ArrayNode queryCoverage(JsonNode request);
 
     /** 调用离线统计更新接口。 */
     JsonNode refresh(JsonNode request);

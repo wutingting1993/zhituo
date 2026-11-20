@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -26,7 +27,6 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(name = "app.monitor.mock-enabled", havingValue = "true")
 public class MonitorMockData implements MonitorDataSupport {
-    private static final String COVERAGE = "interface-monitor-offline-coverage";
     private static final String INTERFACE = "interface";
     private static final String EXPERT = "expert";
     private static final String EXECUTION = "EXECUTION";
@@ -49,16 +49,27 @@ public class MonitorMockData implements MonitorDataSupport {
     /** 记录本地模拟统计的更新时间。 */
     @Override
     public JsonNode refresh(JsonNode request) {
-        lastRefresh.set(OffsetDateTime.now(BEIJING));
+        lastRefresh.set(LocalDateTime.now().atOffset(BEIJING));
         return mapper.createArrayNode();
     }
 
-    /** 模拟统计或覆盖查询。 */
+    /** 模拟统计查询。 */
     @Override
-    public ArrayNode query(String path, JsonNode request) {
+    public ArrayNode queryStatistics(JsonNode request) {
+        return query(request, false);
+    }
+
+    /** 模拟离线覆盖查询。 */
+    @Override
+    public ArrayNode queryCoverage(JsonNode request) {
+        return query(request, true);
+    }
+
+    /** 生成指定查询类型的模拟数据。 */
+    private ArrayNode query(JsonNode request, boolean coverageQuery) {
         OffsetDateTime start = OffsetDateTime.parse(request.path("start_time").asText());
         OffsetDateTime requestedEnd = OffsetDateTime.parse(request.path("end_time").asText());
-        OffsetDateTime now = OffsetDateTime.now(BEIJING).truncatedTo(ChronoUnit.MINUTES);
+        OffsetDateTime now = LocalDateTime.now().atOffset(BEIJING).truncatedTo(ChronoUnit.MINUTES);
         OffsetDateTime cutoff = now.minusMinutes(now.getMinute() % 10);
         OffsetDateTime end = requestedEnd.isBefore(cutoff) ? requestedEnd : cutoff;
         int bucketSeconds = request.path("bucket_seconds").asInt();
@@ -66,7 +77,7 @@ public class MonitorMockData implements MonitorDataSupport {
         for (OffsetDateTime cursor = start; cursor.isBefore(end);) {
             OffsetDateTime boundary = bucketSeconds == 0 ? end : cursor.plusSeconds(bucketSeconds);
             OffsetDateTime bucketEnd = boundary.isBefore(end) ? boundary : end;
-            if (COVERAGE.equals(path)) {
+            if (coverageQuery) {
                 result.add(coverage(cursor, bucketEnd, cutoff));
             } else {
                 appendStatistics(result, request, cursor, bucketEnd);

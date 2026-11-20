@@ -26,11 +26,11 @@ import org.springframework.stereotype.Service;
 /** 校验监控查询，聚合同一统计桶并补全业务名称。 */
 @Service
 public class InterfaceMonitorService implements MonitorApplicationService {
+    private static final ZoneId BEIJING = ZoneId.of("Asia/Shanghai");
     private static final int RANK_LIMIT = 10;
     private static final int LOOKBACK_MONTHS = 6;
     private static final int COVERAGE_BUCKET_SECONDS = 600;
     private static final long MAX_OFFSET = 4294967295L;
-    private static final ZoneId BEIJING = ZoneId.of("Asia/Shanghai");
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSXXX");
     private static final Set<String> GROUPS = ImmutableSet.of("interface", "expert", "total");
     private static final Set<String> PERIODS = ImmutableSet.of("day", "week", "month");
@@ -52,8 +52,8 @@ public class InterfaceMonitorService implements MonitorApplicationService {
                 .put("end_time", midnight(request.getEndDate().plusDays(1))).put("bucket_seconds", request.getBucketSeconds());
         ObjectNode filters = range.deepCopy().put("group_by", request.getGroupBy()).put("interface_id", orEmpty(request.getInterfaceId()))
                 .put("agent_id", orEmpty(request.getAgentId())).put("unattributed_only", request.isUnattributedOnly() ? 1 : 0);
-        ArrayNode rows = data.query("interface-monitor-statistics", filters);
-        ArrayNode coverage = data.query("interface-monitor-offline-coverage", range);
+        ArrayNode rows = data.queryStatistics(filters);
+        ArrayNode coverage = data.queryCoverage(range);
         ObjectNode response = assemble(request, rows, coverage);
         if ("total".equals(request.getGroupBy()) && request.getBucketSeconds() == 0 && filters.path("interface_id").asText().isEmpty()
                 && filters.path("agent_id").asText().isEmpty() && !request.isUnattributedOnly()) {
@@ -83,7 +83,7 @@ public class InterfaceMonitorService implements MonitorApplicationService {
 
     private ArrayNode overviewRows(ObjectNode filters, String group) {
         Map<String, ObjectNode> items = Maps.newLinkedHashMap();
-        for (JsonNode row : data.query("interface-monitor-statistics", filters.deepCopy().put("group_by", group))) {
+        for (JsonNode row : data.queryStatistics(filters.deepCopy().put("group_by", group))) {
             if ("EXECUTION".equals(row.path("metric_scope").asText()) && !row.path("group_key").asText().isEmpty()) {
                 addMetric(items, row);
             }
@@ -132,7 +132,7 @@ public class InterfaceMonitorService implements MonitorApplicationService {
 
     /** 校验北京时间下页面可查询的日期范围。 */
     private void validateDates(LocalDate start, LocalDate end) {
-        LocalDate today = LocalDate.now(BEIJING);
+        LocalDate today = LocalDate.now();
         if (start == null || end == null || end.isBefore(start) || end.isAfter(today) || start.isBefore(today.minusMonths(LOOKBACK_MONTHS))) {
             throw new BusinessException(ResponseEnum.VALIDATION_ERROR.getCode(), "请选择最近六个月内的有效日期范围", null);
         }
