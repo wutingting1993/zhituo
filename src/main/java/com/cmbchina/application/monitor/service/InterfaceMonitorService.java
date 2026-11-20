@@ -18,6 +18,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,7 @@ public class InterfaceMonitorService implements MonitorApplicationService {
     private static final int COVERAGE_BUCKET_SECONDS = 600;
     private static final long MAX_OFFSET = 4294967295L;
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSXXX");
-    private static final Set<String> GROUPS = ImmutableSet.of("interface", "expert", "total");
+    private static final int DAY_BUCKET_SECONDS = 86400;
     private static final Set<String> PERIODS = ImmutableSet.of("day", "week", "month");
     private static final String[] RATES = {"error_rate", "timeout_rate", "cache_hit_rate", "p95_millis", "p99_millis"};
     private static final String[] COUNTS = {"started_count", "success_count", "failure_count", "timeout_count", "cancelled_count", "cache_read_count",
@@ -44,19 +45,48 @@ public class InterfaceMonitorService implements MonitorApplicationService {
     @Autowired
     private ObjectMapper mapper;
 
-    /** 返回已覆盖区间内的统计与数据完成时间。 */
+    /** 查询全局总览。 */
     @Override
-    public JsonNode query(MonitorQuery request) {
+    public JsonNode overview(MonitorQuery request) {
+        return query(request, "total", 0, true);
+    }
+
+    /** 查询接口指标列表。 */
+    @Override
+    public JsonNode interfaces(MonitorQuery request) {
+        return query(request, "interface", 0, false);
+    }
+
+    /** 查询专家指标列表。 */
+    @Override
+    public JsonNode experts(MonitorQuery request) {
+        return query(request, "expert", 0, false);
+    }
+
+    /** 查询详情汇总。 */
+    @Override
+    public JsonNode summary(MonitorQuery request) {
+        return query(request, "total", 0, false);
+    }
+
+    /** 查询详情趋势。 */
+    @Override
+    public JsonNode trend(MonitorQuery request) {
+        int bucketSeconds = Objects.equals(request.getStartDate(), request.getEndDate()) ? COVERAGE_BUCKET_SECONDS : DAY_BUCKET_SECONDS;
+        return query(request, "total", bucketSeconds, false);
+    }
+
+    /** 按入口确定的统计口径读取并组装监控数据。 */
+    private JsonNode query(MonitorQuery request, String group, int bucketSeconds, boolean includeOverview) {
         validate(request);
         ObjectNode range = mapper.createObjectNode().put("start_time", midnight(request.getStartDate()))
-                .put("end_time", midnight(request.getEndDate().plusDays(1))).put("bucket_seconds", request.getBucketSeconds());
-        ObjectNode filters = range.deepCopy().put("group_by", request.getGroupBy()).put("interface_id", orEmpty(request.getInterfaceId()))
+                .put("end_time", midnight(request.getEndDate().plusDays(1))).put("bucket_seconds", bucketSeconds);
+        ObjectNode filters = range.deepCopy().put("group_by", group).put("interface_id", orEmpty(request.getInterfaceId()))
                 .put("agent_id", orEmpty(request.getAgentId())).put("unattributed_only", request.isUnattributedOnly() ? 1 : 0);
         ArrayNode rows = data.queryStatistics(filters);
         ArrayNode coverage = data.queryCoverage(range);
-        ObjectNode response = assemble(request, rows, coverage);
-        if ("total".equals(request.getGroupBy()) && request.getBucketSeconds() == 0 && filters.path("interface_id").asText().isEmpty()
-                && filters.path("agent_id").asText().isEmpty() && !request.isUnattributedOnly()) {
+        ObjectNode response = assemble(group, bucketSeconds, rows, coverage);
+        if (includeOverview) {
             response.set("overview", overview(response.path("items").path(0).path("execution"), filters));
         }
         return response;
@@ -122,9 +152,6 @@ public class InterfaceMonitorService implements MonitorApplicationService {
     /** 保持查询和重算的不同时间边界。 */
     private void validate(MonitorQuery request) {
         validateDates(request.getStartDate(), request.getEndDate());
-        if (!GROUPS.contains(request.getGroupBy()) || request.getBucketSeconds() < 0 || request.getBucketSeconds() % COVERAGE_BUCKET_SECONDS != 0) {
-            throw new BusinessException(ResponseEnum.VALIDATION_ERROR.getCode(), "监控分组或趋势粒度无效", null);
-        }
         if (request.isUnattributedOnly() && !orEmpty(request.getAgentId()).isEmpty()) {
             throw new BusinessException(ResponseEnum.VALIDATION_ERROR.getCode(), "未归属筛选不能同时选择领域专家", null);
         }
@@ -139,21 +166,21 @@ public class InterfaceMonitorService implements MonitorApplicationService {
     }
 
     /** 将两种口径和覆盖信息组装为页面使用的数据。 */
-    private ObjectNode assemble(MonitorQuery request, ArrayNode rows, ArrayNode coverage) {
+    private ObjectNode assemble(String group, int bucketSeconds, ArrayNode rows, ArrayNode coverage) {
         Map<String, ObjectNode> items = Maps.newLinkedHashMap();
         for (JsonNode row : rows) {
             addMetric(items, row);
         }
-        if (request.getBucketSeconds() > 0 && "total".equals(request.getGroupBy())) {
+        if (bucketSeconds > 0 && "total".equals(group)) {
             for (JsonNode bucket : coverage) {
                 addCoveredBucket(items, bucket);
             }
         }
-        Map<String, String> names = loadNames(request.getGroupBy(), items);
+        Map<String, String> names = loadNames(group, items);
         ArrayNode result = mapper.createArrayNode();
         for (ObjectNode item : items.values()) {
             String key = item.path("key").asText();
-            item.put("name", displayName(request.getGroupBy(), key, names));
+            item.put("name", displayName(group, key, names));
             fillScope(item, "execution");
             fillScope(item, "upstream");
             result.add(item);
