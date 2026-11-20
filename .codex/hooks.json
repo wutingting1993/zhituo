@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/quality_hook.py\"",
+            "timeout": 600,
+            "statusMessage": "检查改动 Java 文件"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/quality_hook.py\"",
+            "timeout": 600,
+            "statusMessage": "交付前质量门禁"
+          }
+        ]
+      }
+    ]
+  }
+}
