@@ -217,11 +217,12 @@
     LEFT JOIN top_skill k ON 1 = 1
   </select>
   <sql id="aggregateScope">
-    WITH relations AS (
+    WITH scheduled AS (
       SELECT DISTINCT CAST(u.first_bbk_id AS BINARY) AS bbk_id, CAST(u.org_id AS BINARY) AS org_id,
         CAST(t.sap_id AS BINARY) AS sap_id, CAST(p.id AS BINARY) AS plan_id,
         u.first_bbk_nm AS bbk_name, u.org_nm AS org_name, u.user_name, u.pst_lvl AS level, p.source_label,
-        p.created_at, CAST(s.scene_id AS BINARY) AS skill_id, k.skill_name, CAST(j.id AS BINARY) AS job_id
+        p.created_at, CAST(s.scene_id AS BINARY) AS skill_id, k.skill_name, CAST(j.id AS BINARY) AS job_id,
+        CAST(c.execute_day AS DATE) AS execution_day
       FROM swe_wealth_plans p
       INNER JOIN swe_wealth_plan_targets t ON t.plan_id = p.id AND t.deleted = 0
       INNER JOIN rm_jkh_user_info u ON t.sap_id COLLATE utf8mb4_bin = u.user_id
@@ -229,6 +230,8 @@
       INNER JOIN swe_marketplace_skills k ON k.skill_id = s.scene_id AND k.source_id = 'RMASSIST'
       INNER JOIN swe_cron_jobs j ON j.plan_id = p.id AND j.tenant_id = t.sap_id
         AND j.skill_ids = s.scene_id AND j.source_id = 'RMASSIST' AND j.status != 'deleted'
+      INNER JOIN swe_plan_sence_cron c ON c.plan_id = CAST(p.id AS BINARY) AND c.sence_id = CAST(s.scene_id AS BINARY)
+        AND c.execute_day &gt;= #{query.startDate} AND c.execute_day &lt;= #{query.endDate}
       WHERE p.deleted = 0
       <if test="planOnly">AND p.source_label IN ('我的关注', '分行中台', '行长关注')</if>
       <if test="query.bbkId != null">AND u.first_bbk_id = #{query.bbkId}</if>
@@ -238,12 +241,6 @@
         AND s.scene_id IN
         <foreach collection="query.skillIds" item="skill" open="(" close=")" separator=",">#{skill}</foreach>
       </if>
-    ), scheduled AS (
-      SELECT DISTINCT r.bbk_id, r.org_id, r.sap_id, r.plan_id, r.created_at,
-        r.skill_id, r.skill_name, r.job_id, r.bbk_name, r.org_name, r.user_name, r.level, r.source_label, CAST(c.execute_day AS DATE) AS execution_day
-      FROM relations r
-      INNER JOIN swe_plan_sence_cron c ON c.plan_id = r.plan_id AND c.sence_id = r.skill_id
-      WHERE c.execute_day &gt;= #{query.startDate} AND c.execute_day &lt;= #{query.endDate}
     ), candidates AS (
       SELECT DISTINCT s.job_id, s.execution_day, e.id, CAST(e.trace_id AS BINARY) AS trace_id, e.actual_time, e.status
       FROM scheduled s
