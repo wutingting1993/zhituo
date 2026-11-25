@@ -60,7 +60,7 @@ public class ReportApplicationServiceImpl implements ReportApplicationService {
         }
         ReportQuery benchmark = ReportQuery.builder().bbkId(request.getBbkId()).startDate(request.getStartDate()).endDate(request.getEndDate())
                 .build();
-        return response(current, data.summarize(benchmark));
+        return response(current, data.summarizeCustomerBenchmark(benchmark));
     }
 
     private ReportSummaryResponse response(ReportStatistics current, ReportStatistics benchmark) {

@@ -33,6 +33,8 @@ public interface ReportMapper {
     /** 直接聚合顶部统计，不返回客户明细。 */
     com.cmbchina.infrastructure.report.dao.po.ReportSummaryPo summary(@Param("query") ReportQuery query);
 
+    com.cmbchina.infrastructure.report.dao.po.ReportSummaryPo customerBenchmark(@Param("query") ReportQuery query);
+
     /** 只取机构去重结果，不读取人员明细。 */
     List<ReportOrganizationPo> filterOrganizations();
 

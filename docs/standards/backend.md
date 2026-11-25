@@ -153,6 +153,10 @@ public final class Result<T> {
 
 ### 数据模型与对象构建
 
+- 字段结构已知的请求、响应和业务数据必须使用明确的 Java 类型。Web 接口、应用服务、领域数据访问接口和外部服务适配器按各自边界声明类型，集合和响应信封须声明具体的泛型参数。
+- 在序列化与反序列化边界处理 JSON 字段名、数值类型和可空性。业务逻辑通过对象访问器读取数据。Mock 实现使用与真实数据源相同的类型契约。
+- 禁止用 `JsonNode`、`ObjectNode`、`ArrayNode`、`Map<String, Object>` 或 `Object` 代替结构已知的业务对象。结构由外部动态决定或需要保留原始 JSON 时，可以在对应边界使用 JSON 树，并明确它所承载的数据范围。
+
 - 数据对象使用 @Builder 和 builder() 按字段名初始化。
 
 - 数据模型采用 Lombok @Getter/@Setter，字段私有化，通过访问器读写；需要生成构造方法时，使用 Lombok @NoArgsConstructor、@AllArgsConstructor；后续业务状态变更仍可使用 setter。

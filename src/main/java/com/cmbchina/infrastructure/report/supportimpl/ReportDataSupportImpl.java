@@ -62,6 +62,11 @@ public class ReportDataSupportImpl implements ReportDataSupport {
     }
 
     @Override
+    public com.cmbchina.domain.report.model.ReportStatistics summarizeCustomerBenchmark(ReportQuery query) {
+        return ReportDataConverter.summary(mapper.customerBenchmark(query));
+    }
+
+    @Override
     public List<ReportOrganization> findFilterOrganizations() {
         return mapper.filterOrganizations().stream().map(row -> ReportOrganization.builder().bbkId(row.getBbkId()).bbkName(row.getBbkName())
                 .orgId(row.getOrgId()).orgName(row.getOrgName()).build()).collect(Collectors.toList());

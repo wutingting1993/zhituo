@@ -24,6 +24,8 @@ public interface ReportDataSupport {
     /** 聚合顶部统计。 */
     com.cmbchina.domain.report.model.ReportStatistics summarize(ReportQuery query);
 
+    com.cmbchina.domain.report.model.ReportStatistics summarizeCustomerBenchmark(ReportQuery query);
+
     /** 直接读取人员表去重后的机构。 */
     List<ReportOrganization> findFilterOrganizations();
 
