@@ -54,13 +54,13 @@ public class ReportApplicationServiceImpl implements ReportApplicationService {
         }
         ReportQuery query = ReportQuery.builder().bbkId(request.getBbkId()).orgId(request.getOrgId()).level(request.getLevel())
                 .skillIds(request.getSkillIds()).startDate(request.getStartDate()).endDate(request.getEndDate()).build();
+        ReportStatistics current = data.summarize(query);
+        if (query.getOrgId() == null && query.getLevel() == null && query.getSkillIds().isEmpty()) {
+            return response(current, current);
+        }
         ReportQuery benchmark = ReportQuery.builder().bbkId(request.getBbkId()).startDate(request.getStartDate()).endDate(request.getEndDate())
                 .build();
-        return response(summarize(query), summarize(benchmark));
-    }
-
-    private ReportStatistics summarize(ReportQuery query) {
-        return data.summarize(query);
+        return response(current, data.summarizeCustomerBenchmark(benchmark));
     }
 
     private ReportSummaryResponse response(ReportStatistics current, ReportStatistics benchmark) {

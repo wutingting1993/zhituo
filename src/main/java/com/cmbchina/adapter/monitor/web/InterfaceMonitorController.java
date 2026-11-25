@@ -4,7 +4,7 @@ import com.cmbchina.application.api.dto.Result;
 import com.cmbchina.application.monitor.api.MonitorApplicationService;
 import com.cmbchina.application.monitor.api.dto.MonitorQuery;
 import com.cmbchina.application.monitor.api.dto.MonitorRefresh;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.cmbchina.application.monitor.api.dto.MonitorQueryResponse;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,15 +19,40 @@ public class InterfaceMonitorController {
     @Autowired
     private MonitorApplicationService service;
 
-    /** 查询所选日期范围的离线统计。 */
-    @PostMapping("/query")
-    public Result<JsonNode> query(@Valid @RequestBody MonitorQuery request) {
-        return Result.success(service.query(request));
+    /** 查询全局总览。 */
+    @PostMapping("/overview")
+    public Result<MonitorQueryResponse> overview(@Valid @RequestBody MonitorQuery request) {
+        return Result.success(service.overview(request));
+    }
+
+    /** 查询接口指标列表。 */
+    @PostMapping("/interfaces")
+    public Result<MonitorQueryResponse> interfaces(@Valid @RequestBody MonitorQuery request) {
+        return Result.success(service.interfaces(request));
+    }
+
+    /** 查询专家指标列表。 */
+    @PostMapping("/experts")
+    public Result<MonitorQueryResponse> experts(@Valid @RequestBody MonitorQuery request) {
+        return Result.success(service.experts(request));
+    }
+
+    /** 查询详情汇总。 */
+    @PostMapping("/summary")
+    public Result<MonitorQueryResponse> summary(@Valid @RequestBody MonitorQuery request) {
+        return Result.success(service.summary(request));
+    }
+
+    /** 查询详情趋势。 */
+    @PostMapping("/trend")
+    public Result<MonitorQueryResponse> trend(@Valid @RequestBody MonitorQuery request) {
+        return Result.success(service.trend(request));
     }
 
     /** 将手动更新请求交给现有离线任务接口。 */
     @PostMapping("/refresh")
-    public Result<JsonNode> refresh(@Valid @RequestBody MonitorRefresh request) {
-        return Result.success(service.refresh(request));
+    public Result<Void> refresh(@Valid @RequestBody MonitorRefresh request) {
+        service.refresh(request);
+        return Result.success(null);
     }
 }

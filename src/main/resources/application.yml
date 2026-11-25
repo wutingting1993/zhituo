@@ -17,3 +17,10 @@ mybatis:
   mapper-locations: classpath:mapper/**/*.xml
   configuration:
     map-underscore-to-camel-case: true
+
+app:
+  monitor:
+    clickhouse-base-url: ${CLICKHOUSE_BASE_URL:}
+    clickhouse-statistics-path: interface-monitor-statistics
+    clickhouse-coverage-path: interface-monitor-offline-coverage
+    clickhouse-refresh-path: interface-monitor-offline-refresh
