@@ -2,6 +2,9 @@ package com.cmbchina.application.monitor.service;
 
 import com.cmbchina.application.monitor.api.MonitorApplicationService;
 import com.cmbchina.application.monitor.api.dto.MonitorQuery;
+import com.cmbchina.application.monitor.api.dto.MonitorDistributionResponse;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import com.cmbchina.application.monitor.api.dto.MonitorRefresh;
 import com.cmbchina.application.monitor.api.dto.MonitorCoverageResponse;
 import com.cmbchina.application.monitor.api.dto.MonitorItemResponse;
@@ -101,13 +104,26 @@ public class InterfaceMonitorService implements MonitorApplicationService {
     private MonitorOverviewResponse overview(MonitorMetricsResponse total, MonitorFilter filters) {
         List<MonitorItemResponse> interfaces = overviewRows(filters, "interface");
         List<MonitorItemResponse> experts = overviewRows(filters, "expert");
-        return MonitorOverviewResponse.builder().executionCount(total.getStartedCount()).failureCount(total.getFailureCount())
-                .affectedInterfaceCount(affectedCount(interfaces)).affectedExpertCount(affectedCount(experts)).errorRate(total.getErrorRate())
-                .p95Millis(total.getP95Millis())
+        long completed = total.getSuccessCount() + total.getFailureCount() + total.getCancelledCount();
+        List<MonitorDistributionResponse> distribution = Lists.newArrayList(distribution("成功", total.getSuccessCount(), completed),
+                distribution("其他失败", total.getFailureCount() - total.getTimeoutCount(), completed),
+                distribution("超时", total.getTimeoutCount(), completed), distribution("取消", total.getCancelledCount(), completed));
+        return MonitorOverviewResponse.builder().executionCount(total.getStartedCount()).completedCount(completed).resultDistribution(distribution)
+                .failureCount(total.getFailureCount()).affectedInterfaceCount(affectedCount(interfaces)).affectedExpertCount(affectedCount(experts))
+                .errorRate(total.getErrorRate()).p95Millis(total.getP95Millis())
                 .interfaceFailureTop(rank(interfaces, MonitorMetricsResponse::getFailureCount, metric -> metric.getFailureCount() > 0))
                 .interfaceLatencyTop(rank(interfaces, metric -> metric.getP95Millis() == null ? 0 : metric.getP95Millis(),
                         metric -> metric.getLatencySampleCount() > 0))
                 .expertFailureTop(rank(experts, MonitorMetricsResponse::getFailureCount, metric -> metric.getFailureCount() > 0)).build();
+    }
+
+    /** 百分比统一保留两位小数，无已结束调用时为空。 */
+    private MonitorDistributionResponse distribution(String name, long count, long completed) {
+        Double percentage = completed == 0
+                ? null
+                : BigDecimal.valueOf(count).multiply(BigDecimal.valueOf(100)).divide(BigDecimal.valueOf(completed), 2, RoundingMode.HALF_UP)
+                        .doubleValue();
+        return MonitorDistributionResponse.builder().name(name).count(count).percentage(percentage).build();
     }
 
     /** 读取榜单候选行并补充名称。 */
