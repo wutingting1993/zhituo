@@ -65,7 +65,7 @@
                     if(bucket_ms = 0, toInt64(0),
                         intDiv(toUnixTimestamp64Milli(bucket_start) + 28800000, greatest(bucket_ms, 1))
                             * bucket_ms - 28800000) AS bucket_key
-                FROM LQ13_DataGovernance.interface_monitor_offline_daily_all
+                FROM LQ13_DataGovernance.interface_monitor_offline_daily_all FINAL
                 WHERE row_kind = 'METRIC'
                     AND stat_date >= toDate(parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
                     AND stat_date < toDate(parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
@@ -85,7 +85,7 @@
                     min(bucket_start) AS covered_start_at,
                     max(bucket_start + INTERVAL 10 MINUTE) AS covered_end_at,
                     count() * 600 AS covered_seconds
-                FROM LQ13_DataGovernance.interface_monitor_offline_daily_all
+                FROM LQ13_DataGovernance.interface_monitor_offline_daily_all FINAL
                 WHERE row_kind = 'COVERAGE'
                     AND stat_date >= toDate(parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
                     AND stat_date < toDate(parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
@@ -96,7 +96,6 @@
             GROUP BY group_key, metric_scope, metrics.bucket_key, coverage.covered_start_at, coverage.covered_end_at, coverage.covered_seconds
         )
         ORDER BY group_key, bucket_start, metric_scope
-        SETTINGS final = 1
         ]]>
     </select>
 
@@ -115,7 +114,7 @@
                 max(bucket_start + INTERVAL 10 MINUTE) AS last_at,
                 count() * 600 AS effective_seconds,
                 maxOrNull(statistics_completed_at) AS completed_at
-            FROM LQ13_DataGovernance.interface_monitor_offline_daily_all
+            FROM LQ13_DataGovernance.interface_monitor_offline_daily_all FINAL
             WHERE row_kind = 'COVERAGE'
                 AND stat_date >= toDate(parseDateTime64BestEffort(#{startTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
                 AND stat_date < toDate(parseDateTime64BestEffort(#{endTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
@@ -125,7 +124,6 @@
                 intDiv(toUnixTimestamp64Milli(bucket_start) + 28800000, greatest(toInt64(toUInt32(#{bucketSeconds})) * 1000, 1)))
         )
         ORDER BY available_from
-        SETTINGS final = 1
         ]]>
     </select>
 

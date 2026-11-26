@@ -14,7 +14,7 @@
 | unattributedOnly | boolean | 默认 false，查询未归属调用。与 `agentId` 互斥 |
 | bucketSeconds | integer | 默认 0，返回整个区间。正数须为 600 的倍数 |
 
-日期按服务本地日期校验，最早为当天向前推六个自然月。服务通过 MyBatis 和 ClickHouse JDBC 查询 `LQ13_DataGovernance.interface_monitor_offline_daily_all`，按 `stat_date` 过滤分区，通过 `SETTINGS final = 1` 对底层替换表去重，再聚合统计和覆盖记录。自定义日期的截止边界为结束日期次日零点。接口、专家名称按聚合键批量查询同一个 MySQL 库的 `api_interface`、`operation_task`。
+日期按服务本地日期校验，最早为当天向前推六个自然月。服务通过 MyBatis 和 ClickHouse JDBC 查询 `LQ13_DataGovernance.interface_monitor_offline_daily_all`，按 `stat_date` 过滤分区，通过表名后的 `FINAL` 对底层替换表去重（兼容 ClickHouse 22.3），再聚合统计和覆盖记录。自定义日期的截止边界为结束日期次日零点。接口、专家名称按聚合键批量查询同一个 MySQL 库的 `api_interface`、`operation_task`。
 
 `data` 包含以下字段。
 
