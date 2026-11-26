@@ -14,20 +14,22 @@
 | unattributedOnly | boolean | 默认 false，查询未归属调用。与 `agentId` 互斥 |
 | bucketSeconds | integer | 默认 0，返回整个区间。正数须为 600 的倍数 |
 
-日期按北京时间，最早为当天向前推六个自然月。查询读取离线已发布统计，自定义日期的截止边界为结束日期次日零点。接口、专家名称按聚合键批量查询同一个 MySQL 库的 `api_interface`、`operation_task`。
+日期按服务本地日期校验，最早为当天向前推六个自然月。服务通过 MyBatis 和 ClickHouse JDBC 查询 `LQ13_DataGovernance.interface_monitor_offline_daily_all`，按 `stat_date` 过滤分区，通过 `SETTINGS final = 1` 对底层替换表去重，再聚合统计和覆盖记录。自定义日期的截止边界为结束日期次日零点。接口、专家名称按聚合键批量查询同一个 MySQL 库的 `api_interface`、`operation_task`。
 
 `data` 包含以下字段。
 
-- `items` 的行包含 `key`、`name`、`bucketStart`、`bucketEnd`、`effectiveSeconds`、`execution` 和 `upstream`。桶时间为北京时间 ISO 8601，精确到毫秒。
+- `items` 的行包含 `key`、`name`、`bucketStart`、`bucketEnd`、`effectiveSeconds`、`execution` 和 `upstream`。桶时间为本地日期时间字符串，格式为 `yyyy-MM-dd HH:mm:ss.SSS`，例如 `2026-11-19 10:00:00.000`。
 - 两种口径均返回 `started_count`、`success_count`、`failure_count`、`timeout_count`、`cancelled_count`、`cache_read_count`、`cache_hit_count`、`expert_count`、`interface_count`、`average_qps`、`success_tps`、`error_rate`、`timeout_rate`、`cache_hit_rate`、`p95_millis`、`p99_millis`。错误率使用配置接口的业务成功判断，指标无统计口径时比率和耗时返回 null。
-- `coverage` 的行包含 `available_from`、`available_through`、`effective_seconds`、`statistics_completed_at`。
-- `statisticsCompletedAt` 是所查询的离线数据中最晚的统计完成时间，无覆盖时返回 null。
+- `coverage` 的行包含 `available_from`、`available_through`、`effective_seconds`、`statistics_completed_at`。时间字段可为 null，非空值使用同一毫秒格式。
+- `statisticsCompletedAt` 是所查询的离线数据中最晚的统计完成时间，使用同一毫秒格式，无覆盖时返回 null。
 
 ## POST /api/v1/interface-monitor/refresh
 
-`periodType` 必填，取值 `day`、`week`、`month`。`offset` 默认 0，取值 0 至 4294967295。该接口直接转发外部 CK API `interface-monitor-offline-refresh`，原样返回其 `data`。用例用于页面的「更新统计」，离线任务平台仍按现有方式调用统计接口。
+`periodType` 为必填字符串，取值 `day`、`week`、`month`，分别从当天、本周周一、本月第一天开始。`offset` 为整数，默认 0，取值 0 至 4294967295。0 表示当前周期，只更新截至触发时已闭合的 10 分钟桶。正数向历史回退相应周期并更新整个周期。无闭合桶时直接成功。无效周期、偏移或早于 ClickHouse Date 起点的日期返回 `10000`。
 
-配置 `APP_MONITOR_CLICKHOUSE_BASE_URL` 启用实际 CK API。Mock 联调时给智拓进程设置 `APP_MONITOR_MOCK_ENABLED=true`，两种模式使用相同的页面契约。
+应用通过 MyBatis 和 ClickHouse JDBC 从 `interface_monitor_event` 生成指标和覆盖数据，逐日通过 `INSERT INTO` 直接写入 `interface_monitor_offline_daily`。正式表使用 `ReplicatedReplacingMergeTree()`，以 `(stat_date, bucket_start, row_kind, interface_id, agent_id, metric_scope)` 为覆盖键，重算时整行替换计数和耗时聚合状态。每个日期先写指标，再写覆盖记录与统计完成时间。数据库操作失败返回 `10006`，已写入的数据保留，可重试同一周期。请求示例为 `{"periodType":"week","offset":1}`，成功响应为 `{"code":200,"message":"成功","data":null,"success":true}`。
+
+生产环境使用 `CLICKHOUSE_JDBC_URL`、`CLICKHOUSE_USER`、`CLICKHOUSE_PASSWORD` 配置读写账号。JDBC 需指向可写的 ClickHouse 节点，正式表须是查询表 `interface_monitor_offline_daily_all` 的数据来源。同一覆盖键的写入必须路由到相同分片。刷新在单个实例内串行执行，部署时须保证只有一个刷新执行方。当前表未配置版本列，按写入顺序替换。刷新过程中可能读到新旧混合数据，失败后须重试。本方案按原始事件持续追加的口径运行，历史事件删除或改变接口、专家归属需要额外处理旧分组。Mock 联调时设置 `APP_MONITOR_MOCK_ENABLED=true`。
 
 ### 全局汇总与排行榜
 

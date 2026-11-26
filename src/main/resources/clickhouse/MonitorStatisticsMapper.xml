@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cmbchina.infrastructure.monitor.dao.mapper.MonitorStatisticsMapper">
+    <select id="queryStatistics" resultType="com.cmbchina.infrastructure.monitor.dao.po.MonitorStatisticsRow">
+        <![CDATA[
+        SELECT
+            group_key,
+            metric_scope,
+            CAST(effective_start_at AS String) AS bucket_start,
+            CAST(effective_end_at AS String) AS bucket_end,
+            covered_seconds AS effective_seconds,
+            total_started AS started_count,
+            total_success AS success_count,
+            total_failure AS failure_count,
+            total_timeout AS timeout_count,
+            total_cancelled AS cancelled_count,
+            total_cache_read AS cache_read_count,
+            total_cache_hit AS cache_hit_count,
+            expert_count,
+            interface_count,
+            started_count / nullIf(effective_seconds, 0) AS average_qps,
+            success_count / nullIf(effective_seconds, 0) AS success_tps,
+            failure_count / nullIf(success_count + failure_count, 0) AS error_rate,
+            timeout_count / nullIf(success_count + failure_count, 0) AS timeout_rate,
+            cache_hit_count / nullIf(cache_read_count, 0) AS cache_hit_rate,
+            if(total_latency_samples = 0, NULL, latency_quantiles[1]) AS p95_millis,
+            if(total_latency_samples = 0, NULL, latency_quantiles[2]) AS p99_millis,
+            total_latency_samples AS latency_sample_count
+        FROM
+        (
+            SELECT
+                group_key,
+                metric_scope,
+                coverage.covered_start_at AS effective_start_at,
+                coverage.covered_end_at AS effective_end_at,
+                coverage.covered_seconds AS covered_seconds,
+                sum(started_count) AS total_started,
+                sum(success_count) AS total_success,
+                sum(failure_count) AS total_failure,
+                sum(timeout_count) AS total_timeout,
+                sum(cancelled_count) AS total_cancelled,
+                sum(cache_read_count) AS total_cache_read,
+                sum(cache_hit_count) AS total_cache_hit,
+                uniqExactIf(agent_id, metric_scope = 'EXECUTION' AND started_count > 0 AND agent_id != '') AS expert_count,
+                uniqExactIf(interface_id, metric_scope = 'EXECUTION' AND started_count > 0) AS interface_count,
+                sum(latency_sample_count) AS total_latency_samples,
+                quantilesTDigestIfMerge(0.95, 0.99)(latency_state) AS latency_quantiles
+            FROM
+            (
+                SELECT
+                    metric_scope,
+                    agent_id,
+                    interface_id,
+                    started_count,
+                    success_count,
+                    failure_count,
+                    timeout_count,
+                    cancelled_count,
+                    cache_read_count,
+                    cache_hit_count,
+                    latency_sample_count,
+                    latency_state,
+                    toInt64(toUInt32(#{range.bucketSeconds})) * 1000 AS bucket_ms,
+                    multiIf(#{groupBy} = 'interface', interface_id, #{groupBy} = 'expert', agent_id, '') AS group_key,
+                    if(bucket_ms = 0, toInt64(0),
+                        intDiv(toUnixTimestamp64Milli(bucket_start) + 28800000, greatest(bucket_ms, 1))
+                            * bucket_ms - 28800000) AS bucket_key
+                FROM LQ13_DataGovernance.interface_monitor_offline_daily_all
+                WHERE row_kind = 'METRIC'
+                    AND stat_date >= toDate(parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+                    AND stat_date < toDate(parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+                    AND bucket_start >= parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai')
+                    AND bucket_start < parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai')
+                    AND (#{interfaceId} = '' OR interface_id = #{interfaceId})
+                    AND (#{agentId} = '' OR agent_id = #{agentId})
+                    AND (toUInt8(#{unattributedOnly}) = 0 OR agent_id = '')
+            ) AS metrics
+            INNER JOIN
+            (
+                SELECT
+                    if(toUInt32(#{range.bucketSeconds}) = 0, toInt64(0),
+                        intDiv(toUnixTimestamp64Milli(bucket_start) + 28800000,
+                            greatest(toInt64(toUInt32(#{range.bucketSeconds})) * 1000, 1))
+                            * toInt64(toUInt32(#{range.bucketSeconds})) * 1000 - 28800000) AS coverage_key,
+                    min(bucket_start) AS covered_start_at,
+                    max(bucket_start + INTERVAL 10 MINUTE) AS covered_end_at,
+                    count() * 600 AS covered_seconds
+                FROM LQ13_DataGovernance.interface_monitor_offline_daily_all
+                WHERE row_kind = 'COVERAGE'
+                    AND stat_date >= toDate(parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+                    AND stat_date < toDate(parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+                    AND bucket_start >= parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai')
+                    AND bucket_start < parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai')
+                GROUP BY coverage_key
+            ) AS coverage ON metrics.bucket_key = coverage.coverage_key
+            GROUP BY group_key, metric_scope, metrics.bucket_key, coverage.covered_start_at, coverage.covered_end_at, coverage.covered_seconds
+        )
+        ORDER BY group_key, bucket_start, metric_scope
+        SETTINGS final = 1
+        ]]>
+    </select>
+
+    <select id="queryCoverage" resultType="com.cmbchina.infrastructure.monitor.dao.po.MonitorCoverageRow">
+        <![CDATA[
+        SELECT
+            CAST(first_at AS String) AS available_from,
+            CAST(last_at AS String) AS available_through,
+            effective_seconds,
+            if(isNull(completed_at), NULL,
+                CAST(assumeNotNull(completed_at) AS String)) AS statistics_completed_at
+        FROM
+        (
+            SELECT
+                min(bucket_start) AS first_at,
+                max(bucket_start + INTERVAL 10 MINUTE) AS last_at,
+                count() * 600 AS effective_seconds,
+                maxOrNull(statistics_completed_at) AS completed_at
+            FROM LQ13_DataGovernance.interface_monitor_offline_daily_all
+            WHERE row_kind = 'COVERAGE'
+                AND stat_date >= toDate(parseDateTime64BestEffort(#{startTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+                AND stat_date < toDate(parseDateTime64BestEffort(#{endTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+                AND bucket_start >= parseDateTime64BestEffort(#{startTime}, 3, 'Asia/Shanghai')
+                AND bucket_start < parseDateTime64BestEffort(#{endTime}, 3, 'Asia/Shanghai')
+            GROUP BY if(toUInt32(#{bucketSeconds}) = 0, toInt64(0),
+                intDiv(toUnixTimestamp64Milli(bucket_start) + 28800000, greatest(toInt64(toUInt32(#{bucketSeconds})) * 1000, 1)))
+        )
+        ORDER BY available_from
+        SETTINGS final = 1
+        ]]>
+    </select>
+
+
+    <insert id="saveMetrics">
+        <![CDATA[
+        INSERT INTO LQ13_DataGovernance.interface_monitor_offline_daily
+        (
+            stat_date, bucket_start, row_kind, statistics_completed_at, interface_id, agent_id, metric_scope,
+            started_count, success_count, failure_count, timeout_count, cancelled_count,
+            cache_read_count, cache_hit_count, latency_sample_count, latency_state
+        )
+        SELECT
+            toDate(#{statDate}),
+            fromUnixTimestamp64Milli(
+                intDiv(toUnixTimestamp64Milli(occurred_at) + 28800000, 600000) * 600000 - 28800000, 'Asia/Shanghai'
+            ) AS metric_bucket_start,
+            'METRIC',
+            NULL,
+            interface_id,
+            agent_id,
+            metric_scope,
+            countIf(event_phase = 'START') AS started_count,
+            countIf(event_phase = 'FINISH' AND outcome = 'SUCCESS') AS success_count,
+            countIf(event_phase = 'FINISH' AND outcome = 'FAILURE') AS failure_count,
+            countIf(event_phase = 'FINISH' AND outcome = 'FAILURE' AND failure_kind = 'TIMEOUT') AS timeout_count,
+            countIf(event_phase = 'FINISH' AND outcome = 'CANCELLED') AS cancelled_count,
+            countIf(metric_scope = 'EXECUTION' AND event_phase = 'FINISH'
+                AND cache_result IN ('HIT', 'MISS', 'READ_ERROR')) AS cache_read_count,
+            countIf(metric_scope = 'EXECUTION' AND event_phase = 'FINISH' AND cache_result = 'HIT') AS cache_hit_count,
+            countIf(event_phase = 'FINISH' AND outcome IN ('SUCCESS', 'FAILURE')
+                AND isNotNull(elapsed_millis)) AS latency_sample_count,
+            quantilesTDigestIfState(0.95, 0.99)(
+                ifNull(elapsed_millis, toUInt64(0)),
+                event_phase = 'FINISH' AND outcome IN ('SUCCESS', 'FAILURE') AND isNotNull(elapsed_millis)
+            ) AS latency_state
+        FROM LQ13_DataGovernance.interface_monitor_event FINAL
+        WHERE occurred_date = toDate(#{statDate})
+            AND occurred_at >= toDateTime64(toDate(#{statDate}), 3, 'Asia/Shanghai')
+            AND occurred_at < toDateTime64(addDays(toDate(#{statDate}), 1), 3, 'Asia/Shanghai')
+            AND occurred_at < parseDateTime64BestEffort(#{coveredUntil}, 3, 'Asia/Shanghai')
+            AND metric_bucket_start + INTERVAL 10 MINUTE <= parseDateTime64BestEffort(#{coveredUntil}, 3, 'Asia/Shanghai')
+        GROUP BY metric_bucket_start, interface_id, agent_id, metric_scope
+        ]]>
+    </insert>
+
+    <insert id="saveCoverage">
+        <![CDATA[
+        INSERT INTO LQ13_DataGovernance.interface_monitor_offline_daily
+        (
+            stat_date, bucket_start, row_kind, statistics_completed_at, interface_id, agent_id, metric_scope,
+            started_count, success_count, failure_count, timeout_count, cancelled_count,
+            cache_read_count, cache_hit_count, latency_sample_count, latency_state
+        )
+        SELECT
+            toDate(#{statDate}),
+            addMinutes(toDateTime64(toDate(#{statDate}), 3, 'Asia/Shanghai'), toInt64(number) * 10) AS covered_bucket_start,
+            'COVERAGE',
+            parseDateTime64BestEffort(#{statisticsCompletedAt}, 3, 'Asia/Shanghai'),
+            '',
+            '',
+            '',
+            toUInt64(0),
+            toUInt64(0),
+            toUInt64(0),
+            toUInt64(0),
+            toUInt64(0),
+            toUInt64(0),
+            toUInt64(0),
+            toUInt64(0),
+            quantilesTDigestIfState(0.95, 0.99)(toUInt64(0), toUInt8(0))
+        FROM numbers(144)
+        WHERE covered_bucket_start + INTERVAL 10 MINUTE <= parseDateTime64BestEffort(#{coveredUntil}, 3, 'Asia/Shanghai')
+        GROUP BY covered_bucket_start
+        ]]>
+    </insert>
+
+</mapper>

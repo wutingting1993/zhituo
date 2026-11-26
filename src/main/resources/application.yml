@@ -20,7 +20,6 @@ mybatis:
 
 app:
   monitor:
-    clickhouse-base-url: ${CLICKHOUSE_BASE_URL:}
-    clickhouse-statistics-path: interface-monitor-statistics
-    clickhouse-coverage-path: interface-monitor-offline-coverage
-    clickhouse-refresh-path: interface-monitor-offline-refresh
+    clickhouse-jdbc-url: ${CLICKHOUSE_JDBC_URL:}
+    clickhouse-user: ${CLICKHOUSE_USER:default}
+    clickhouse-password: ${CLICKHOUSE_PASSWORD:}

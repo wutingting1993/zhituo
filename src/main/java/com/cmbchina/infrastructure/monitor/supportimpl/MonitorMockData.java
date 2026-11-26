@@ -11,9 +11,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -34,8 +33,7 @@ public class MonitorMockData implements MonitorDataSupport {
     private static final String EXPERT = "expert";
     private static final String EXECUTION = "EXECUTION";
     private static final String UPSTREAM = "UPSTREAM";
-    private static final ZoneOffset BEIJING = ZoneOffset.ofHours(8);
-    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSXXX");
+    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
     private static final List<Traffic> TRAFFIC = ImmutableList.of(new Traffic("sample-assets", "客户资产查询", "sample-sales", "客户经营专家", 3700, 42, 166),
             new Traffic("sample-assets", "客户资产查询", "sample-wealth", "财富顾问专家", 2150, 30, 194),
             new Traffic("sample-assets", "客户资产查询", "", "未归属", 330, 38, 185),
@@ -44,12 +42,12 @@ public class MonitorMockData implements MonitorDataSupport {
             new Traffic("sample-holdings", "客户持仓查询", "sample-wealth", "财富顾问专家", 1450, 100, 220),
             new Traffic("sample-holdings", "客户持仓查询", "sample-risk-team", "风险识别专家", 510, 100, 242));
 
-    private final AtomicReference<OffsetDateTime> lastRefresh = new AtomicReference<>();
+    private final AtomicReference<LocalDateTime> lastRefresh = new AtomicReference<>();
 
     /** 记录本地模拟统计的更新时间。 */
     @Override
     public void refresh(MonitorRefreshCommand request) {
-        lastRefresh.set(LocalDateTime.now().atOffset(BEIJING));
+        lastRefresh.set(LocalDateTime.now());
     }
 
     /** 模拟统计查询。 */
@@ -63,27 +61,27 @@ public class MonitorMockData implements MonitorDataSupport {
     /** 模拟离线覆盖查询。 */
     @Override
     public List<MonitorCoverage> queryCoverage(MonitorRange request) {
-        OffsetDateTime cutoff = cutoff();
+        LocalDateTime cutoff = cutoff();
         List<MonitorCoverage> result = Lists.newArrayList();
         visitBuckets(request, cutoff, (start, end) -> result.add(coverage(start, end, cutoff)));
         return result;
     }
 
     /** 获取最近的已闭合桶边界。 */
-    private OffsetDateTime cutoff() {
-        OffsetDateTime now = LocalDateTime.now().atOffset(BEIJING).truncatedTo(ChronoUnit.MINUTES);
+    private LocalDateTime cutoff() {
+        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
         return now.minusMinutes(now.getMinute() % 10);
     }
 
     /** 按相同的桶边界生成统计及覆盖数据。 */
-    private void visitBuckets(MonitorRange request, OffsetDateTime cutoff, BiConsumer<OffsetDateTime, OffsetDateTime> visitor) {
-        OffsetDateTime start = OffsetDateTime.parse(request.getStartTime());
-        OffsetDateTime requestedEnd = OffsetDateTime.parse(request.getEndTime());
-        OffsetDateTime end = requestedEnd.isBefore(cutoff) ? requestedEnd : cutoff;
+    private void visitBuckets(MonitorRange request, LocalDateTime cutoff, BiConsumer<LocalDateTime, LocalDateTime> visitor) {
+        LocalDateTime start = LocalDateTime.parse(request.getStartTime(), TIME);
+        LocalDateTime requestedEnd = LocalDateTime.parse(request.getEndTime(), TIME);
+        LocalDateTime end = requestedEnd.isBefore(cutoff) ? requestedEnd : cutoff;
         int bucketSeconds = request.getBucketSeconds();
-        for (OffsetDateTime cursor = start; cursor.isBefore(end);) {
-            OffsetDateTime boundary = bucketSeconds == 0 ? end : cursor.plusSeconds(bucketSeconds);
-            OffsetDateTime bucketEnd = boundary.isBefore(end) ? boundary : end;
+        for (LocalDateTime cursor = start; cursor.isBefore(end);) {
+            LocalDateTime boundary = bucketSeconds == 0 ? end : cursor.plusSeconds(bucketSeconds);
+            LocalDateTime bucketEnd = boundary.isBefore(end) ? boundary : end;
             visitor.accept(cursor, bucketEnd);
             cursor = bucketEnd;
         }
@@ -104,15 +102,15 @@ public class MonitorMockData implements MonitorDataSupport {
     }
 
     /** 空流量也可显示离线覆盖时间。 */
-    private MonitorCoverage coverage(OffsetDateTime start, OffsetDateTime end, OffsetDateTime cutoff) {
-        OffsetDateTime refreshed = lastRefresh.get();
-        OffsetDateTime completed = refreshed != null && refreshed.isAfter(cutoff) ? refreshed : cutoff;
+    private MonitorCoverage coverage(LocalDateTime start, LocalDateTime end, LocalDateTime cutoff) {
+        LocalDateTime refreshed = lastRefresh.get();
+        LocalDateTime completed = refreshed != null && refreshed.isAfter(cutoff) ? refreshed : cutoff;
         return MonitorCoverage.builder().availableFrom(TIME.format(start)).availableThrough(TIME.format(end))
                 .effectiveSeconds(ChronoUnit.SECONDS.between(start, end)).statisticsCompletedAt(TIME.format(completed)).build();
     }
 
     /** 汇总同一桶内满足筛选条件的固定调用组合。 */
-    private void appendStatistics(List<MonitorMetricRow> result, MonitorFilter query, OffsetDateTime start, OffsetDateTime end) {
+    private void appendStatistics(List<MonitorMetricRow> result, MonitorFilter query, LocalDateTime start, LocalDateTime end) {
         Map<String, Bucket> buckets = Maps.newLinkedHashMap();
         String group = query.getGroupBy();
         for (Traffic traffic : TRAFFIC) {
@@ -139,7 +137,7 @@ public class MonitorMockData implements MonitorDataSupport {
     }
 
     /** 输出与配置服务消费的字段名和可空口径一致。 */
-    private MonitorMetricRow metric(String key, String scope, Bucket bucket, OffsetDateTime start, OffsetDateTime end) {
+    private MonitorMetricRow metric(String key, String scope, Bucket bucket, LocalDateTime start, LocalDateTime end) {
         boolean execution = EXECUTION.equals(scope);
         long seconds = ChronoUnit.SECONDS.between(start, end);
         long started = execution ? bucket.execution : bucket.upstream;
@@ -193,6 +191,7 @@ public class MonitorMockData implements MonitorDataSupport {
 
     /** 模拟计数以同一套 10 分钟明细累计，使列表、汇总和趋势能相互核对。 */
     private static final class Bucket {
+        private static final LocalDateTime EPOCH = LocalDate.ofEpochDay(0).atStartOfDay();
         private long execution;
         private long upstream;
         private long executionFailures;
@@ -205,9 +204,10 @@ public class MonitorMockData implements MonitorDataSupport {
         private final Set<String> interfaces = Sets.newHashSet();
 
         /** 叠加所选时间内的离线模拟数据。 */
-        private void add(Traffic traffic, OffsetDateTime start, OffsetDateTime end) {
-            for (long minute = start.toEpochSecond(); minute < end.toEpochSecond(); minute += 600) {
-                long variation = Math.floorMod(minute / 600 * 13 + traffic.callsPerBucket, 49);
+        private void add(Traffic traffic, LocalDateTime start, LocalDateTime end) {
+            long endSecond = ChronoUnit.SECONDS.between(EPOCH, end);
+            for (long second = ChronoUnit.SECONDS.between(EPOCH, start); second < endSecond; second += 600) {
+                long variation = Math.floorMod(second / 600 * 13 + traffic.callsPerBucket, 49);
                 long calls = traffic.callsPerBucket * (76 + variation) / 100;
                 long sent = calls * traffic.upstreamPercent / 100;
                 executionLatencies.merge(traffic.latency, calls, Long::sum);
