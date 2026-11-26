@@ -45,3 +45,31 @@
 ```json
 {"executionCount":0,"failureCount":0,"affectedInterfaceCount":0,"affectedExpertCount":0,"errorRate":null,"p95Millis":null,"interfaceFailureTop":[],"interfaceLatencyTop":[],"expertFailureTop":[]}
 ```
+
+### 总览请求结果分布
+
+POST `/api/v1/interface-monitor/overview` 的请求参数及原有响应字段保持现有约定，新增以下字段，均由后端按当前日期、接口和专家条件计算。
+
+| 字段 | 类型 | 必填 / 可空 | 说明 |
+| --- | --- | --- | --- |
+| data.overview.completedCount | integer (int64) | 必填、非空 | 已结束调用数，成功 + 失败 + 取消 |
+| data.overview.resultDistribution | array | 必填、非空 | 固定按成功、其他失败、超时、取消排序的四项 |
+| resultDistribution[].name | string | 必填、非空 | 分类名称 |
+| resultDistribution[].count | integer (int64) | 必填、非空 | 分类次数 |
+| resultDistribution[].percentage | number | 必填、可空 | count / completedCount × 100，单位为百分数，四舍五入保留两位小数，分母为零时为 null |
+
+超时属于失败，其他失败 = 失败 - 超时，四项互斥。分母包含取消，不包含尚未结束的调用，与错误率的分母不同。独立四舍五入后，占比总和可能与 100 存在舍入差异。无数据时 completedCount 和四项 count 均为 0，四项 percentage 均为 null。参数校验与错误码沿用本接口约定。
+
+请求示例 `{"startDate":"2026-11-25","endDate":"2026-11-25"}`。响应新增字段片段如下，位于成功信封的 data.overview 中。
+
+```json
+{
+  "completedCount": 144,
+  "resultDistribution": [
+    {"name": "成功", "count": 123, "percentage": 85.42},
+    {"name": "其他失败", "count": 7, "percentage": 4.86},
+    {"name": "超时", "count": 6, "percentage": 4.17},
+    {"name": "取消", "count": 8, "percentage": 5.56}
+  ]
+}
+```

@@ -9,6 +9,8 @@ import lombok.Getter;
 @Builder
 public class MonitorOverviewResponse {
     private final long executionCount;
+    private final long completedCount;
+    private final List<MonitorDistributionResponse> resultDistribution;
     private final long failureCount;
     private final long affectedInterfaceCount;
     private final long affectedExpertCount;
