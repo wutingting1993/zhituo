@@ -22,7 +22,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
@@ -38,12 +37,11 @@ import org.springframework.stereotype.Service;
 /** 校验监控查询，聚合同一统计桶并补全业务名称。 */
 @Service
 public class InterfaceMonitorService implements MonitorApplicationService {
-    private static final ZoneId BEIJING = ZoneId.of("Asia/Shanghai");
     private static final int RANK_LIMIT = 10;
     private static final int LOOKBACK_MONTHS = 6;
     private static final int COVERAGE_BUCKET_SECONDS = 600;
     private static final long MAX_OFFSET = 4294967295L;
-    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSXXX");
+    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
     private static final int DAY_BUCKET_SECONDS = 86400;
     private static final Set<String> PERIODS = ImmutableSet.of("day", "week", "month");
     @Autowired
@@ -269,9 +267,9 @@ public class InterfaceMonitorService implements MonitorApplicationService {
         return key.isEmpty() ? "未归属" : names.getOrDefault(key, "专家名称不可用");
     }
 
-    /** 将日期边界转换为 CK 协议规定的北京时间。 */
+    /** 将日期边界转换为 监控查询使用的本地时间。 */
     private static String midnight(LocalDate date) {
-        return TIME.format(date.atStartOfDay(BEIJING));
+        return TIME.format(date.atStartOfDay());
     }
 
     /** 空字符串表示该筛选维度不限。 */
