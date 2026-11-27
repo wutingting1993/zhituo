@@ -20,6 +20,7 @@ mybatis:
 
 app:
   monitor:
+    batch-available-from: ${BATCH_MONITOR_AVAILABLE_FROM:}
     clickhouse-jdbc-url: ${CLICKHOUSE_JDBC_URL:}
     clickhouse-user: ${CLICKHOUSE_USER:default}
     clickhouse-password: ${CLICKHOUSE_PASSWORD:}

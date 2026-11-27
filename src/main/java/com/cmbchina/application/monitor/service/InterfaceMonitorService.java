@@ -2,6 +2,9 @@ package com.cmbchina.application.monitor.service;
 
 import com.cmbchina.application.monitor.api.MonitorApplicationService;
 import com.cmbchina.application.monitor.api.dto.MonitorQuery;
+import com.cmbchina.application.monitor.api.dto.MonitorBatchResponse;
+import com.cmbchina.application.monitor.api.dto.MonitorBatchMetricResponse;
+import com.cmbchina.domain.monitor.model.MonitorBatchMetric;
 import com.cmbchina.application.monitor.api.dto.MonitorDistributionResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -40,6 +43,7 @@ import org.springframework.stereotype.Service;
 /** 校验监控查询，聚合同一统计桶并补全业务名称。 */
 @Service
 public class InterfaceMonitorService implements MonitorApplicationService {
+    private static final int MINUTE_SECONDS = 60;
     private static final int RANK_LIMIT = 10;
     private static final int LOOKBACK_MONTHS = 6;
     private static final int COVERAGE_BUCKET_SECONDS = 600;
@@ -155,6 +159,42 @@ public class InterfaceMonitorService implements MonitorApplicationService {
                 .limit(RANK_LIMIT).collect(Collectors.toList());
     }
 
+    /** 按专家和日期查询批量入口指标，接口筛选由内部接口表格单独处理。 */
+    @Override
+    public MonitorBatchResponse batchMetrics(MonitorQuery request) {
+        validate(request);
+        MonitorRange range = MonitorRange.builder().startTime(midnight(request.getStartDate())).endTime(midnight(request.getEndDate().plusDays(1)))
+                .bucketSeconds(MINUTE_SECONDS).build();
+        MonitorFilter minutes = MonitorFilter.builder().range(range).groupBy("minute").interfaceId("").agentId(orEmpty(request.getAgentId()))
+                .unattributedOnly(request.isUnattributedOnly()).build();
+        MonitorFilter total = MonitorFilter.builder().range(range).groupBy("total").interfaceId("").agentId(minutes.getAgentId())
+                .unattributedOnly(minutes.isUnattributedOnly()).build();
+        List<MonitorBatchMetric> summaries = data.queryBatchStatistics(total);
+        List<MonitorBatchMetric> points = data.queryBatchStatistics(minutes);
+        List<MonitorCoverageResponse> coverage = points.stream().map(this::batchCoverage).collect(Collectors.toList());
+        MonitorBatchMetric summary = summaries.isEmpty() ? null : summaries.get(0);
+        return MonitorBatchResponse.builder().summary(summary == null ? null : batchMetric(summary))
+                .points(points.stream().map(this::batchMetric).collect(Collectors.toList())).coverage(coverage)
+                .statisticsCompletedAt(summary == null ? null : summary.getStatisticsCompletedAt()).bucketSeconds(MINUTE_SECONDS).build();
+    }
+
+    /** 输出与分钟数据对应的覆盖边界。 */
+    private MonitorCoverageResponse batchCoverage(MonitorBatchMetric metric) {
+        return MonitorCoverageResponse.builder().availableFrom(metric.getBucketStart()).availableThrough(metric.getBucketEnd())
+                .effectiveSeconds(metric.getEffectiveSeconds()).statisticsCompletedAt(metric.getStatisticsCompletedAt()).build();
+    }
+
+    /** 将已由数据库聚合的批量请求指标转换为接口字段。 */
+    private MonitorBatchMetricResponse batchMetric(MonitorBatchMetric metric) {
+        return MonitorBatchMetricResponse.builder().startedCount(metric.getStartedCount()).successCount(metric.getSuccessCount())
+                .partialFailureCount(metric.getPartialFailureCount()).failureCount(metric.getFailureCount())
+                .cancelledCount(metric.getCancelledCount()).completedCount(metric.getCompletedCount())
+                .latencySampleCount(metric.getLatencySampleCount()).averageMillis(metric.getAverageMillis()).p95Millis(metric.getP95Millis())
+                .qps(metric.getQps()).completedTps(metric.getCompletedTps()).successTps(metric.getSuccessTps())
+                .partialFailureRate(metric.getPartialFailureRate()).failureRate(metric.getFailureRate()).bucketStart(metric.getBucketStart())
+                .bucketEnd(metric.getBucketEnd()).build();
+    }
+
     /** 手动重算指定周期，无页面回看窗口限制。 */
     @Override
     public void refresh(MonitorRefresh request) {
@@ -240,8 +280,10 @@ public class InterfaceMonitorService implements MonitorApplicationService {
                 .failureCount(metric.getFailureCount()).timeoutCount(metric.getTimeoutCount()).cancelledCount(metric.getCancelledCount())
                 .cacheReadCount(metric.getCacheReadCount()).cacheHitCount(metric.getCacheHitCount()).expertCount(metric.getExpertCount())
                 .interfaceCount(metric.getInterfaceCount()).latencySampleCount(metric.getLatencySampleCount()).averageQps(metric.getAverageQps())
-                .successTps(metric.getSuccessTps()).errorRate(metric.getErrorRate()).timeoutRate(metric.getTimeoutRate())
-                .cacheHitRate(metric.getCacheHitRate()).p95Millis(metric.getP95Millis()).p99Millis(metric.getP99Millis()).build();
+                .successTps(metric.getSuccessTps()).activeSecondP95Qps(metric.getActiveSecondP95Qps())
+                .activeSecondP95SuccessTps(metric.getActiveSecondP95SuccessTps()).peakQps(metric.getPeakQps()).errorRate(metric.getErrorRate())
+                .timeoutRate(metric.getTimeoutRate()).cacheHitRate(metric.getCacheHitRate()).p95Millis(metric.getP95Millis())
+                .p99Millis(metric.getP99Millis()).build();
     }
 
     /** 已发布但没有请求的桶仍展示零流量。 */

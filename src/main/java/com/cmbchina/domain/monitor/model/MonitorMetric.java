@@ -19,6 +19,9 @@ public class MonitorMetric {
     private final long latencySampleCount;
     private final double averageQps;
     private final double successTps;
+    private final Long activeSecondP95Qps;
+    private final Long activeSecondP95SuccessTps;
+    private final Long peakQps;
     private final Double errorRate;
     private final Double timeoutRate;
     private final Double cacheHitRate;

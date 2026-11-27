@@ -23,11 +23,29 @@
 - `coverage` 的行包含 `available_from`、`available_through`、`effective_seconds`、`statistics_completed_at`。时间字段可为 null，非空值使用同一毫秒格式。
 - `statisticsCompletedAt` 是所查询的离线数据中最晚的统计完成时间，使用同一毫秒格式，无覆盖时返回 null。
 
+### 吞吐指标
+
+`overview`、`interfaces`、`experts`、`summary`、`trend` 中返回的完整 `execution`、`upstream` 指标对象均包含以下字段。各 POST 请求的参数、校验和错误码沿用现有约定。
+
+| 字段 | 类型 | 必填 / 可空 | 说明 |
+| --- | --- | --- | --- |
+| active_second_p95_qps | integer (int64) | 必填、可空 | 活跃秒开始次数的第 95 百分位 |
+| active_second_p95_success_tps | integer (int64) | 必填、可空 | 活跃秒成功完成次数的第 95 百分位 |
+| peak_qps | integer (int64) | 必填、可空 | 活跃秒开始次数的最大值 |
+
+自然秒按事件发生时间划分。开始或结束事件使该秒成为活跃秒。两个 P95 使用同一组活跃秒，缺少开始或成功完成事件的秒分别计 0。先在查询分组和指标口径内按同一秒合并计数，再排序取第 `ceil(0.95 × 活跃秒数)` 项。没有活跃秒或分组包含尚未生成秒级计数的指标行时，三项均为 null。
+
+请求示例 `POST /api/v1/interface-monitor/interfaces`，请求体为 `{"startDate":"2026-11-19","endDate":"2026-11-19"}`。响应指标片段如下。
+
+```json
+{"active_second_p95_qps":20,"active_second_p95_success_tps":18,"peak_qps":31}
+```
+
 ## POST /api/v1/interface-monitor/refresh
 
 `periodType` 为必填字符串，取值 `day`、`week`、`month`，分别从当天、本周周一、本月第一天开始。`offset` 为整数，默认 0，取值 0 至 4294967295。0 表示当前周期，只更新截至触发时已闭合的 10 分钟桶。正数向历史回退相应周期并更新整个周期。无闭合桶时直接成功。无效周期、偏移或早于 ClickHouse Date 起点的日期返回 `10000`。
 
-应用通过 MyBatis 和 ClickHouse JDBC 从 `interface_monitor_event` 生成指标和覆盖数据，逐日通过 `INSERT INTO` 直接写入 `interface_monitor_offline_daily`。正式表使用 `ReplicatedReplacingMergeTree()`，以 `(stat_date, bucket_start, row_kind, interface_id, agent_id, metric_scope)` 为覆盖键，重算时整行替换计数和耗时聚合状态。每个日期先写指标，再写覆盖记录与统计完成时间。数据库操作失败返回 `10006`，已写入的数据保留，可重试同一周期。请求示例为 `{"periodType":"week","offset":1}`，成功响应为 `{"code":200,"message":"成功","data":null,"success":true}`。
+应用通过 MyBatis 和 ClickHouse JDBC 从 `interface_monitor_event` 生成指标和覆盖数据，逐日通过 `INSERT INTO` 直接写入 `interface_monitor_offline_daily`。正式表使用 `ReplicatedReplacingMergeTree()`，以 `(stat_date, bucket_start, row_kind, interface_id, agent_id, metric_scope)` 为覆盖键，重算时整行替换计数、耗时聚合状态和桶内活跃秒计数。上线前先在各分片及查询分布式表应用 [秒级计数列迁移](../database/clickhouse-monitor-second-counts.sql)。仅对原始事件仍完整保留的历史周期调用刷新回填。每个日期先写指标，再写覆盖记录与统计完成时间。数据库操作失败返回 `10006`，已写入的数据保留，可重试同一周期。请求示例为 `{"periodType":"week","offset":1}`，成功响应为 `{"code":200,"message":"成功","data":null,"success":true}`。
 
 生产环境使用 `CLICKHOUSE_JDBC_URL`、`CLICKHOUSE_USER`、`CLICKHOUSE_PASSWORD` 配置读写账号。JDBC 需指向可写的 ClickHouse 节点，正式表须是查询表 `interface_monitor_offline_daily_all` 的数据来源。同一覆盖键的写入必须路由到相同分片。刷新在单个实例内串行执行，部署时须保证只有一个刷新执行方。当前表未配置版本列，按写入顺序替换。刷新过程中可能读到新旧混合数据，失败后须重试。本方案按原始事件持续追加的口径运行，历史事件删除或改变接口、专家归属需要额外处理旧分组。Mock 联调时设置 `APP_MONITOR_MOCK_ENABLED=true`。
 
@@ -73,3 +91,51 @@ POST `/api/v1/interface-monitor/overview` 的请求参数及原有响应字段�
   ]
 }
 ```
+
+## POST /api/v1/interface-monitor/batch-metrics
+
+按专家和日期统计两个批量入口的完整请求周期，接受现有 JSON 请求字段。startDate、endDate 必填，格式和六个月日期校验沿用现有规则。agentId 为可选字符串，unattributedOnly 为可选布尔值、默认 false，两者互斥。interfaceId 对本接口无筛选作用，内部接口表格由原查询处理。请求示例为 `{"startDate":"2026-11-27","endDate":"2026-11-27","agentId":"local-expert-1"}`。
+
+成功响应沿用 code=200 信封，data 字段如下。参数错误返回 10000，ClickHouse 查询失败返回 10006。
+
+| 字段 | 类型 | 必填 / 可空 | 含义 |
+| --- | --- | --- | --- |
+| summary | object | 必填、可空 | 已覆盖分钟合并后的整体指标，无覆盖为 null |
+| points | array | 必填、非空 | 每个已覆盖自然分钟的指标，按时间升序，空闲分钟为 0 |
+| coverage | array | 必填、非空 | 使用已有 available_from、available_through、effective_seconds、statistics_completed_at 结构，逐分钟发布 |
+| statisticsCompletedAt | string | 必填、可空 | 最近统计发布时间，毫秒本地时间 |
+| bucketSeconds | integer | 必填、非空 | 固定 60 |
+
+summary 和 points 的每项均返回下表字段，计数为非负 int64。bucketStart、bucketEnd 为 `yyyy-MM-dd HH:mm:ss.SSS` 本地时间，结束边界不包含。summary 的边界覆盖全部已发布分钟，可能存在缺口，速率分母仅累计已覆盖分钟秒数。
+
+| 指标 | 类型 | 必填 / 可空 | 口径 |
+| --- | --- | --- | --- |
+| startedCount | integer | 必填、非空 | 窗口内接收请求数 |
+| successCount | integer | 必填、非空 | 所有查询项成功的完成请求数 |
+| partialFailureCount | integer | 必填、非空 | 同时包含成功及失败项的完成请求数 |
+| failureCount | integer | 必填、非空 | 全部失败或 HTTP 请求异常数 |
+| cancelledCount | integer | 必填、非空 | 取消数，排除于完成 TPS 和耗时样本 |
+| completedCount | integer | 必填、非空 | successCount + partialFailureCount + failureCount |
+| latencySampleCount | integer | 必填、非空 | 已完成且记录耗时的样本数 |
+| averageMillis | number | 必填、可空 | 总耗时除以样本数，无样本为 null |
+| p95Millis | number | 必填、可空 | 合并分钟耗时分布后取 P95，无样本为 null |
+| qps | number | 必填、非空 | startedCount / 覆盖秒数 |
+| completedTps | number | 必填、非空 | completedCount / 覆盖秒数 |
+| successTps | number | 必填、非空 | successCount / 覆盖秒数 |
+| partialFailureRate | number | 必填、可空 | partialFailureCount / completedCount，无完成请求为 null |
+| failureRate | number | 必填、可空 | failureCount / completedCount，无完成请求为 null |
+| bucketStart、bucketEnd | string | 必填、非空 | 指标对应范围的起止时间 |
+
+开始次数按接收时间归属，完成次数和耗时按响应写出终态时间归属。跨窗口完成时，开始与完成可归属不同分钟。耗时包括服务端接收、业务执行、结果转换及响应写出，无法测量客户端收完响应的时刻。成功、部分失败及失败参与耗时，取消单列。
+
+无数据响应示例为 `{"code":200,"message":"成功","success":true,"data":{"summary":null,"points":[],"coverage":[],"statisticsCompletedAt":null,"bucketSeconds":60}}`。一个空闲分钟的指标示例为 `{"startedCount":0,"successCount":0,"partialFailureCount":0,"failureCount":0,"cancelledCount":0,"completedCount":0,"latencySampleCount":0,"averageMillis":null,"p95Millis":null,"qps":0,"completedTps":0,"successTps":0,"partialFailureRate":null,"failureRate":null,"bucketStart":"2026-11-27 00:00:00.000","bucketEnd":"2026-11-27 00:01:00.000"}`。
+
+### 迁移和数据覆盖
+
+本机表结构见 [批量监控迁移](../database/clickhouse-monitor-batch.sql)，其集群名为 local_monitor。部署到其他集群时应采用实际集群名及复制表引擎，并保证同一事件或离线覆盖键写入同一分片。查询使用分布式表后的 FINAL 去重，事件重发及同键重算不会重复累加。
+
+批量分钟统计随现有 refresh 请求生成，只发布已闭合的自然分钟。配置 `BATCH_MONITOR_AVAILABLE_FROM` 为完整采集链路生效后的第一个完整自然分钟，格式为 `yyyy-MM-dd HH:mm:ss.SSS`。默认空字符串时不发布批量覆盖，避免把历史缺少终态的时间误报为空闲。回填前须确认开始和结束事件在该范围完整保留。重算按已有 ReplacingMergeTree 整行替换模式，刷新中可能读到新旧指标，统计失败需重试同一周期。
+
+迁移文件不会启动 Kafka 或发布 Flink 作业。引擎事件映射需同步采用 api-config 项目 sql/flink/interface_monitor_kafka_to_clickhouse.sql 的 BATCH_STARTED/BATCH_FINISHED 映射。若事件被迟到写入已发布分钟，应重算受影响的日期。
+
+本机验收依次执行 [批量样例](../database/clickhouse-monitor-batch-local-seed.sql)和[内部接口样例](../database/clickhouse-monitor-batch-local-interface-seed.sql)，再调用 refresh 生成统计。样例使用 local-batch- 前缀、local-expert-1、local-expert-2 及未归属专家，和正式业务请求区分。重复执行样例通过事件标识去重。
