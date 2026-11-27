@@ -3,6 +3,8 @@ package com.cmbchina.infrastructure.monitor.supportimpl;
 import com.cmbchina.domain.monitor.model.MonitorCoverage;
 import com.cmbchina.domain.monitor.model.MonitorFilter;
 import com.cmbchina.domain.monitor.model.MonitorMetric;
+import com.cmbchina.domain.monitor.model.MonitorBatchMetric;
+import org.springframework.beans.factory.annotation.Value;
 import com.cmbchina.domain.monitor.model.MonitorMetricRow;
 import com.cmbchina.domain.monitor.model.MonitorRange;
 import com.cmbchina.domain.monitor.model.MonitorRefreshCommand;
@@ -37,6 +39,9 @@ public class MonitorDataSupportImpl implements MonitorDataSupport {
     private static final int BUCKET_MINUTES = 10;
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
+    @Value("${app.monitor.batch-available-from:}")
+    private String batchAvailableFrom;
+
     @Autowired
     private MonitorNameMapper nameMapper;
 
@@ -50,6 +55,16 @@ public class MonitorDataSupportImpl implements MonitorDataSupport {
             return statisticsMapper.queryStatistics(request).stream().map(this::metricRow).collect(Collectors.toList());
         } catch (DataAccessException error) {
             throw new BusinessException(ResponseEnum.MONITOR_UPSTREAM_ERROR.getCode(), "ClickHouse 监控统计查询失败", error);
+        }
+    }
+
+    /** 查询批量请求的完整周期指标。 */
+    @Override
+    public List<MonitorBatchMetric> queryBatchStatistics(MonitorFilter request) {
+        try {
+            return statisticsMapper.queryBatchStatistics(request);
+        } catch (DataAccessException error) {
+            throw new BusinessException(ResponseEnum.MONITOR_UPSTREAM_ERROR.getCode(), "ClickHouse 批量请求统计查询失败", error);
         }
     }
 
@@ -89,15 +104,21 @@ public class MonitorDataSupportImpl implements MonitorDataSupport {
         if (start.toEpochDay() < 0) {
             throw new BusinessException(ResponseEnum.VALIDATION_ERROR.getCode(), "离线更新日期超出 ClickHouse 支持范围", null);
         }
-        LocalDateTime cutoff = now.truncatedTo(ChronoUnit.MINUTES).minusMinutes(now.getMinute() % BUCKET_MINUTES);
+        LocalDateTime minuteCutoff = now.truncatedTo(ChronoUnit.MINUTES);
+        LocalDateTime cutoff = minuteCutoff.minusMinutes(now.getMinute() % BUCKET_MINUTES);
         try {
-            for (LocalDate date = start; date.isBefore(end) && date.atStartOfDay().isBefore(cutoff); date = date.plusDays(1)) {
+            for (LocalDate date = start; date.isBefore(end) && date.atStartOfDay().isBefore(minuteCutoff); date = date.plusDays(1)) {
                 LocalDateTime nextDay = date.plusDays(1).atStartOfDay();
                 String statDate = date.toString();
                 String coveredUntil = TIME.format(nextDay.isBefore(cutoff) ? nextDay : cutoff);
 
                 statisticsMapper.saveMetrics(statDate, coveredUntil);
                 statisticsMapper.saveCoverage(statDate, coveredUntil, TIME.format(LocalDateTime.now()));
+                if (!batchAvailableFrom.isEmpty()) {
+                    String batchCoveredUntil = TIME.format(nextDay.isBefore(minuteCutoff) ? nextDay : minuteCutoff);
+                    statisticsMapper.saveBatchMetrics(statDate, batchCoveredUntil, batchAvailableFrom);
+                    statisticsMapper.saveBatchCoverage(statDate, batchCoveredUntil, batchAvailableFrom, TIME.format(LocalDateTime.now()));
+                }
 
             }
         } catch (DataAccessException error) {
@@ -111,8 +132,10 @@ public class MonitorDataSupportImpl implements MonitorDataSupport {
                 .failureCount(row.getFailureCount()).timeoutCount(row.getTimeoutCount()).cancelledCount(row.getCancelledCount())
                 .cacheReadCount(row.getCacheReadCount()).cacheHitCount(row.getCacheHitCount()).expertCount(row.getExpertCount())
                 .interfaceCount(row.getInterfaceCount()).latencySampleCount(row.getLatencySampleCount()).averageQps(row.getAverageQps())
-                .successTps(row.getSuccessTps()).errorRate(row.getErrorRate()).timeoutRate(row.getTimeoutRate()).cacheHitRate(row.getCacheHitRate())
-                .p95Millis(row.getP95Millis()).p99Millis(row.getP99Millis()).build();
+                .successTps(row.getSuccessTps()).activeSecondP95Qps(row.getActiveSecondP95Qps())
+                .activeSecondP95SuccessTps(row.getActiveSecondP95SuccessTps()).peakQps(row.getPeakQps()).errorRate(row.getErrorRate())
+                .timeoutRate(row.getTimeoutRate()).cacheHitRate(row.getCacheHitRate()).p95Millis(row.getP95Millis()).p99Millis(row.getP99Millis())
+                .build();
         return MonitorMetricRow.builder().groupKey(row.getGroupKey()).metricScope(row.getMetricScope()).bucketStart(toApiTime(row.getBucketStart()))
                 .bucketEnd(toApiTime(row.getBucketEnd())).effectiveSeconds(row.getEffectiveSeconds()).metric(metric).build();
     }
@@ -120,6 +143,12 @@ public class MonitorDataSupportImpl implements MonitorDataSupport {
     /** 将 ClickHouse 返回的日期时间统一为三位毫秒。 */
     private String toApiTime(String value) {
         return value == null ? null : TIME.format(LocalDateTime.parse(value.replace(' ', 'T')));
+    }
+
+    /** 查询接口已发布配置中的缓存开关。 */
+    @Override
+    public Boolean cacheEnabled(String interfaceId) {
+        return nameMapper.findCacheEnabled(interfaceId);
     }
 
     /** 从当前数据源批量读取名称。 */

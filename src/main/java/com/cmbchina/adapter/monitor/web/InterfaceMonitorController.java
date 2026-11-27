@@ -3,6 +3,7 @@ package com.cmbchina.adapter.monitor.web;
 import com.cmbchina.application.api.dto.Result;
 import com.cmbchina.application.monitor.api.MonitorApplicationService;
 import com.cmbchina.application.monitor.api.dto.MonitorQuery;
+import com.cmbchina.application.monitor.api.dto.MonitorBatchResponse;
 import com.cmbchina.application.monitor.api.dto.MonitorRefresh;
 import com.cmbchina.application.monitor.api.dto.MonitorQueryResponse;
 import javax.validation.Valid;
@@ -37,6 +38,12 @@ public class InterfaceMonitorController {
         return Result.success(service.experts(request));
     }
 
+    /** 查询当前接口的专家执行对比。 */
+    @PostMapping("/expert-executions")
+    public Result<MonitorQueryResponse> expertExecutions(@Valid @RequestBody MonitorQuery request) {
+        return Result.success(service.expertExecutions(request));
+    }
+
     /** 查询详情汇总。 */
     @PostMapping("/summary")
     public Result<MonitorQueryResponse> summary(@Valid @RequestBody MonitorQuery request) {
@@ -47,6 +54,12 @@ public class InterfaceMonitorController {
     @PostMapping("/trend")
     public Result<MonitorQueryResponse> trend(@Valid @RequestBody MonitorQuery request) {
         return Result.success(service.trend(request));
+    }
+
+    /** 查询仅按专家和日期限定的批量请求指标。 */
+    @PostMapping("/batch-metrics")
+    public Result<MonitorBatchResponse> batchMetrics(@Valid @RequestBody MonitorQuery request) {
+        return Result.success(service.batchMetrics(request));
     }
 
     /** 将手动更新请求交给现有离线任务接口。 */

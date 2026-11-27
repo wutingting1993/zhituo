@@ -16,4 +16,6 @@ public class MonitorQueryResponse {
     private final String statisticsCompletedAt;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private MonitorOverviewResponse overview;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean cacheEnabled;
 }

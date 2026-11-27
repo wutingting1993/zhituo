@@ -14,4 +14,7 @@ public interface MonitorNameMapper {
 
     /** 批量查询专家标识和名称。 */
     List<MonitorNameRecord> findExperts(@Param("ids") Set<String> ids);
+
+    /** 查询接口当前已发布版本的缓存开关。 */
+    Boolean findCacheEnabled(@Param("interfaceId") String interfaceId);
 }

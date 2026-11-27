@@ -3,6 +3,7 @@ package com.cmbchina.infrastructure.monitor.supportimpl;
 import com.cmbchina.domain.monitor.model.MonitorCoverage;
 import com.cmbchina.domain.monitor.model.MonitorFilter;
 import com.cmbchina.domain.monitor.model.MonitorMetric;
+import com.cmbchina.domain.monitor.model.MonitorBatchMetric;
 import com.cmbchina.domain.monitor.model.MonitorMetricRow;
 import com.cmbchina.domain.monitor.model.MonitorRange;
 import com.cmbchina.domain.monitor.model.MonitorRefreshCommand;
@@ -43,6 +44,12 @@ public class MonitorMockData implements MonitorDataSupport {
             new Traffic("sample-holdings", "客户持仓查询", "sample-risk-team", "风险识别专家", 510, 100, 242));
 
     private final AtomicReference<LocalDateTime> lastRefresh = new AtomicReference<>();
+
+    /** 现有样例未记录批量响应终态，返回未覆盖。 */
+    @Override
+    public List<MonitorBatchMetric> queryBatchStatistics(MonitorFilter request) {
+        return Lists.newArrayList();
+    }
 
     /** 记录本地模拟统计的更新时间。 */
     @Override
@@ -85,6 +92,12 @@ public class MonitorMockData implements MonitorDataSupport {
             visitor.accept(cursor, bucketEnd);
             cursor = bucketEnd;
         }
+    }
+
+    /** 本地模拟数据不提供接口发布配置。 */
+    @Override
+    public Boolean cacheEnabled(String interfaceId) {
+        return null;
     }
 
     /** 模拟标识只映射本地样例名称，无需在业务库写入虚拟专家。 */

@@ -14,4 +14,12 @@
         WHERE agent_id IN
         <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
     </select>
+    <select id="findCacheEnabled" resultType="java.lang.Boolean">
+        SELECT version.cache_enabled
+        FROM api_interface current_interface
+        INNER JOIN api_interface_version version
+            ON version.interface_id = current_interface.id
+            AND version.version_no = current_interface.published_version
+        WHERE current_interface.id = #{interfaceId}
+    </select>
 </mapper>

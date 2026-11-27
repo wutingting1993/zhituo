@@ -1,6 +1,7 @@
 package com.cmbchina.application.monitor.api;
 
 import com.cmbchina.application.monitor.api.dto.MonitorQuery;
+import com.cmbchina.application.monitor.api.dto.MonitorBatchResponse;
 import com.cmbchina.application.monitor.api.dto.MonitorRefresh;
 import com.cmbchina.application.monitor.api.dto.MonitorQueryResponse;
 
@@ -16,11 +17,17 @@ public interface MonitorApplicationService {
     /** 查询专家指标列表。 */
     MonitorQueryResponse experts(MonitorQuery request);
 
+    /** 查询指定接口内的专家执行对比。 */
+    MonitorQueryResponse expertExecutions(MonitorQuery request);
+
     /** 查询详情汇总。 */
     MonitorQueryResponse summary(MonitorQuery request);
 
     /** 查询详情趋势。 */
     MonitorQueryResponse trend(MonitorQuery request);
+
+    /** 查询专家批量请求完整周期的分钟统计。 */
+    MonitorBatchResponse batchMetrics(MonitorQuery request);
 
     /** 触发指定周期的离线统计更新。 */
     void refresh(MonitorRefresh request);

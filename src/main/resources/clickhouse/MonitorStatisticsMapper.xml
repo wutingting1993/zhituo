@@ -20,6 +20,12 @@
             interface_count,
             started_count / nullIf(effective_seconds, 0) AS average_qps,
             success_count / nullIf(effective_seconds, 0) AS success_tps,
+            if(missing_second_counts > 0 OR active_seconds = 0, NULL,
+                arraySort(throughput.2)[percentile_rank]) AS active_second_p95_qps,
+            if(missing_second_counts > 0 OR active_seconds = 0, NULL,
+                arraySort(throughput.3)[percentile_rank]) AS active_second_p95_success_tps,
+            if(missing_second_counts > 0 OR active_seconds = 0, NULL,
+                arrayMax(throughput.2)) AS peak_qps,
             failure_count / nullIf(success_count + failure_count, 0) AS error_rate,
             timeout_count / nullIf(success_count + failure_count, 0) AS timeout_rate,
             cache_hit_count / nullIf(cache_read_count, 0) AS cache_hit_rate,
@@ -43,6 +49,15 @@
                 sum(cache_hit_count) AS total_cache_hit,
                 uniqExactIf(agent_id, metric_scope = 'EXECUTION' AND started_count > 0 AND agent_id != '') AS expert_count,
                 uniqExactIf(interface_id, metric_scope = 'EXECUTION' AND started_count > 0) AS interface_count,
+                countIf(empty(second_counts.1)) AS missing_second_counts,
+                sumMap(
+                    arrayMap(offset -> bucket_epoch_second + offset, second_counts.1),
+                    second_counts.2,
+                    second_counts.3,
+                    second_counts.4
+                ) AS throughput,
+                length(throughput.1) AS active_seconds,
+                intDiv(95 * active_seconds + 99, 100) AS percentile_rank,
                 sum(latency_sample_count) AS total_latency_samples,
                 quantilesTDigestIfMerge(0.95, 0.99)(latency_state) AS latency_quantiles
             FROM
@@ -60,6 +75,8 @@
                     cache_hit_count,
                     latency_sample_count,
                     latency_state,
+                    second_counts,
+                    intDiv(toUnixTimestamp64Milli(bucket_start), 1000) AS bucket_epoch_second,
                     toInt64(toUInt32(#{range.bucketSeconds})) * 1000 AS bucket_ms,
                     multiIf(#{groupBy} = 'interface', interface_id, #{groupBy} = 'expert', agent_id, '') AS group_key,
                     if(bucket_ms = 0, toInt64(0),
@@ -134,7 +151,7 @@
         (
             stat_date, bucket_start, row_kind, statistics_completed_at, interface_id, agent_id, metric_scope,
             started_count, success_count, failure_count, timeout_count, cancelled_count,
-            cache_read_count, cache_hit_count, latency_sample_count, latency_state
+            cache_read_count, cache_hit_count, latency_sample_count, latency_state, second_counts
         )
         SELECT
             toDate(#{statDate}),
@@ -159,7 +176,14 @@
             quantilesTDigestIfState(0.95, 0.99)(
                 ifNull(elapsed_millis, toUInt64(0)),
                 event_phase = 'FINISH' AND outcome IN ('SUCCESS', 'FAILURE') AND isNotNull(elapsed_millis)
-            ) AS latency_state
+            ) AS latency_state,
+            sumMapIf(
+                [toUInt16(intDiv(toUnixTimestamp64Milli(occurred_at) - toUnixTimestamp64Milli(metric_bucket_start), 1000))],
+                [toUInt64(event_phase = 'START')],
+                [toUInt64(event_phase = 'FINISH' AND outcome = 'SUCCESS')],
+                [toUInt64(1)],
+                event_phase IN ('START', 'FINISH')
+            ) AS second_counts
         FROM LQ13_DataGovernance.interface_monitor_event FINAL
         WHERE occurred_date = toDate(#{statDate})
             AND occurred_at >= toDateTime64(toDate(#{statDate}), 3, 'Asia/Shanghai')
@@ -198,6 +222,150 @@
         FROM numbers(144)
         WHERE covered_bucket_start + INTERVAL 10 MINUTE <= parseDateTime64BestEffort(#{coveredUntil}, 3, 'Asia/Shanghai')
         GROUP BY covered_bucket_start
+        ]]>
+    </insert>
+
+    <sql id="batchExpertRange"><![CDATA[
+        stat_date >= toDate(parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+        AND stat_date < toDate(parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+        AND bucket_start >= parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai')
+        AND bucket_start < parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai')
+]]></sql>
+
+    <select id="queryBatchStatistics" resultType="com.cmbchina.domain.monitor.model.MonitorBatchMetric">
+        <choose>
+            <when test="groupBy == 'expert'">
+                SELECT agent_id AS group_key,
+                    sum(started_count) AS started_count,
+                    sum(success_count) AS success_count,
+                    sum(partial_failure_count) AS partial_failure_count,
+                    sum(failure_count) AS failure_count,
+                    sum(cancelled_count) AS cancelled_count,
+                    success_count + partial_failure_count + failure_count AS completed_count,
+                    sum(latency_sample_count) AS latency_sample_count,
+                    sum(latency_sum_millis) / nullIf(latency_sample_count, 0) AS average_millis,
+                    if(latency_sample_count = 0, NULL,
+                quantilesTDigestIfMerge(0.95, 0.99)(latency_state)[1]) AS p95_millis,
+                    partial_failure_count / nullIf(completed_count, 0) AS partial_failure_rate,
+                    failure_count / nullIf(completed_count, 0) AS failure_rate
+                FROM LQ13_DataGovernance.interface_monitor_batch_minute_all FINAL
+                WHERE row_kind = 'METRIC' AND <include refid="batchExpertRange"/>
+                    AND (#{agentId} = '' OR agent_id = #{agentId})
+                    AND (toUInt8(#{unattributedOnly}) = 0 OR agent_id = '')
+                    AND bucket_start IN (
+                        SELECT bucket_start FROM LQ13_DataGovernance.interface_monitor_batch_minute_all FINAL
+                        WHERE row_kind = 'COVERAGE' AND <include refid="batchExpertRange"/>
+                    )
+                GROUP BY agent_id
+                ORDER BY started_count DESC, agent_id
+                    </when>
+            <otherwise>
+        <![CDATA[
+        SELECT
+            CAST(min(minute_at) AS String) AS bucket_start,
+            CAST(max(minute_at + INTERVAL 1 MINUTE) AS String) AS bucket_end,
+            count() * 60 AS effective_seconds,
+            CAST(max(statistics_completed_at) AS String) AS statistics_completed_at,
+            sum(started_count) AS started_count,
+            sum(success_count) AS success_count,
+            sum(partial_failure_count) AS partial_failure_count,
+            sum(failure_count) AS failure_count,
+            sum(cancelled_count) AS cancelled_count,
+            success_count + partial_failure_count + failure_count AS completed_count,
+            sum(latency_sample_count) AS latency_sample_count,
+            sum(latency_sum_millis) / nullIf(latency_sample_count, 0) AS average_millis,
+            if(latency_sample_count = 0, NULL,
+                quantilesTDigestIfMerge(0.95, 0.99)(latency_state)[1]) AS p95_millis,
+            started_count / effective_seconds AS qps,
+            completed_count / effective_seconds AS completed_tps,
+            success_count / effective_seconds AS success_tps,
+            partial_failure_count / nullIf(completed_count, 0) AS partial_failure_rate,
+            failure_count / nullIf(completed_count, 0) AS failure_rate
+        FROM
+        (
+            SELECT
+                bucket_start AS minute_at,
+                max(statistics_completed_at) AS statistics_completed_at,
+                sum(started_count) AS started_count,
+                sum(success_count) AS success_count,
+                sum(partial_failure_count) AS partial_failure_count,
+                sum(failure_count) AS failure_count,
+                sum(cancelled_count) AS cancelled_count,
+                sum(latency_sum_millis) AS latency_sum_millis,
+                sum(latency_sample_count) AS latency_sample_count,
+                quantilesTDigestIfMergeState(0.95, 0.99)(latency_state) AS latency_state
+            FROM LQ13_DataGovernance.interface_monitor_batch_minute_all FINAL
+            WHERE stat_date >= toDate(parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+                AND stat_date < toDate(parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+                AND bucket_start >= parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai')
+                AND bucket_start < parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai')
+                AND (row_kind = 'COVERAGE' OR
+                    (row_kind = 'METRIC' AND (#{agentId} = '' OR agent_id = #{agentId})
+                        AND (toUInt8(#{unattributedOnly}) = 0 OR agent_id = '')))
+            GROUP BY bucket_start
+            HAVING countIf(row_kind = 'COVERAGE') > 0
+        )
+        GROUP BY if(#{groupBy} = 'total', toInt64(0), toUnixTimestamp64Milli(minute_at))
+        ORDER BY min(minute_at)
+        ]]>
+            </otherwise>
+        </choose>
+    </select>
+
+    <insert id="saveBatchMetrics">
+        <![CDATA[
+        INSERT INTO LQ13_DataGovernance.interface_monitor_batch_minute
+        (
+            stat_date, bucket_start, row_kind, statistics_completed_at, entrypoint, agent_id,
+            started_count, success_count, partial_failure_count, failure_count, cancelled_count,
+            latency_sum_millis, latency_sample_count, latency_state
+        )
+        SELECT
+            toDate(#{statDate}),
+            toDateTime64(toStartOfMinute(occurred_at), 3, 'Asia/Shanghai') AS minute_start,
+            'METRIC',
+            NULL,
+            entrypoint,
+            agent_id,
+            countIf(event_phase = 'START'),
+            countIf(event_phase = 'FINISH' AND outcome = 'SUCCESS'),
+            countIf(event_phase = 'FINISH' AND outcome = 'PARTIAL_FAILURE'),
+            countIf(event_phase = 'FINISH' AND outcome = 'FAILURE'),
+            countIf(event_phase = 'FINISH' AND outcome = 'CANCELLED'),
+            sumIf(ifNull(elapsed_millis, toUInt64(0)),
+                event_phase = 'FINISH' AND outcome IN ('SUCCESS', 'PARTIAL_FAILURE', 'FAILURE')),
+            countIf(event_phase = 'FINISH' AND outcome IN ('SUCCESS', 'PARTIAL_FAILURE', 'FAILURE')
+                AND isNotNull(elapsed_millis)),
+            quantilesTDigestIfState(0.95, 0.99)(ifNull(elapsed_millis, toUInt64(0)),
+                event_phase = 'FINISH' AND outcome IN ('SUCCESS', 'PARTIAL_FAILURE', 'FAILURE') AND isNotNull(elapsed_millis))
+        FROM LQ13_DataGovernance.interface_monitor_batch_event_all FINAL
+        WHERE occurred_date = toDate(#{statDate})
+            AND occurred_at >= parseDateTime64BestEffort(#{availableFrom}, 3, 'Asia/Shanghai')
+            AND minute_start + INTERVAL 1 MINUTE <= parseDateTime64BestEffort(#{coveredUntil}, 3, 'Asia/Shanghai')
+        GROUP BY minute_start, entrypoint, agent_id
+        ]]>
+    </insert>
+
+    <insert id="saveBatchCoverage">
+        <![CDATA[
+        INSERT INTO LQ13_DataGovernance.interface_monitor_batch_minute
+        (
+            stat_date, bucket_start, row_kind, statistics_completed_at, entrypoint, agent_id,
+            started_count, success_count, partial_failure_count, failure_count, cancelled_count,
+            latency_sum_millis, latency_sample_count, latency_state
+        )
+        SELECT
+            toDate(#{statDate}),
+            addMinutes(toDateTime64(toDate(#{statDate}), 3, 'Asia/Shanghai'), toInt64(number)) AS minute_start,
+            'COVERAGE',
+            parseDateTime64BestEffort(#{statisticsCompletedAt}, 3, 'Asia/Shanghai'),
+            '', '', toUInt64(0), toUInt64(0), toUInt64(0), toUInt64(0), toUInt64(0),
+            toUInt64(0), toUInt64(0),
+            quantilesTDigestIfState(0.95, 0.99)(toUInt64(0), toUInt8(0))
+        FROM numbers(1440)
+        WHERE minute_start >= parseDateTime64BestEffort(#{availableFrom}, 3, 'Asia/Shanghai')
+            AND minute_start + INTERVAL 1 MINUTE <= parseDateTime64BestEffort(#{coveredUntil}, 3, 'Asia/Shanghai')
+        GROUP BY minute_start
         ]]>
     </insert>
 

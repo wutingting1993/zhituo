@@ -24,6 +24,9 @@ public class MonitorStatisticsRow {
     private long latencySampleCount;
     private double averageQps;
     private double successTps;
+    private Long activeSecondP95Qps;
+    private Long activeSecondP95SuccessTps;
+    private Long peakQps;
     private Double errorRate;
     private Double timeoutRate;
     private Double cacheHitRate;
