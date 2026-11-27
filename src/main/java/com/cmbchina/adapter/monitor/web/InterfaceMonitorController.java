@@ -38,6 +38,12 @@ public class InterfaceMonitorController {
         return Result.success(service.experts(request));
     }
 
+    /** 查询当前接口的专家执行对比。 */
+    @PostMapping("/expert-executions")
+    public Result<MonitorQueryResponse> expertExecutions(@Valid @RequestBody MonitorQuery request) {
+        return Result.success(service.expertExecutions(request));
+    }
+
     /** 查询详情汇总。 */
     @PostMapping("/summary")
     public Result<MonitorQueryResponse> summary(@Valid @RequestBody MonitorQuery request) {

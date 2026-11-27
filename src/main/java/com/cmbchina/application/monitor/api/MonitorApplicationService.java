@@ -17,6 +17,9 @@ public interface MonitorApplicationService {
     /** 查询专家指标列表。 */
     MonitorQueryResponse experts(MonitorQuery request);
 
+    /** 查询指定接口内的专家执行对比。 */
+    MonitorQueryResponse expertExecutions(MonitorQuery request);
+
     /** 查询详情汇总。 */
     MonitorQueryResponse summary(MonitorQuery request);
 

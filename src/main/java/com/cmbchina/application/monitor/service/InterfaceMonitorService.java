@@ -57,19 +57,19 @@ public class InterfaceMonitorService implements MonitorApplicationService {
     /** 查询全局总览。 */
     @Override
     public MonitorQueryResponse overview(MonitorQuery request) {
-        return query(request, "total", 0, true);
+        return query(request, "total", 0, true, false);
     }
 
     /** 查询接口指标列表。 */
     @Override
     public MonitorQueryResponse interfaces(MonitorQuery request) {
-        return query(request, "interface", 0, false);
+        return query(request, "interface", 0, false, false);
     }
 
     /** 查询专家指标列表。 */
     @Override
     public MonitorQueryResponse experts(MonitorQuery request) {
-        MonitorQueryResponse internal = query(request, "expert", 0, false);
+        MonitorQueryResponse internal = query(request, "expert", 0, false, true);
         MonitorRange range = MonitorRange.builder().startTime(midnight(request.getStartDate())).endTime(midnight(request.getEndDate().plusDays(1)))
                 .bucketSeconds(MINUTE_SECONDS).build();
         MonitorFilter filters = MonitorFilter.builder().range(range).groupBy("expert").interfaceId("").agentId(orEmpty(request.getAgentId()))
@@ -109,10 +109,19 @@ public class InterfaceMonitorService implements MonitorApplicationService {
                 .statisticsCompletedAt(coverage == null ? null : coverage.getStatisticsCompletedAt()).build();
     }
 
+    /** 查询指定接口范围内的专家执行指标。 */
+    @Override
+    public MonitorQueryResponse expertExecutions(MonitorQuery request) {
+        if (request.getInterfaceId() == null || request.getInterfaceId().trim().isEmpty()) {
+            throw new BusinessException(ResponseEnum.VALIDATION_ERROR.getCode(), "请选择需要对比的接口", null);
+        }
+        return query(request, "expert", 0, false, false);
+    }
+
     /** 查询详情汇总。 */
     @Override
     public MonitorQueryResponse summary(MonitorQuery request) {
-        MonitorQueryResponse response = query(request, "total", 0, false);
+        MonitorQueryResponse response = query(request, "total", 0, false, false);
         if (request.getInterfaceId() != null && !request.getInterfaceId().isEmpty()) {
             response.setCacheEnabled(data.cacheEnabled(request.getInterfaceId()));
         }
@@ -123,16 +132,16 @@ public class InterfaceMonitorService implements MonitorApplicationService {
     @Override
     public MonitorQueryResponse trend(MonitorQuery request) {
         int bucketSeconds = Objects.equals(request.getStartDate(), request.getEndDate()) ? COVERAGE_BUCKET_SECONDS : DAY_BUCKET_SECONDS;
-        return query(request, "total", bucketSeconds, false);
+        return query(request, "total", bucketSeconds, false, false);
     }
 
     /** 按入口确定的统计口径读取并组装监控数据。 */
-    private MonitorQueryResponse query(MonitorQuery request, String group, int bucketSeconds, boolean includeOverview) {
+    private MonitorQueryResponse query(MonitorQuery request, String group, int bucketSeconds, boolean includeOverview, boolean ignoreInterface) {
         validate(request);
         MonitorRange range = MonitorRange.builder().startTime(midnight(request.getStartDate())).endTime(midnight(request.getEndDate().plusDays(1)))
                 .bucketSeconds(bucketSeconds).build();
         MonitorFilter filters = MonitorFilter.builder().range(range).groupBy(group)
-                .interfaceId("expert".equals(group) ? "" : orEmpty(request.getInterfaceId())).agentId(orEmpty(request.getAgentId()))
+                .interfaceId(ignoreInterface ? "" : orEmpty(request.getInterfaceId())).agentId(orEmpty(request.getAgentId()))
                 .unattributedOnly(request.isUnattributedOnly()).build();
         List<MonitorMetricRow> rows = data.queryStatistics(filters);
         List<MonitorCoverage> coverage = data.queryCoverage(range);

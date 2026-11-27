@@ -190,3 +190,23 @@ summary 和 points 的每项均返回下表字段，计数为非负 int64。buck
 请求示例：`{"startDate":"2026-11-27","endDate":"2026-11-27","interfaceId":"local-iface-1"}`。响应新增字段片段：`{"cacheEnabled":false}`，位于原成功信封的 `data` 内；原有 items、coverage、statisticsCompletedAt 保留。配置未关联时原响应中不出现 cacheEnabled。
 
 本机缓存四态验收：执行 [MySQL 缓存配置样例](../database/mysql-monitor-cache-local-seed.sql)，仅调整 local-iface-1/2/3/4。账户查询（local-iface-1）关闭缓存，资产与理财持仓汇总（local-iface-2）开启缓存且当前样例命中率为 0，长名称批量查询接口（local-iface-3）不关联发布版本、配置未知。前三种沿用现有 ClickHouse 监控样例。再执行 [ClickHouse 命中样例](../database/clickhouse-monitor-cache-hit-local-seed.sql) 并刷新当天统计，新增「缓存命中验证查询」（local-iface-4）：缓存开启，20 次成功执行，10 次命中与 10 次未命中，命中率 50%。事件固定标识，重复执行同一天样例按 FINAL 去重。
+
+## POST /api/v1/interface-monitor/expert-executions
+
+用于接口展开下的领域专家对比，统计对象为**当前接口内**按专家分组的接口逻辑调用和上游实际请求，不统计整批 HTTP 请求。复用内部通用聚合查询；原 `/experts` 的批量请求列表仍忽略接口筛选，不受本次调整影响。
+
+| 请求字段 | 类型 | 必填/可空 | 规则 |
+| --- | --- | --- | --- |
+| startDate | string | 必填、不可空 | YYYY-MM-DD，沿用最近六个月日期校验 |
+| endDate | string | 必填、不可空 | YYYY-MM-DD，包含结束日，不能早于开始日 |
+| interfaceId | string | 必填、不可空 | 非空白接口标识，所有返回指标均限定该接口 |
+| agentId | string | 可选、可空 | 进一步限定专家 |
+| unattributedOnly | boolean | 可选，默认 false | 与非空 agentId 互斥 |
+
+成功响应沿用 `code:200`、`success:true` 信封。`data.items` 为专家分组数组，每项 key/name、bucketStart/bucketEnd、effectiveSeconds、execution/upstream 的字段、类型与空值口径沿用本文通用监控指标定义；不返回 batch。key 可为空字符串表示未归属，execution/upstream 始终为对象。data.coverage 和 data.statisticsCompletedAt 使用内部执行统计覆盖。无匹配事件时 items 为 []，无覆盖时 statisticsCompletedAt 可为 null。无配置专家名称时沿用名称回退规则。
+
+占比由前端分别按该接口内 execution.started_count、upstream.started_count 总数计算，不能混用分母；分母为 0 显示「—」。专家上下两行共用六指标列，按所选口径的原始指标值排序，缺失值置底，分组两行不拆开。
+
+接口、日期或专家条件无效返回业务错误码 10000（缺少接口提示「请选择需要对比的接口」）；统计数据源错误沿用 10006，HTTP 200 业务信封约定保持一致。
+
+请求示例：`{"startDate":"2026-11-27","endDate":"2026-11-27","interfaceId":"local-iface-4"}`。实际样例响应 data.items[0] 的指标片段：`{"key":"local-expert-1","name":"财富顾问","execution":{"started_count":20,"cache_read_count":20,"cache_hit_count":10,"cache_hit_rate":0.5},"upstream":{"started_count":0}}`。完整响应同时保留上述通用指标对象的所有字段、覆盖和统计完成时间；本例省略未变化字段。
