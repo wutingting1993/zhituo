@@ -27,4 +27,7 @@ public interface MonitorDataSupport {
 
     /** 查询当前维度的名称。 */
     Map<String, String> names(String group, Set<String> ids);
+
+    /** 查询接口当前已发布版本的缓存开关，未关联配置时返回空。 */
+    Boolean cacheEnabled(String interfaceId);
 }

@@ -94,6 +94,12 @@ public class MonitorMockData implements MonitorDataSupport {
         }
     }
 
+    /** 本地模拟数据不提供接口发布配置。 */
+    @Override
+    public Boolean cacheEnabled(String interfaceId) {
+        return null;
+    }
+
     /** 模拟标识只映射本地样例名称，无需在业务库写入虚拟专家。 */
     @Override
     public Map<String, String> names(String group, Set<String> ids) {

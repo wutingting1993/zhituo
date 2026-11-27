@@ -112,7 +112,11 @@ public class InterfaceMonitorService implements MonitorApplicationService {
     /** 查询详情汇总。 */
     @Override
     public MonitorQueryResponse summary(MonitorQuery request) {
-        return query(request, "total", 0, false);
+        MonitorQueryResponse response = query(request, "total", 0, false);
+        if (request.getInterfaceId() != null && !request.getInterfaceId().isEmpty()) {
+            response.setCacheEnabled(data.cacheEnabled(request.getInterfaceId()));
+        }
+        return response;
     }
 
     /** 查询详情趋势。 */

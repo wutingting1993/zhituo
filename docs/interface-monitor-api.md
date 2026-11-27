@@ -178,3 +178,15 @@ summary 和 points 的每项均返回下表字段，计数为非负 int64。buck
 ```
 
 示例假设覆盖 3600 秒，实际吞吐按返回的已覆盖时长计算。
+
+## POST /api/v1/interface-monitor/summary：接口缓存状态
+
+请求沿用现有日期、接口和专家筛选：`startDate`、`endDate` 为必填 `YYYY-MM-DD` 字符串，`interfaceId`、`agentId` 为可选字符串，`unattributedOnly` 为可选布尔值、默认 false，与非空 `agentId` 互斥。校验、成功信封及错误码 10000 / 10006 沿用上文。
+
+响应新增 `data.cacheEnabled`：可选 boolean，关联 `api_interface.id = interfaceId` 与 `api_interface_version.interface_id`，按 `published_version = version_no` 读取当前已发布配置的 `cache_enabled`。false 表示明确关闭，true 表示明确开启。未指定接口、接口已删除、无已发布版本或开关为空时省略该字段，表示无法确定；不会使用草稿开关或命中率推断。该状态是当前发布配置，不代表查询历史日期的配置。
+
+页面仅在 `cacheEnabled: false` 时在卡片内容区居中显示「未开启缓存」，隐藏百分比和缓存命中率区间图；true 时即使命中率为 0 也保留区间图；字段缺失时显示「缓存配置未知」并保留原图，不标记未开启。累计指标与其他图表保持原口径。
+
+请求示例：`{"startDate":"2026-11-27","endDate":"2026-11-27","interfaceId":"local-iface-1"}`。响应新增字段片段：`{"cacheEnabled":false}`，位于原成功信封的 `data` 内；原有 items、coverage、statisticsCompletedAt 保留。配置未关联时原响应中不出现 cacheEnabled。
+
+本机缓存四态验收：执行 [MySQL 缓存配置样例](../database/mysql-monitor-cache-local-seed.sql)，仅调整 local-iface-1/2/3/4。账户查询（local-iface-1）关闭缓存，资产与理财持仓汇总（local-iface-2）开启缓存且当前样例命中率为 0，长名称批量查询接口（local-iface-3）不关联发布版本、配置未知。前三种沿用现有 ClickHouse 监控样例。再执行 [ClickHouse 命中样例](../database/clickhouse-monitor-cache-hit-local-seed.sql) 并刷新当天统计，新增「缓存命中验证查询」（local-iface-4）：缓存开启，20 次成功执行，10 次命中与 10 次未命中，命中率 50%。事件固定标识，重复执行同一天样例按 FINAL 去重。

@@ -145,6 +145,12 @@ public class MonitorDataSupportImpl implements MonitorDataSupport {
         return value == null ? null : TIME.format(LocalDateTime.parse(value.replace(' ', 'T')));
     }
 
+    /** 查询接口已发布配置中的缓存开关。 */
+    @Override
+    public Boolean cacheEnabled(String interfaceId) {
+        return nameMapper.findCacheEnabled(interfaceId);
+    }
+
     /** 从当前数据源批量读取名称。 */
     @Override
     public Map<String, String> names(String group, Set<String> ids) {
