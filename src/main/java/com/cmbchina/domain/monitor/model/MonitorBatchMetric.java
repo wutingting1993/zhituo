@@ -7,6 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class MonitorBatchMetric {
+    private String groupKey;
     private long startedCount;
     private long successCount;
     private long partialFailureCount;

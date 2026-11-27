@@ -225,7 +225,41 @@
         ]]>
     </insert>
 
+    <sql id="batchExpertRange"><![CDATA[
+        stat_date >= toDate(parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+        AND stat_date < toDate(parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai'), 'Asia/Shanghai')
+        AND bucket_start >= parseDateTime64BestEffort(#{range.startTime}, 3, 'Asia/Shanghai')
+        AND bucket_start < parseDateTime64BestEffort(#{range.endTime}, 3, 'Asia/Shanghai')
+]]></sql>
+
     <select id="queryBatchStatistics" resultType="com.cmbchina.domain.monitor.model.MonitorBatchMetric">
+        <choose>
+            <when test="groupBy == 'expert'">
+                SELECT agent_id AS group_key,
+                    sum(started_count) AS started_count,
+                    sum(success_count) AS success_count,
+                    sum(partial_failure_count) AS partial_failure_count,
+                    sum(failure_count) AS failure_count,
+                    sum(cancelled_count) AS cancelled_count,
+                    success_count + partial_failure_count + failure_count AS completed_count,
+                    sum(latency_sample_count) AS latency_sample_count,
+                    sum(latency_sum_millis) / nullIf(latency_sample_count, 0) AS average_millis,
+                    if(latency_sample_count = 0, NULL,
+                quantilesTDigestIfMerge(0.95, 0.99)(latency_state)[1]) AS p95_millis,
+                    partial_failure_count / nullIf(completed_count, 0) AS partial_failure_rate,
+                    failure_count / nullIf(completed_count, 0) AS failure_rate
+                FROM LQ13_DataGovernance.interface_monitor_batch_minute_all FINAL
+                WHERE row_kind = 'METRIC' AND <include refid="batchExpertRange"/>
+                    AND (#{agentId} = '' OR agent_id = #{agentId})
+                    AND (toUInt8(#{unattributedOnly}) = 0 OR agent_id = '')
+                    AND bucket_start IN (
+                        SELECT bucket_start FROM LQ13_DataGovernance.interface_monitor_batch_minute_all FINAL
+                        WHERE row_kind = 'COVERAGE' AND <include refid="batchExpertRange"/>
+                    )
+                GROUP BY agent_id
+                ORDER BY started_count DESC, agent_id
+                    </when>
+            <otherwise>
         <![CDATA[
         SELECT
             CAST(min(minute_at) AS String) AS bucket_start,
@@ -274,6 +308,8 @@
         GROUP BY if(#{groupBy} = 'total', toInt64(0), toUnixTimestamp64Milli(minute_at))
         ORDER BY min(minute_at)
         ]]>
+            </otherwise>
+        </choose>
     </select>
 
     <insert id="saveBatchMetrics">

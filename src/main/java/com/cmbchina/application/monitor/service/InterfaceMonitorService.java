@@ -69,7 +69,44 @@ public class InterfaceMonitorService implements MonitorApplicationService {
     /** 查询专家指标列表。 */
     @Override
     public MonitorQueryResponse experts(MonitorQuery request) {
-        return query(request, "expert", 0, false);
+        MonitorQueryResponse internal = query(request, "expert", 0, false);
+        MonitorRange range = MonitorRange.builder().startTime(midnight(request.getStartDate())).endTime(midnight(request.getEndDate().plusDays(1)))
+                .bucketSeconds(MINUTE_SECONDS).build();
+        MonitorFilter filters = MonitorFilter.builder().range(range).groupBy("expert").interfaceId("").agentId(orEmpty(request.getAgentId()))
+                .unattributedOnly(request.isUnattributedOnly()).build();
+        Map<String, MonitorItemResponse> items = Maps.newLinkedHashMap();
+        internal.getItems().forEach(item -> items.put(item.getKey(), item));
+        MonitorFilter total = MonitorFilter.builder().range(range).groupBy("total").interfaceId("").agentId(filters.getAgentId())
+                .unattributedOnly(filters.isUnattributedOnly()).build();
+        List<MonitorBatchMetric> summaries = data.queryBatchStatistics(total);
+        MonitorBatchMetric coverage = summaries.isEmpty() ? null : summaries.get(0);
+        if (coverage != null) {
+            for (MonitorBatchMetric metric : data.queryBatchStatistics(filters)) {
+                metric.setBucketStart(coverage.getBucketStart());
+                metric.setBucketEnd(coverage.getBucketEnd());
+                metric.setEffectiveSeconds(coverage.getEffectiveSeconds());
+                metric.setQps((double) metric.getStartedCount() / coverage.getEffectiveSeconds());
+                metric.setCompletedTps((double) metric.getCompletedCount() / coverage.getEffectiveSeconds());
+                metric.setSuccessTps((double) metric.getSuccessCount() / coverage.getEffectiveSeconds());
+                MonitorItemResponse item = items.computeIfAbsent(metric.getGroupKey(),
+                        key -> newItem(key, metric.getBucketStart(), metric.getBucketEnd(), metric.getEffectiveSeconds()));
+                item.setBatch(batchMetric(metric));
+            }
+        }
+        Map<String, String> names = loadNames("expert", items);
+        for (MonitorItemResponse item : items.values()) {
+            item.setName(displayName("expert", item.getKey(), names));
+            if (item.getExecution() == null) {
+                item.setExecution(MonitorMetricsResponse.builder().build());
+                item.setUpstream(MonitorMetricsResponse.builder().build());
+            }
+            if (item.getBatch() == null && coverage != null) {
+                item.setBatch(batchMetric(new MonitorBatchMetric()));
+            }
+        }
+        return MonitorQueryResponse.builder().items(Lists.newArrayList(items.values()))
+                .coverage(coverage == null ? Lists.newArrayList() : Lists.newArrayList(batchCoverage(coverage)))
+                .statisticsCompletedAt(coverage == null ? null : coverage.getStatisticsCompletedAt()).build();
     }
 
     /** 查询详情汇总。 */
@@ -90,8 +127,9 @@ public class InterfaceMonitorService implements MonitorApplicationService {
         validate(request);
         MonitorRange range = MonitorRange.builder().startTime(midnight(request.getStartDate())).endTime(midnight(request.getEndDate().plusDays(1)))
                 .bucketSeconds(bucketSeconds).build();
-        MonitorFilter filters = MonitorFilter.builder().range(range).groupBy(group).interfaceId(orEmpty(request.getInterfaceId()))
-                .agentId(orEmpty(request.getAgentId())).unattributedOnly(request.isUnattributedOnly()).build();
+        MonitorFilter filters = MonitorFilter.builder().range(range).groupBy(group)
+                .interfaceId("expert".equals(group) ? "" : orEmpty(request.getInterfaceId())).agentId(orEmpty(request.getAgentId()))
+                .unattributedOnly(request.isUnattributedOnly()).build();
         List<MonitorMetricRow> rows = data.queryStatistics(filters);
         List<MonitorCoverage> coverage = data.queryCoverage(range);
         MonitorQueryResponse response = assemble(group, bucketSeconds, rows, coverage);

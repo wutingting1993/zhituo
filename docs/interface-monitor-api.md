@@ -139,3 +139,42 @@ summary 和 points 的每项均返回下表字段，计数为非负 int64。buck
 迁移文件不会启动 Kafka 或发布 Flink 作业。引擎事件映射需同步采用 api-config 项目 sql/flink/interface_monitor_kafka_to_clickhouse.sql 的 BATCH_STARTED/BATCH_FINISHED 映射。若事件被迟到写入已发布分钟，应重算受影响的日期。
 
 本机验收依次执行 [批量样例](../database/clickhouse-monitor-batch-local-seed.sql)和[内部接口样例](../database/clickhouse-monitor-batch-local-interface-seed.sql)，再调用 refresh 生成统计。样例使用 local-batch- 前缀、local-expert-1、local-expert-2 及未归属专家，和正式业务请求区分。重复执行样例通过事件标识去重。
+
+## POST /api/v1/interface-monitor/experts
+
+专家列表沿用现有成功信封和 `data.items` 结构，新增 `items[].batch`，使用与 `/batch-metrics` 的 `summary` 相同的字段、类型与完整请求周期口径。内部 `execution` / `upstream` 字段保留用于已有内部调用数据，不作为专家列表的展示指标。专家候选取内部执行与批量请求中出现过的专家并集，包含未归属。
+
+请求参数 `startDate`、`endDate` 为必填日期字符串，`agentId` 为可选字符串，`unattributedOnly` 为可选布尔值、默认 false，与非空 `agentId` 互斥。`interfaceId` 即使传入也不参与此接口筛选。日期校验、HTTP 200 信封及错误码 10000 / 10006 沿用上文。
+
+`batch` 为可选对象：查询范围没有批量统计覆盖时省略，前端显示「—」；已有覆盖但该专家无批量事件时返回零计数、零吞吐，耗时和无分母比率为 null。其 `bucketStart` / `bucketEnd` 在零事件对象中可为 null，列表不使用这两个字段。专家聚合先筛选已发布覆盖的分钟，再按专家合并两个入口的计数与耗时分布。每个专家的 QPS 和成功 TPS 分母均为查询范围内全部已覆盖分钟的秒数，包含空闲秒，跨天 P95 合并分布后计算。`coverage` 和 `statisticsCompletedAt` 对应批量请求覆盖，无批量覆盖时分别为 `[]` 和 null。
+
+页面展示批量请求数、成功率、平均耗时、P95 耗时、QPS 和成功 TPS；成功率为 `successCount / completedCount`，已完成包含全部成功、部分失败和失败，取消不参与分母，无已完成批次时为 null。列表按批量请求数降序，吞吐单位为次/秒。
+
+请求示例：`{"startDate":"2026-11-27","endDate":"2026-11-27","agentId":"local-expert-1"}`。成功响应的批量指标片段（位于 `data.items[0]`，省略保留的内部指标字段）：
+
+```json
+{
+  "key": "local-expert-1",
+  "name": "财富顾问",
+  "batch": {
+    "startedCount": 180,
+    "successCount": 120,
+    "partialFailureCount": 40,
+    "failureCount": 20,
+    "cancelledCount": 0,
+    "completedCount": 180,
+    "latencySampleCount": 180,
+    "averageMillis": 5414.444444444444,
+    "p95Millis": 70000,
+    "qps": 0.05,
+    "completedTps": 0.05,
+    "successTps": 0.03333333333333333,
+    "partialFailureRate": 0.2222222222222222,
+    "failureRate": 0.1111111111111111,
+    "bucketStart": "2026-11-27 00:00:00.000",
+    "bucketEnd": "2026-11-27 01:00:00.000"
+  }
+}
+```
+
+示例假设覆盖 3600 秒，实际吞吐按返回的已覆盖时长计算。

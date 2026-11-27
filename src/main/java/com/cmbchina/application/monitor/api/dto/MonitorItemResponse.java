@@ -15,6 +15,8 @@ public class MonitorItemResponse {
     private final String bucketStart;
     private final String bucketEnd;
     private final double effectiveSeconds;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private MonitorBatchMetricResponse batch;
     private MonitorMetricsResponse execution;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private MonitorMetricsResponse upstream;
